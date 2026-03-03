@@ -1,0 +1,34 @@
+### Get all saisons
+GET http://localhost:8080/api/saisons
+
+###
+
+### Create Saison ETE
+POST http://localhost:8080/api/saisons
+Content-Type: application/json
+
+{
+  "saison": "ETE 2025",
+  "code": "ETE25",
+  "etat": 1,
+  "ordre": "1",
+  "idTypeSaison": 1,
+  "dateDebut": "2025-06-01",
+  "dateFin": "2025-08-31"
+}
+
+###
+
+### Create Saison HIVER
+POST http://localhost:8080/api/saisons
+Content-Type: application/json
+
+{
+  "saison": "HIVER 2025",
+  "code": "HIV25",
+  "etat": 1,
+  "ordre": "2",
+  "idTypeSaison": 1,
+  "dateDebut": "2025-12-01",
+  "dateFin": "2026-02-28"
+}

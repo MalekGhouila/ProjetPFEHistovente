@@ -1,0 +1,30 @@
+/* ===== GOOGLE FONT ===== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import "primeicons/primeicons.css";
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  --font-family: 'Poppins', sans-serif;
+
+  /* Brand colors */
+  --brand-primary: #6c3483;
+  --brand-secondary: #9b59b6;
+  --brand-accent: #e91e8c;
+
+  /* Reusable input focus tokens — used in login.css */
+  --input-focus-border: rgba(233, 30, 140, 0.6);
+  --input-focus-shadow: rgba(233, 30, 140, 0.15);
+
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== GLOBAL RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family),sans-serif;
+}

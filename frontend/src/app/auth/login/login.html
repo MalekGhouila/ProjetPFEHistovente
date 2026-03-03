@@ -1,0 +1,32 @@
+<div class="login-bg">
+  <div class="glass-card">
+    <div class="login-logo">
+      <h1>NAF NAF</h1>
+      <p>Sales Intelligence Platform</p>
+    </div>
+
+    <div class="login-form">
+      <div class="field">
+        <input
+          pInputText
+          [(ngModel)]="username"
+          placeholder="Username"
+        />
+      </div>
+
+      <div class="field">
+        <p-password
+          [(ngModel)]="password"
+          [feedback]="false"
+          placeholder="Password"
+          [toggleMask]="true"
+        />
+      </div>
+
+      <p-button
+        label="Sign In"
+        (onClick)="onLogin()"
+      />
+    </div>
+  </div>
+</div>

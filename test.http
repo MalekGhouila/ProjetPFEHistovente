@@ -1,0 +1,98 @@
+### Get all families
+GET http://localhost:8080/api/familles
+
+###
+
+### Create ROBE family
+POST http://localhost:8080/api/familles
+Content-Type: application/json
+
+{
+  "code": "ROB",
+  "famille": "ROBE",
+  "etat": true
+}
+
+###
+
+### Create TEE-SHIRT family
+POST http://localhost:8080/api/familles
+Content-Type: application/json
+
+{
+  "code": "TEE",
+  "famille": "TEE-SHIRT",
+  "etat": true
+}
+
+###
+
+### Create PULL family
+POST http://localhost:8080/api/familles
+Content-Type: application/json
+
+{
+  "code": "PUL",
+  "famille": "PULL",
+  "etat": true
+}
+
+###
+
+### Get family by ID
+GET http://localhost:8080/api/familles/1
+
+###
+
+### Update family
+PUT http://localhost:8080/api/familles/1
+Content-Type: application/json
+
+{
+  "code": "ROB",
+  "famille": "ROBE UPDATED",
+  "etat": true
+}
+
+###
+
+### Delete family
+DELETE http://localhost:8080/api/familles/3
+
+### Get all colors
+GET http://localhost:8080/api/couleurs
+
+###
+
+### Create color ROUGE
+POST http://localhost:8080/api/couleurs
+Content-Type: application/json
+
+{
+  "code": "ROU",
+  "couleur": "ROUGE"
+}
+
+###
+
+### Create color NOIR
+POST http://localhost:8080/api/couleurs
+Content-Type: application/json
+
+{
+  "code": "NOI",
+  "couleur": "NOIR"
+}
+
+###
+
+### Create color BLANC
+POST http://localhost:8080/api/couleurs
+Content-Type: application/json
+
+{
+  "code": "BLA",
+  "couleur": "BLANC"
+}
+
+
