@@ -28,10 +28,10 @@ public class Article {
     @Column(name="Etat")
     private Integer etat;
 
-    @Column(name = "Prix")
+    @Column(name = "Prix", precision = 24, scale = 6)
     private BigDecimal prix;
 
-    @Column(name = "PrixAchat")
+    @Column(name = "PrixAchat", precision = 24, scale = 6)
     private BigDecimal prixAchat;
 
     @Column(name = "Reference", length = 50)
@@ -55,6 +55,6 @@ public class Article {
     @Column(name = "IDArSousFamille")
     private Long idArSousFamille;
 
-    @Column(name = "PrixOutlet")
+    @Column(name = "PrixOutlet", precision = 24, scale = 6)
     private BigDecimal prixOutlet;
 }

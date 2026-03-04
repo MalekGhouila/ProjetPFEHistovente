@@ -53,19 +53,19 @@ public class HistoVente {
     @Column(name = "Saison", length = 30)
     private String saison;
 
-    @Column(name = "PrixAchat")
+    @Column(name = "PrixAchat", precision = 24, scale = 6)
     private BigDecimal prixAchat;
 
-    @Column(name = "PrixVente")
+    @Column(name = "PrixVente", precision = 24, scale = 6)
     private BigDecimal prixVente;
 
-    @Column(name = "Prix")
+    @Column(name = "Prix", precision = 24, scale = 6)
     private BigDecimal prix;
 
     @Column(name = "Remise")
     private Double remise;
 
-    @Column(name = "Total")
+    @Column(name = "Total", precision = 24, scale = 6)
     private BigDecimal total;
 
     @Column(name = "TVA")
