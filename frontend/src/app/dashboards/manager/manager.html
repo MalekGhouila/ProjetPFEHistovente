@@ -1,1 +1,82 @@
-<p>manager works!</p>
+<div class="dashboard">
+
+  <!-- Page Title -->
+  <div class="dashboard-header">
+    <h1>Manager Dashboard</h1>
+    <p>{{welcomeMessage}}</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon sales">
+        <i class="pi pi-shopping-cart"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Transactions</span>
+        <span class="kpi-value">{{ totalSales }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon revenue">
+        <i class="pi pi-euro"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Revenue</span>
+        <span class="kpi-value">{{ totalRevenue }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon stores">
+        <i class="pi pi-building"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Stores</span>
+        <span class="kpi-value">{{ totalStores }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon avg">
+        <i class="pi pi-chart-line"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Avg Sale Value</span>
+        <span class="kpi-value">{{ avgSaleValue }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="charts-grid">
+    <div class="chart-card wide">
+      <h3>Monthly Sales Trend 2024</h3>
+      <p-chart type="line"
+               [data]="monthlySalesData"
+               [options]="monthlySalesOptions"
+               height="300px"/>
+    </div>
+
+    <div class="chart-card">
+      <h3>Sales by Product Family</h3>
+      <p-chart type="doughnut"
+               [data]="salesByFamilyData"
+               [options]="salesByFamilyOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="charts-grid">
+    <div class="chart-card full">
+      <h3>Top 10 Stores by Sales</h3>
+      <p-chart type="bar"
+               [data]="topStoresData"
+               [options]="topStoresOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+</div>

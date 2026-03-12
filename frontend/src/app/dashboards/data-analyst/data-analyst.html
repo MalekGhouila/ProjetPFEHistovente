@@ -1,1 +1,82 @@
-<p>data-analyst works!</p>
+<div class="dashboard">
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Data Analyst Dashboard</h1>
+    <p>{{ welcomeMessage }} - Data Quality & Analytics Overview</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon records">
+        <i class="pi pi-database"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Records</span>
+        <span class="kpi-value">{{ totalRecords }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon quality">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Data Quality Score</span>
+        <span class="kpi-value quality-score">{{ dataQualityScore }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon missing">
+        <i class="pi pi-exclamation-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Missing Values</span>
+        <span class="kpi-value missing-score">{{ missingValues }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon outliers">
+        <i class="pi pi-times-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Outliers Detected</span>
+        <span class="kpi-value outliers-score">{{ outliersDetected }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Missing Values by Column</h3>
+      <p-chart type="bar"
+               [data]="missingValuesData"
+               [options]="missingValuesOptions"
+               height="300px"/>
+    </div>
+
+    <div class="chart-card">
+      <h3>Outliers Detected per Month</h3>
+      <p-chart type="line"
+               [data]="outliersData"
+               [options]="outliersOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="charts-grid-full">
+    <div class="chart-card">
+      <h3>Data Completeness by Year (%)</h3>
+      <p-chart type="bar"
+               [data]="completenessData"
+               [options]="completenessOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+</div>

@@ -1,1 +1,120 @@
-<p>sidebar works!</p>
+<aside class="sidebar">
+  <ul class="sidebar-menu">
+
+    @if (role === 'ADMIN') {
+      <li class="sidebar-item">
+      <a routerLink="/admin" routerLinkActive="active">
+        <i class="pi pi-home"></i>
+        <span>Dashboard</span>
+      </a>
+      </li>
+
+      <li class="sidebar-item">
+        <a routerLink="/admin/users" routerLinkActive="active">
+          <i class="pi pi-users"></i>
+          <span>Users Management</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/data-monitoring" routerLinkActive="active">
+          <i class="pi pi-database"></i>
+          <span>Data Quality</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/ml-monitoring" routerLinkActive="active">
+          <i class="pi pi-chart-bar"></i>
+          <span>ML Performance</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/settings" routerLinkActive="active">
+          <i class="pi pi-cog"></i>
+          <span>Settings</span>
+        </a>
+      </li>
+    }
+
+    @if (role === 'MANAGER') {
+      <li class="sidebar-item">
+        <a routerLink="/manager" routerLinkActive="active">
+          <i class="pi pi-home"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/manager/stores" routerLinkActive="active">
+          <i class="pi pi-building"></i>
+          <span>Stores</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/manager/families" routerLinkActive="active">
+          <i class="pi pi-tag"></i>
+          <span>Families</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/manager/predictions" routerLinkActive="active">
+          <i class="pi pi-bolt"></i>
+          <span>Predictions</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/manager/alerts" routerLinkActive="active">
+          <i class="pi pi-bell"></i>
+          <span>Alerts</span>
+        </a>
+      </li>
+    }
+
+    @if (role === 'RESPONSABLE_MAGASIN') {
+      <li class="sidebar-item">
+        <a routerLink="/responsable-magasin" routerLinkActive="active">
+          <i class="pi pi-home"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/responsable-magasin/stock" routerLinkActive="active">
+          <i class="pi pi-box"></i>
+          <span>Stock Forecast</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/responsable-magasin/at-risk" routerLinkActive="active">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>At-Risk Products</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/responsable-magasin/dormant" routerLinkActive="active">
+          <i class="pi pi-clock"></i>
+          <span>Dormant Products</span>
+        </a>
+      </li>
+    }
+
+    @if (role === 'DATA_ANALYST') {
+      <li class="sidebar-item">
+        <a routerLink="/data-analyst" routerLinkActive="active">
+          <i class="pi pi-home"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/data-analyst/data-quality" routerLinkActive="active">
+          <i class="pi pi-database"></i>
+          <span>Data Quality</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/data-analyst/ml-evolution" routerLinkActive="active">
+          <i class="pi pi-chart-line"></i>
+          <span>ML Evolution</span>
+        </a>
+      </li>
+    }
+
+  </ul>
+</aside>

@@ -20,9 +20,17 @@ export class AuthService {
     localStorage.setItem('token', token);
   }
 
-  saveUser(username: string, role: string): void {
+  saveUser(username: string, role: string, idMagasin: number | null): void {
     localStorage.setItem('username', username);
     localStorage.setItem('role', role);
+    if (idMagasin) {
+      localStorage.setItem('idMagasin', idMagasin.toString());
+    }
+  }
+
+  getIdMagasin(): number | null {
+    const id = localStorage.getItem('idMagasin');
+    return id ? parseInt(id) : null;
   }
 
   getToken(): string | null {

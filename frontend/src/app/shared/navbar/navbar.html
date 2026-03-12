@@ -1,1 +1,18 @@
-<p>navbar works!</p>
+<nav class="navbar">
+  <div class="navbar-left">
+    <span class="navbar-brand">NAF NAF</span>
+    <span class="navbar-subtitle">Sales Intelligence Platform</span>
+  </div>
+
+  <div class="navbar-right">
+    <span class="navbar-user">
+      <i class="pi pi-user"></i>
+      {{ username }}
+    </span>
+    <span class="navbar-role">{{ role }}</span>
+    <button class="logout-btn" (click)="logout()">
+      <i class="pi pi-sign-out"></i>
+      Logout
+    </button>
+  </div>
+</nav>

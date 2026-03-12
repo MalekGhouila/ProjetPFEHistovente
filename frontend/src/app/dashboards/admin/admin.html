@@ -1,1 +1,103 @@
-<p>admin works!</p>
+<div class="dashboard">
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <p>{{ welcomeMessage }} - System Overview</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon users">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Users</span>
+        <span class="kpi-value">{{ totalUsers }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon active">
+        <i class="pi pi-user-plus"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Active Users</span>
+        <span class="kpi-value">{{ activeUsers }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon roles">
+        <i class="pi pi-shield"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Roles</span>
+        <span class="kpi-value">{{ totalRoles }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon status">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">System Status</span>
+        <span class="kpi-value status-healthy">{{ systemStatus }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Info -->
+  <div class="info-grid">
+    <div class="info-card">
+      <h3>Registered Roles</h3>
+      <ul class="roles-list">
+        <li>
+          <span class="role-badge admin">ADMIN</span>
+          <span>Full system access</span>
+        </li>
+        <li>
+          <span class="role-badge manager">MANAGER</span>
+          <span>Sales &amp; predictions access</span>
+        </li>
+        <li>
+          <span class="role-badge responsable">RESPONSABLE_MAGASIN</span>
+          <span>Store-specific access</span>
+        </li>
+        <li>
+          <span class="role-badge analyst">DATA_ANALYST</span>
+          <span>Data &amp; ML metrics access</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>System Status</h3>
+      <ul class="status-list">
+        <li>
+          <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          <span>Database Connected</span>
+          <span class="status-ok">OK</span>
+        </li>
+        <li>
+          <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          <span>API Server Running</span>
+          <span class="status-ok">OK</span>
+        </li>
+        <li>
+          <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          <span>Authentication Service</span>
+          <span class="status-ok">OK</span>
+        </li>
+        <li>
+          <i class="pi pi-exclamation-circle" style="color: #f1c40f"></i>
+          <span>ML Model</span>
+          <span class="status-warning">Pending</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>

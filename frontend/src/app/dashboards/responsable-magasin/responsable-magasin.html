@@ -1,1 +1,71 @@
-<p>responsable-magasin works!</p>
+<div class="dashboard">
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Store Dashboard</h1>
+    <p>{{ welcomeMessage }} - Managing {{ storeName }}</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon sales">
+        <i class="pi pi-shopping-cart"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Store Sales</span>
+        <span class="kpi-value">{{ storeSales }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon revenue">
+        <i class="pi pi-euro"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Store Revenue</span>
+        <span class="kpi-value">{{ storeRevenue }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon avg">
+        <i class="pi pi-chart-line"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Avg Sale Value</span>
+        <span class="kpi-value">{{ avgSaleValue }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon products">
+        <i class="pi pi-box"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Products</span>
+        <span class="kpi-value">{{ totalProducts }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card wide">
+      <h3>My Store Sales Trend 2024</h3>
+      <p-chart type="line"
+               [data]="storeSalesTrendData"
+               [options]="storeSalesTrendOptions"
+               height="300px"/>
+    </div>
+
+    <div class="chart-card">
+      <h3>Sales by Product Family</h3>
+      <p-chart type="doughnut"
+               [data]="storeFamilyData"
+               [options]="storeFamilyOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+</div>

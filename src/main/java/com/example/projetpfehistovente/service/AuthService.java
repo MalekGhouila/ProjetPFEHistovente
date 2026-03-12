@@ -34,7 +34,7 @@ public class AuthService {
                 user.getRole().name()
         );
 
-        return new AuthResponse(token, user.getUsername(),user.getRole());
+        return new AuthResponse(token, user.getUsername(),user.getRole(), user.getIdMagasin());
     }
 
     public AuthResponse register(RegisterRequest request){
@@ -52,6 +52,7 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .active(true)
+                .idMagasin(request.getIdMagasin())
                 .build();
 
         userRepository.save(user);
@@ -61,6 +62,6 @@ public class AuthService {
                 user.getRole().name()
         );
 
-        return new AuthResponse(token, user.getUsername(), user.getRole());
+        return new AuthResponse(token, user.getUsername(), user.getRole(), user.getIdMagasin());
     }
 }

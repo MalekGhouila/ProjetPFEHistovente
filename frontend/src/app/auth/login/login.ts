@@ -36,7 +36,7 @@ export class Login {
     }).subscribe({
       next: (response) => {
         this.authService.saveToken(response.token);
-        this.authService.saveUser(response.username, response.role);
+        this.authService.saveUser(response.username, response.role, response.idMagasin);
 
         switch(response.role) {
           case 'ADMIN':

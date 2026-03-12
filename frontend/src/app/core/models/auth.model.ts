@@ -7,4 +7,5 @@ export interface AuthResponse {
   token: string;
   username: string;
   role: string;
+  idMagasin: number | null;
 }

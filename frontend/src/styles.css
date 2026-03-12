@@ -11,12 +11,33 @@
   --brand-secondary: #9b59b6;
   --brand-accent: #e91e8c;
 
-  /* Reusable input focus tokens — used in login.css */
+  /* Input focus tokens */
   --input-focus-border: rgba(233, 30, 140, 0.6);
   --input-focus-shadow: rgba(233, 30, 140, 0.15);
 
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
+
+  /* Backgrounds */
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+
+  /* Text */
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --text-muted: #a0aec0;
+
+  /* Border */
+  --border-color: #e2e8f0;
+
+  /* Layout */
+  --sidebar-width: 250px;
+  --navbar-height: 60px;
 }
+
 
 /* ===== GLOBAL RESET ===== */
 * {

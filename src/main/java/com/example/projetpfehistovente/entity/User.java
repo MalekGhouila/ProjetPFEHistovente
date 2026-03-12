@@ -31,5 +31,9 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column
+    private Long idMagasin;
+
+
     private Boolean active=true;
 }
