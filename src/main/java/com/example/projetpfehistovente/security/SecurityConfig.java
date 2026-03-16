@@ -34,12 +34,14 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints (no token needed)
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/register").hasRole("ADMIN")
                         // Protected endpoints by role
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/histoventes/**").hasAnyRole("ADMIN", "MANAGER", "DATA_ANALYST", "RESPONSABLE_MAGASIN")
                         .requestMatchers("/api/magasins/**").hasAnyRole("ADMIN", "MANAGER", "RESPONSABLE_MAGASIN")
                         .requestMatchers("/api/articles/**").hasAnyRole("ADMIN", "MANAGER", "DATA_ANALYST")
+                        .requestMatchers("/api/analytics/**").hasAnyRole("ADMIN", "MANAGER", "DATA_ANALYST", "RESPONSABLE_MAGASIN")
                         // All other endpoints need authentication
                         .anyRequest().authenticated()
                 )

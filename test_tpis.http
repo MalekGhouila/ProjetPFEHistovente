@@ -1,0 +1,49 @@
+### Test Global KPIs
+GET http://localhost:8080/api/analytics/kpis
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MzUwMDIzMCwiZXhwIjoxNzczNTg2NjMwfQ.JEOxpIY_1HB5EbU6tRKQCZ6-XoYsmMr-ErUFANtiKqkK0zzNgXtGkE1BoTwrQuBRr__94bwcz18yMdcbMsw8ZQ
+
+###  test test
+GET http://localhost:8080/api/analytics/test
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MzUwMDIzMCwiZXhwIjoxNzczNTg2NjMwfQ.JEOxpIY_1HB5EbU6tRKQCZ6-XoYsmMr-ErUFANtiKqkK0zzNgXtGkE1BoTwrQuBRr__94bwcz18yMdcbMsw8ZQ
+
+
+###
+
+### Test Monthly Sales
+GET http://localhost:8080/api/analytics/monthly-sales
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MzUwMDIzMCwiZXhwIjoxNzczNTg2NjMwfQ.JEOxpIY_1HB5EbU6tRKQCZ6-XoYsmMr-ErUFANtiKqkK0zzNgXtGkE1BoTwrQuBRr__94bwcz18yMdcbMsw8ZQ
+
+###
+
+### Test Top Stores
+GET http://localhost:8080/api/analytics/top-stores
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MzUwMDIzMCwiZXhwIjoxNzczNTg2NjMwfQ.JEOxpIY_1HB5EbU6tRKQCZ6-XoYsmMr-ErUFANtiKqkK0zzNgXtGkE1BoTwrQuBRr__94bwcz18yMdcbMsw8ZQ
+
+###
+
+### Test Sales by Family
+GET http://localhost:8080/api/analytics/sales-by-family
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### Test Data Quality
+GET http://localhost:8080/api/analytics/data-quality
+Authorization: Bearer YOUR_TOKEN_HERE
+
+
+### Login
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+
+### Get all users
+GET http://localhost:8080/api/users
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MzY5MDMwNywiZXhwIjoxNzczNzc2NzA3fQ.er9PgZ_EC-FZrJ3udOHKs9V3mmvJ3E4nbQy1013kAKkYZH6onX5iVMcYmI3Ya_LQqdkjg1pqLhCtqjp1e1vKZg
+
+
