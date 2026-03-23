@@ -1,0 +1,20 @@
+### Login first
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+
+### Test count (should be faster now!)
+GET http://localhost:8080/api/analytics/test
+Authorization: Bearer YOUR_TOKEN
+
+###
+
+### Test KPIs
+GET http://localhost:8080/api/analytics/kpis
+Authorization: Bearer YOUR_TOKEN

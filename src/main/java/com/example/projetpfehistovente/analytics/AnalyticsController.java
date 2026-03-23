@@ -51,12 +51,7 @@ public class AnalyticsController {
         return ResponseEntity.ok("Total records: " + count);
     }
 
-    // In controller:
-    @GetMapping("/test-sum")
-    public ResponseEntity<String> testSum() {
-        Double sum = analyticsService.testSum();
-        return ResponseEntity.ok("Total revenue: " + sum);
-    }
+
 
 
 
