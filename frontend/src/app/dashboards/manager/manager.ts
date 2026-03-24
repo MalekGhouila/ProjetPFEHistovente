@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { CardModule } from 'primeng/card';
 import { AuthService } from '../../core/services/auth.service';
+import {HttpClient} from '@angular/common/http';
 
 @Component({
   selector: 'app-manager',
@@ -14,10 +15,10 @@ export class Manager implements OnInit {
   welcomeMessage : string ='';
 
   // KPI Data
-  totalSales = '16,277,213';
-  totalRevenue = '€ 45,832,491';
-  totalStores = '50';
-  avgSaleValue = '€ 45.20';
+  totalSales = '...';
+  totalRevenue = '...';
+  totalStores = '...';
+  avgSaleValue = '...';
 
   // Line Chart - Monthly Sales
   monthlySalesData: any;
@@ -31,14 +32,32 @@ export class Manager implements OnInit {
   topStoresData: any;
   topStoresOptions: any;
 
-  constructor(private authService : AuthService) {
+  constructor(private authService : AuthService, private http: HttpClient, private cdr: ChangeDetectorRef) {
   }
 
   ngOnInit() {
+    this.loadKpis();
     this.initMonthlySalesChart();
     this.initSalesByFamilyChart();
     this.initTopStoresChart();
     this.welcomeMessage=`Welcome back, ${this.authService.getUsername()!}`;
+  }
+
+  loadKpis() {
+    this.http.get<any>('http://localhost:8080/api/analytics/kpis')
+      .subscribe({
+        next: (data) => {
+          this.totalSales = data.totalTransactions.toLocaleString();
+          this.totalRevenue = '€ ' + (data.totalRevenue / 1000000).toFixed(2) + 'M';
+          this.avgSaleValue = '€ ' + data.avgSaleValue.toFixed(2);
+          this.totalStores = data.totalStores.toString();
+          this.cdr.detectChanges(); // ← Fix!
+        },
+        error: (err: any) => {
+          console.error('Error loading KPIs:', err);
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   initMonthlySalesChart() {

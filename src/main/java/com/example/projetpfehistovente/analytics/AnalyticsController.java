@@ -45,14 +45,4 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getStoreKpis(storeId));
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        Long count = analyticsService.getTestCount();
-        return ResponseEntity.ok("Total records: " + count);
-    }
-
-
-
-
-
 }

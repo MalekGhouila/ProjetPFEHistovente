@@ -1,100 +1,114 @@
 package com.example.projetpfehistovente.analytics;
 
 import com.example.projetpfehistovente.dto.*;
-import com.example.projetpfehistovente.repository.HistoVenteCleanRepository;
+import com.example.projetpfehistovente.repository.AnalyticsSummaryRepository;
 import com.example.projetpfehistovente.repository.MagasinRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AnalyticsService {
 
     @Autowired
-    private HistoVenteCleanRepository histoVenteCleanRepository;
+    private AnalyticsSummaryRepository summaryRepository;
 
     @Autowired
     private MagasinRepository magasinRepository;
 
-    public Long getTestCount() {
-        return histoVenteCleanRepository.count();
-    }
+    @Autowired
+    private ObjectMapper objectMapper;
 
+    // ===== GLOBAL KPIs =====
     public KpiResponse getGlobalKpis() {
-        Long totalTransactions = histoVenteCleanRepository.countTotalTransactions();
-        Double totalRevenue = histoVenteCleanRepository.sumTotalRevenue();
-        Double avgSaleValue = histoVenteCleanRepository.avgSaleValue();
-        Long totalStores = magasinRepository.count();
+        Double totalTransactions = getValue("total_transactions");
+        Double totalRevenue = getValue("total_revenue");
+        Double avgSaleValue = getValue("avg_sale_value");
+        Double totalStores = getValue("total_stores");
 
         return new KpiResponse(
-                totalTransactions,
+                totalTransactions != null ? totalTransactions.longValue() : 0L,
                 totalRevenue != null ? totalRevenue : 0.0,
                 avgSaleValue != null ? avgSaleValue : 0.0,
-                totalStores
+                totalStores != null ? totalStores.longValue() : 0L
         );
     }
 
+    // ===== MONTHLY SALES =====
     public List<MonthlySalesResponse> getMonthlySales() {
-        List<Object[]> results = histoVenteCleanRepository.getMonthlySalesNative();
-        return results.stream().map(row -> new MonthlySalesResponse(
-                (String) row[0],
-                ((Number) row[1]).longValue(),
-                row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO
-        )).collect(Collectors.toList());
+        String json = getText("monthly_sales_2024");
+        if (json == null) return List.of();
+        try {
+            return objectMapper.readValue(json,
+                    new TypeReference<List<MonthlySalesResponse>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
+    // ===== TOP STORES =====
     public List<TopStoreResponse> getTopStores() {
-        List<Object[]> results = histoVenteCleanRepository.getTopStoresNative();
-        return results.stream().map(row -> new TopStoreResponse(
-                (String) row[0],
-                ((Number) row[1]).longValue(),
-                row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO
-        )).collect(Collectors.toList());
+        String json = getText("top_stores");
+        if (json == null) return List.of();
+        try {
+            return objectMapper.readValue(json,
+                    new TypeReference<List<TopStoreResponse>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
+    // ===== SALES BY FAMILY =====
     public List<FamilySalesResponse> getSalesByFamily() {
-        List<Object[]> results = histoVenteCleanRepository.getSalesByFamilyNative();
-        long total = results.stream()
-                .mapToLong(r -> ((Number) r[1]).longValue())
-                .sum();
-        return results.stream().map(row -> {
-            long sales = ((Number) row[1]).longValue();
-            double percentage = total > 0 ? (sales * 100.0) / total : 0.0;
-            return new FamilySalesResponse(
-                    (String) row[0],
-                    sales,
-                    percentage
-            );
-        }).collect(Collectors.toList());
+        String json = getText("sales_by_family");
+        if (json == null) return List.of();
+        try {
+            return objectMapper.readValue(json,
+                    new TypeReference<List<FamilySalesResponse>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
+    // ===== DATA QUALITY =====
     public DataQualityResponse getDataQuality() {
-        Long totalRecords = histoVenteCleanRepository.countTotalTransactions();
-        Long outliersCount = 0L;
-        Double missingPercentage = 26.0;
-        Double qualityScore = 74.0;
-
+        Double totalRecords = getValue("total_transactions");
         return new DataQualityResponse(
-                totalRecords,
-                qualityScore,
-                missingPercentage,
-                outliersCount
+                totalRecords != null ? totalRecords.longValue() : 0L,
+                74.0,
+                26.0,
+                0L
         );
     }
 
+    // ===== STORE KPIs =====
     public KpiResponse getStoreKpis(Long storeId) {
-        Long totalTransactions = histoVenteCleanRepository.countByMagasin(storeId);
-        Double totalRevenue = histoVenteCleanRepository.sumRevenueByMagasin(storeId);
-        Double avgSaleValue = histoVenteCleanRepository.avgSaleByMagasin(storeId);
+        Double transactions = getValue("store_transactions_" + storeId);
+        Double revenue = getValue("store_revenue_" + storeId);
+        Double avg = getValue("store_avg_" + storeId);
 
         return new KpiResponse(
-                totalTransactions,
-                totalRevenue != null ? totalRevenue : 0.0,
-                avgSaleValue != null ? avgSaleValue : 0.0,
+                transactions != null ? transactions.longValue() : 0L,
+                revenue != null ? revenue : 0.0,
+                avg != null ? avg : 0.0,
                 1L
         );
+    }
+
+    // ===== HELPER METHODS =====
+    private Double getValue(String metricName) {
+        return summaryRepository.findByMetricName(metricName)
+                .map(s -> s.getMetricValue())
+                .orElse(null);
+    }
+
+    private String getText(String metricName) {
+        return summaryRepository.findByMetricName(metricName)
+                .map(s -> s.getMetricText())
+                .orElse(null);
     }
 }
