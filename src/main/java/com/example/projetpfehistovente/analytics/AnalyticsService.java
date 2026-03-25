@@ -67,12 +67,20 @@ public class AnalyticsService {
         String json = getText("sales_by_family");
         if (json == null) return List.of();
         try {
-            return objectMapper.readValue(json,
+            List<FamilySalesResponse> families = objectMapper.readValue(json,
                     new TypeReference<List<FamilySalesResponse>>() {});
+
+            // Calculate percentage
+            long total = families.stream().mapToLong(FamilySalesResponse::getTotalSales).sum();
+            families.forEach(f -> f.setPercentage(
+                    total > 0 ? (f.getTotalSales() * 100.0) / total : 0.0
+            ));
+            return families;
         } catch (Exception e) {
             return List.of();
         }
     }
+
 
     // ===== DATA QUALITY =====
     public DataQualityResponse getDataQuality() {

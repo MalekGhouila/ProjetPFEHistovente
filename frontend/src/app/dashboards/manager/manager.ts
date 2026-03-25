@@ -1,8 +1,8 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { CardModule } from 'primeng/card';
 import { AuthService } from '../../core/services/auth.service';
-import {HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-manager',
@@ -12,7 +12,8 @@ import {HttpClient} from '@angular/common/http';
   styleUrl: './manager.css'
 })
 export class Manager implements OnInit {
-  welcomeMessage : string ='';
+
+  welcomeMessage: string = '';
 
   // KPI Data
   totalSales = '...';
@@ -20,27 +21,47 @@ export class Manager implements OnInit {
   totalStores = '...';
   avgSaleValue = '...';
 
-  // Line Chart - Monthly Sales
+  // Charts
   monthlySalesData: any;
   monthlySalesOptions: any;
-
-  // Donut Chart - Sales by Family
   salesByFamilyData: any;
   salesByFamilyOptions: any;
-
-  // Bar Chart - Top Stores
   topStoresData: any;
   topStoresOptions: any;
 
-  constructor(private authService : AuthService, private http: HttpClient, private cdr: ChangeDetectorRef) {
-  }
+  constructor(
+    private authService: AuthService,
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
+    this.welcomeMessage = `Welcome back, ${this.authService.getUsername()!}`;
+    this.initChartOptions();
     this.loadKpis();
-    this.initMonthlySalesChart();
-    this.initSalesByFamilyChart();
-    this.initTopStoresChart();
-    this.welcomeMessage=`Welcome back, ${this.authService.getUsername()!}`;
+    this.loadMonthlySales();
+    this.loadTopStores();
+    this.loadSalesByFamily();
+  }
+
+  // Initialize chart options only (no data yet)
+  initChartOptions() {
+    this.monthlySalesOptions = {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    };
+
+    this.salesByFamilyOptions = {
+      responsive: true,
+      plugins: { legend: { position: 'right' } }
+    };
+
+    this.topStoresOptions = {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    };
   }
 
   loadKpis() {
@@ -51,83 +72,72 @@ export class Manager implements OnInit {
           this.totalRevenue = '€ ' + (data.totalRevenue / 1000000).toFixed(2) + 'M';
           this.avgSaleValue = '€ ' + data.avgSaleValue.toFixed(2);
           this.totalStores = data.totalStores.toString();
-          this.cdr.detectChanges(); // ← Fix!
-        },
-        error: (err: any) => {
-          console.error('Error loading KPIs:', err);
           this.cdr.detectChanges();
-        }
+        },
+        error: (err: any) => console.error('Error loading KPIs:', err)
       });
   }
 
-  initMonthlySalesChart() {
-    this.monthlySalesData = {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      datasets: [{
-        label: 'Sales 2024',
-        data: [12500, 14200, 13800, 15600, 18900, 21000,
-          19500, 17800, 16200, 14900, 13100, 11800],
-        borderColor: '#6c3483',
-        backgroundColor: 'rgba(108, 52, 131, 0.1)',
-        tension: 0.4,
-        fill: true
-      }]
-    };
-
-    this.monthlySalesOptions = {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        title: { display: false }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    };
+  loadMonthlySales() {
+    this.http.get<any[]>('http://localhost:8080/api/analytics/monthly-sales')
+      .subscribe({
+        next: (data) => {
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          this.monthlySalesData = {
+            labels: data.map(d => monthNames[parseInt(d.month) - 1]),
+            datasets: [{
+              label: 'Sales 2024',
+              data: data.map(d => d.totalSales),
+              borderColor: '#6c3483',
+              backgroundColor: 'rgba(108, 52, 131, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          };
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => console.error('Error loading monthly sales:', err)
+      });
   }
 
-  initSalesByFamilyChart() {
-    this.salesByFamilyData = {
-      labels: ['ROBE', 'TEE-SHIRT', 'PULL', 'CHEMISE', 'PANTALON', 'OTHER'],
-      datasets: [{
-        data: [35, 25, 15, 12, 8, 5],
-        backgroundColor: [
-          '#6c3483', '#e91e8c', '#9b59b6',
-          '#3498db', '#2ecc71', '#e74c3c'
-        ]
-      }]
-    };
-
-    this.salesByFamilyOptions = {
-      responsive: true,
-      plugins: {
-        legend: { position: 'right' }
-      }
-    };
+  loadTopStores() {
+    this.http.get<any[]>('http://localhost:8080/api/analytics/top-stores')
+      .subscribe({
+        next: (data) => {
+          this.topStoresData = {
+            labels: data.map(d => d.storeName),
+            datasets: [{
+              label: 'Total Sales',
+              data: data.map(d => d.totalSales),
+              backgroundColor: 'rgba(108, 52, 131, 0.7)',
+              borderColor: '#6c3483',
+              borderWidth: 1
+            }]
+          };
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => console.error('Error loading top stores:', err)
+      });
   }
 
-  initTopStoresChart() {
-    this.topStoresData = {
-      labels: ['Paris 01', 'Lyon 02', 'Marseille', 'Bordeaux',
-        'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Lille', 'Rennes'],
-      datasets: [{
-        label: 'Total Sales',
-        data: [8500, 7200, 6800, 6100, 5900, 5400, 4800, 4200, 3900, 3500],
-        backgroundColor: 'rgba(108, 52, 131, 0.7)',
-        borderColor: '#6c3483',
-        borderWidth: 1
-      }]
-    };
-
-    this.topStoresOptions = {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    };
+  loadSalesByFamily() {
+    this.http.get<any[]>('http://localhost:8080/api/analytics/sales-by-family')
+      .subscribe({
+        next: (data) => {
+          this.salesByFamilyData = {
+            labels: data.map(d => d.famille),
+            datasets: [{
+              data: data.map(d => d.totalSales),
+              backgroundColor: [
+                '#6c3483', '#e91e8c', '#9b59b6',
+                '#3498db', '#2ecc71', '#e74c3c'
+              ]
+            }]
+          };
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => console.error('Error loading sales by family:', err)
+      });
   }
 }
