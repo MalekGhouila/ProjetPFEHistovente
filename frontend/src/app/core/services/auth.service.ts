@@ -23,8 +23,12 @@ export class AuthService {
   saveUser(username: string, role: string, idMagasin: number | null): void {
     localStorage.setItem('username', username);
     localStorage.setItem('role', role);
-    if (idMagasin) {
+
+    // Always update idMagasin - even if null!
+    if (idMagasin !== null && idMagasin !== undefined) {
       localStorage.setItem('idMagasin', idMagasin.toString());
+    } else {
+      localStorage.removeItem('idMagasin'); // ← Clear if null!
     }
   }
 
@@ -32,6 +36,7 @@ export class AuthService {
     const id = localStorage.getItem('idMagasin');
     return id ? parseInt(id) : null;
   }
+
 
   getToken(): string | null {
     return localStorage.getItem('token');

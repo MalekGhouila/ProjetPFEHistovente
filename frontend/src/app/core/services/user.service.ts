@@ -11,11 +11,18 @@ export interface User {
   idMagasin: number | null;
 }
 
+export interface Magasin {
+  idMagasin: number;
+  magasin: string;
+  code: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   private apiUrl = 'http://localhost:8080/api/users';
+  private magasinUrl = 'http://localhost:8080/api/magasins';
 
   constructor(private http: HttpClient) {}
 
@@ -29,6 +36,18 @@ export class UserService {
 
   createUser(user: any): Observable<any> {
     return this.http.post('http://localhost:8080/api/auth/register', user);
+  }
+
+  updateStore(userId: number, storeId: number): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${userId}/store`, storeId);
+  }
+
+  searchStores(query: string): Observable<any> {
+    return this.http.get<any>(`${this.magasinUrl}?page=0&size=10`);
+  }
+
+  toggleActive(id: number): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${id}/toggle-active`, {});
   }
 
 }

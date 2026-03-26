@@ -14,6 +14,7 @@ export class ResponsableMagasin implements OnInit {
   welcomeMessage: string = '';
   storeName: string = 'Store #1';
   storeId: number | null = null;
+  noStoreAssigned: boolean = false;
 
   // KPI Data
   storeSales = '45,231';
@@ -32,9 +33,14 @@ export class ResponsableMagasin implements OnInit {
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
     this.storeId = this.authService.getIdMagasin();
+    console.log(this.storeId);
     this.storeName = `Store #${this.storeId}`;
     this.initStoreSalesTrend();
     this.initStoreFamilyChart();
+    if (!this.storeId) {
+      this.noStoreAssigned = true;
+      return;
+    }
   }
 
   initStoreSalesTrend() {

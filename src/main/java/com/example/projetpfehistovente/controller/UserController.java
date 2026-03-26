@@ -30,4 +30,28 @@ public class UserController {
                 })
                 .orElseGet(() -> ResponseEntity.<Void>notFound().build());
     }
+
+    @PutMapping("/{id}/store")
+    public ResponseEntity<User> updateStore(
+            @PathVariable Long id,
+            @RequestBody Long storeId) {
+        return userService.findById(id)
+                .map(user -> {
+                    user.setIdMagasin(storeId);
+                    return ResponseEntity.ok(userService.save(user));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/toggle-active")
+    public ResponseEntity<User> toggleActive(@PathVariable Long id) {
+        return userService.findById(id)
+                .map(user -> {
+                    user.setActive(!user.getActive());
+                    return ResponseEntity.ok(userService.save(user));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+
 }

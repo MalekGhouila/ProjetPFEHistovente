@@ -111,3 +111,30 @@
   color: var(--text-primary);
   margin-bottom: 20px;
 }
+
+.no-store-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  gap: 16px;
+  color: var(--text-secondary);
+}
+
+.no-store-container i {
+  font-size: 4rem;
+  color: #f1c40f;
+}
+
+.no-store-container h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.no-store-container p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+

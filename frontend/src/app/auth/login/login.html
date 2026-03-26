@@ -11,10 +11,11 @@
           pInputText
           [(ngModel)]="username"
           placeholder="Username"
+          (keyup.enter)="onLogin()"
         />
       </div>
 
-      <div class="field">
+      <div class="field" (keyup.enter)="onLogin()">
         <p-password
           [(ngModel)]="password"
           [feedback]="false"
@@ -22,6 +23,7 @@
           [toggleMask]="true"
         />
       </div>
+
 
       @if (errorMessage) {
         <div style="color: #ff4444; font-size: 0.85rem; text-align: center;">
@@ -34,7 +36,6 @@
         (onClick)="onLogin()"
         [disabled]="loading"
       />
-
     </div>
   </div>
 </div>

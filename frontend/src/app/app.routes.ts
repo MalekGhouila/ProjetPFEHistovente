@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { Login } from './auth/login/login';
 import { Layout } from './shared/layout/layout';
 import { authGuard } from './core/guards/auth-guard';
+import { storeGuard } from './core/guards/store-guard';
+import { NoStore } from './shared/no-store/no-store';
 
 // Dashboards
 import { Admin } from './dashboards/admin/admin';
@@ -33,6 +35,8 @@ import { Settings } from './dashboards/admin/settings/settings';
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: Login },
+  { path: 'no-store', component: NoStore },
+
   {
     path: '',
     component: Layout,
@@ -52,11 +56,11 @@ export const routes: Routes = [
       { path: 'manager/predictions', component: Predictions },
       { path: 'manager/alerts', component: Alerts },
 
-      // Responsable Magasin routes
-      { path: 'responsable-magasin', component: ResponsableMagasin },
-      { path: 'responsable-magasin/stock', component: Stock },
-      { path: 'responsable-magasin/at-risk', component: AtRisk },
-      { path: 'responsable-magasin/dormant', component: Dormant },
+      // Responsable Magasin routes (with storeGuard!)
+      { path: 'responsable-magasin', component: ResponsableMagasin, canActivate: [storeGuard] },
+      { path: 'responsable-magasin/stock', component: Stock, canActivate: [storeGuard] },
+      { path: 'responsable-magasin/at-risk', component: AtRisk, canActivate: [storeGuard] },
+      { path: 'responsable-magasin/dormant', component: Dormant, canActivate: [storeGuard] },
 
       // Data Analyst routes
       { path: 'data-analyst', component: DataAnalyst },

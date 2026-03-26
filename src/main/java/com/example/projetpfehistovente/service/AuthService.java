@@ -21,12 +21,17 @@ public class AuthService {
     @Autowired
     private JwtUtils jwtUtils;
 
-    public AuthResponse login(LoginRequest request){
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found !!"));
+                .orElseThrow(() -> new RuntimeException("User not found!"));
 
-        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
-            throw new RuntimeException("Invalid password !!");
+        // ← ADD THIS CHECK
+        if (!user.getActive()) {
+            throw new RuntimeException("Account is inactive! Please contact your administrator.");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid password!");
         }
 
         String token = jwtUtils.generateToken(
@@ -34,8 +39,9 @@ public class AuthService {
                 user.getRole().name()
         );
 
-        return new AuthResponse(token, user.getUsername(),user.getRole(), user.getIdMagasin());
+        return new AuthResponse(token, user.getUsername(), user.getRole(), user.getIdMagasin());
     }
+
 
     public AuthResponse register(RegisterRequest request){
         if(userRepository.existsByUsername(request.getUsername())){
