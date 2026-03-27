@@ -27,4 +27,15 @@ export class Navbar implements OnInit {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
+
+  getRoleDisplay(role: string): string {
+    switch(role) {
+      case 'ADMIN': return 'Admin';
+      case 'MANAGER': return 'Manager';
+      case 'RESPONSABLE_MAGASIN': return 'Responsable Magasin';
+      case 'DATA_ANALYST': return 'Data Analyst';
+      default: return role;
+    }
+  }
+
 }

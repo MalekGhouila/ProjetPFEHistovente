@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../core/services/user.service';
 
 @Component({
   selector: 'app-admin',
@@ -12,15 +13,31 @@ export class Admin implements OnInit {
 
   welcomeMessage: string = '';
 
-  // KPI Data
-  totalUsers = '4';
-  activeUsers = '4';
+  // KPI Data - will be real
+  totalUsers = '...';
+  activeUsers = '...';
   totalRoles = '4';
   systemStatus = 'Healthy';
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
+    this.loadUserStats();
+  }
+
+  loadUserStats() {
+    this.userService.getAll().subscribe({
+      next: (users) => {
+        this.totalUsers = users.length.toString();
+        this.activeUsers = users.filter(u => u.active).length.toString();
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error loading users:', err)
+    });
   }
 }

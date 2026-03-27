@@ -9,7 +9,7 @@
       <i class="pi pi-user"></i>
       {{ username }}
     </span>
-    <span class="navbar-role">{{ role }}</span>
+    <span class="navbar-role">{{ getRoleDisplay(role) }}</span>
     <button class="logout-btn" (click)="logout()">
       <i class="pi pi-sign-out"></i>
       Logout
