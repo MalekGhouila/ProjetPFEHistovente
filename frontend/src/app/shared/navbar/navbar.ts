@@ -24,9 +24,12 @@ export class Navbar implements OnInit {
   }
 
   logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    if (confirm('Are you sure you want to logout?')) {
+      this.authService.logout();
+      this.router.navigate(['/login']);
+    }
   }
+
 
   getRoleDisplay(role: string): string {
     switch(role) {
