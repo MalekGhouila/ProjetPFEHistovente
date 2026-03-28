@@ -137,4 +137,45 @@
   font-size: 0.95rem;
   color: var(--text-secondary);
 }
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calculating-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-primary);
+  font-weight: 500;
+}
+
+.last-updated {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.data-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+.last-updated-msg {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.refresh-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

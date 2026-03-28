@@ -1,26 +1,30 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
+import { ButtonModule } from 'primeng/button';
 import { AuthService } from '../../core/services/auth.service';
+import { StoreAnalyticsService } from '../../core/services/store-analytics.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-responsable-magasin',
   standalone: true,
-  imports: [ChartModule],
-  templateUrl: './responsable-magasin.html',
+  imports: [ChartModule, ButtonModule, DatePipe],  templateUrl: './responsable-magasin.html',
   styleUrl: './responsable-magasin.css'
 })
 export class ResponsableMagasin implements OnInit {
 
   welcomeMessage: string = '';
-  storeName: string = 'Store #1';
+  storeName: string = '';
   storeId: number | null = null;
   noStoreAssigned: boolean = false;
+  lastUpdated: string = '';
+  isCalculating: boolean = false;
 
   // KPI Data
-  storeSales = '45,231';
-  storeRevenue = '€ 890,432';
-  avgSaleValue = '€ 35.20';
-  totalProducts = '234';
+  storeSales = '...';
+  storeRevenue = '...';
+  avgSaleValue = '...';
+  topFamily = '...';
 
   // Charts
   storeSalesTrendData: any;
@@ -28,64 +32,138 @@ export class ResponsableMagasin implements OnInit {
   storeFamilyData: any;
   storeFamilyOptions: any;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private storeAnalyticsService: StoreAnalyticsService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
-    this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
     this.storeId = this.authService.getIdMagasin();
-    console.log(this.storeId);
-    this.storeName = `Store #${this.storeId}`;
-    this.initStoreSalesTrend();
-    this.initStoreFamilyChart();
+
     if (!this.storeId) {
       this.noStoreAssigned = true;
       return;
     }
+
+    this.storeName = `Store #${this.storeId}`;
+    this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
+    this.initChartOptions();
+    this.loadStoreData();
+
   }
 
-  initStoreSalesTrend() {
-    this.storeSalesTrendData = {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      datasets: [{
-        label: 'My Store Sales 2024',
-        data: [1200, 1400, 1100, 1600, 1900, 2100,
-          1800, 1700, 1500, 1300, 1100, 1000],
-        borderColor: '#e91e8c',
-        backgroundColor: 'rgba(233, 30, 140, 0.1)',
-        tension: 0.4,
-        fill: true
-      }]
-    };
-
+  initChartOptions() {
     this.storeSalesTrendOptions = {
       responsive: true,
-      plugins: {
-        legend: { position: 'top' }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    };
-  }
-
-  initStoreFamilyChart() {
-    this.storeFamilyData = {
-      labels: ['ROBE', 'TEE-SHIRT', 'PULL', 'CHEMISE', 'OTHER'],
-      datasets: [{
-        data: [40, 25, 15, 12, 8],
-        backgroundColor: [
-          '#e91e8c', '#6c3483', '#9b59b6',
-          '#3498db', '#2ecc71'
-        ]
-      }]
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
     };
 
     this.storeFamilyOptions = {
       responsive: true,
-      plugins: {
-        legend: { position: 'right' }
-      }
+      plugins: { legend: { position: 'right' } }
     };
+  }
+
+  loadStoreData() {
+    if (!this.storeId) return;
+
+    // Load KPIs
+    this.storeAnalyticsService.getKpis(this.storeId).subscribe({
+      next: (data) => {
+        if (data.hasData) {
+          this.storeSales = data.totalTransactions.toLocaleString();
+          this.storeRevenue = '€ ' + (data.totalRevenue / 1000000).toFixed(2) + 'M';
+          this.avgSaleValue = '€ ' + data.avgSaleValue.toFixed(2);
+          this.lastUpdated = data.lastUpdated;
+        } else {
+          this.storeSales = 'No data';
+          this.storeRevenue = 'No data';
+          this.avgSaleValue = 'No data';
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error loading KPIs:', err)
+    });
+
+    // Load Monthly Sales
+    this.storeAnalyticsService.getMonthlySales(this.storeId).subscribe({
+      next: (data) => {
+        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+        if (parsed && parsed.length > 0) {
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          this.storeSalesTrendData = {
+            labels: parsed.map((d: any) => monthNames[parseInt(d.month.split('-')[1]) - 1]),
+            datasets: [{
+              label: 'My Store Sales 2024',
+              data: parsed.map((d: any) => d.totalSales),
+              borderColor: '#e91e8c',
+              backgroundColor: 'rgba(233, 30, 140, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          };
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err: any) => console.error('Error loading monthly sales:', err)
+    });
+
+    // Load Sales by Family
+    this.storeAnalyticsService.getSalesByFamily(this.storeId).subscribe({
+      next: (data) => {
+        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+        if (parsed && parsed.length > 0) {
+          this.topFamily = parsed[0]?.famille || 'N/A';
+          this.storeFamilyData = {
+            labels: parsed.map((d: any) => d.famille),
+            datasets: [{
+              data: parsed.map((d: any) => d.totalSales),
+              backgroundColor: [
+                '#e91e8c', '#6c3483', '#9b59b6',
+                '#3498db', '#2ecc71', '#e74c3c'
+              ]
+            }]
+          };
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err: any) => console.error('Error loading family sales:', err)
+    });
+  }
+
+  refreshData() {
+    if (!this.storeId) return;
+    this.isCalculating = true;
+    this.cdr.detectChanges();
+
+    this.storeAnalyticsService.calculate(this.storeId).subscribe({
+      next: () => {
+        this.pollStatus();
+      },
+      error: (err: any) => {
+        console.error('Error triggering calculation:', err);
+        this.isCalculating = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  pollStatus() {
+    if (!this.storeId) return;
+    const interval = setInterval(() => {
+      this.storeAnalyticsService.getStatus(this.storeId!).subscribe({
+        next: (status) => {
+          if (status.hasData) {
+            clearInterval(interval);
+            this.isCalculating = false;
+            this.loadStoreData();
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    }, 5000);
   }
 }
