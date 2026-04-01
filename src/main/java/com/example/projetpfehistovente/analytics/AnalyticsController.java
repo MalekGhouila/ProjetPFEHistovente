@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/analytics")
@@ -43,6 +44,23 @@ public class AnalyticsController {
     @GetMapping("/store-kpis/{storeId}")
     public ResponseEntity<KpiResponse> getStoreKpis(@PathVariable Long storeId) {
         return ResponseEntity.ok(analyticsService.getStoreKpis(storeId));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Map<String, String>> refresh() {
+        new Thread(() -> analyticsService.refreshAnalytics()).start();
+        return ResponseEntity.ok(Map.of(
+                "message", "Calculation started! This may take a few minutes.",
+                "status", "processing"
+        ));
+    }
+
+    @GetMapping("/refresh-status")
+    public ResponseEntity<Map<String, Object>> getRefreshStatus() {
+        return ResponseEntity.ok(Map.of(
+                "isCalculating", AnalyticsService.isCalculating(),
+                "lastUpdated", analyticsService.getLastUpdated()
+        ));
     }
 
 }

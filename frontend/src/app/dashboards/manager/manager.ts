@@ -1,19 +1,24 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { CardModule } from 'primeng/card';
+import { ButtonModule } from 'primeng/button';
+import { DatePipe } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { HttpClient } from '@angular/common/http';
+import { AnalyticsService } from '../../core/services/analytics.service';
 
 @Component({
   selector: 'app-manager',
   standalone: true,
-  imports: [ChartModule, CardModule],
+  imports: [ChartModule, CardModule, ButtonModule, DatePipe],
   templateUrl: './manager.html',
   styleUrl: './manager.css'
 })
 export class Manager implements OnInit {
 
   welcomeMessage: string = '';
+  lastUpdated: string = '';
+  isCalculating: boolean = false;
 
   // KPI Data
   totalSales = '...';
@@ -32,36 +37,45 @@ export class Manager implements OnInit {
   constructor(
     private authService: AuthService,
     private http: HttpClient,
+    private analyticsService: AnalyticsService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()!}`;
     this.initChartOptions();
+    this.loadRefreshStatus();
     this.loadKpis();
     this.loadMonthlySales();
     this.loadTopStores();
     this.loadSalesByFamily();
   }
 
-  // Initialize chart options only (no data yet)
   initChartOptions() {
     this.monthlySalesOptions = {
       responsive: true,
       plugins: { legend: { position: 'top' } },
       scales: { y: { beginAtZero: true } }
     };
-
     this.salesByFamilyOptions = {
       responsive: true,
       plugins: { legend: { position: 'right' } }
     };
-
     this.topStoresOptions = {
       responsive: true,
       plugins: { legend: { display: false } },
       scales: { y: { beginAtZero: true } }
     };
+  }
+
+  loadRefreshStatus() {
+    this.analyticsService.getRefreshStatus().subscribe({
+      next: (status) => {
+        this.lastUpdated = status.lastUpdated;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error loading status:', err)
+    });
   }
 
   loadKpis() {
@@ -139,5 +153,40 @@ export class Manager implements OnInit {
         },
         error: (err: any) => console.error('Error loading sales by family:', err)
       });
+  }
+
+  refreshData() {
+    this.isCalculating = true;
+    this.cdr.detectChanges();
+
+    this.analyticsService.refresh().subscribe({
+      next: () => {
+        this.pollStatus();
+      },
+      error: (err: any) => {
+        console.error('Error triggering refresh:', err);
+        this.isCalculating = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  pollStatus() {
+    const interval = setInterval(() => {
+      this.analyticsService.getRefreshStatus().subscribe({
+        next: (status) => {
+          if (!status.isCalculating) {
+            clearInterval(interval);
+            this.isCalculating = false;
+            this.lastUpdated = status.lastUpdated;
+            this.loadKpis();
+            this.loadMonthlySales();
+            this.loadTopStores();
+            this.loadSalesByFamily();
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    }, 5000);
   }
 }

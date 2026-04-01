@@ -24,6 +24,13 @@ public class StoreAnalyticsService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final java.util.Set<Long> calculatingStores =
+            java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+
+    public static boolean isCalculating(Long storeId) {
+        return calculatingStores.contains(storeId);
+    }
+
     // ===== GET DATA =====
     public Double getValue(Long storeId, String metricName) {
         return storeAnalyticsRepository
@@ -55,58 +62,62 @@ public class StoreAnalyticsService {
     // ===== CALCULATE AND SAVE =====
     @Transactional
     public void calculateStoreAnalytics(Long storeId) {
-        // Delete old data for this store
-        storeAnalyticsRepository.deleteByIdMagasin(storeId);
-
-        // Calculate and save KPIs
-        saveValue(storeId, "total_transactions",
-                histoVenteCleanRepository.countByMagasin(storeId).doubleValue());
-
-        Double revenue = histoVenteCleanRepository.sumRevenueByMagasin(storeId);
-        saveValue(storeId, "total_revenue",
-                revenue != null ? revenue : 0.0);
-
-        Double avg = histoVenteCleanRepository.avgSaleByMagasin(storeId);
-        saveValue(storeId, "avg_sale_value",
-                avg != null ? avg : 0.0);
-
-        // Calculate and save monthly sales
-        List<Object[]> monthlySales = histoVenteCleanRepository
-                .getMonthlySalesByStoreNative(storeId);
+        calculatingStores.add(storeId); // ← MOVE HERE (start of method)
         try {
-            String json = objectMapper.writeValueAsString(
-                    monthlySales.stream().map(row -> {
-                        return java.util.Map.of(
+            // Delete old data for this store
+            storeAnalyticsRepository.deleteByIdMagasin(storeId);
+
+            // Calculate and save KPIs
+            saveValue(storeId, "total_transactions",
+                    histoVenteCleanRepository.countByMagasin(storeId).doubleValue());
+
+            Double revenue = histoVenteCleanRepository.sumRevenueByMagasin(storeId);
+            saveValue(storeId, "total_revenue",
+                    revenue != null ? revenue : 0.0);
+
+            Double avg = histoVenteCleanRepository.avgSaleByMagasin(storeId);
+            saveValue(storeId, "avg_sale_value",
+                    avg != null ? avg : 0.0);
+
+            // Monthly sales
+            List<Object[]> monthlySales = histoVenteCleanRepository
+                    .getMonthlySalesByStoreNative(storeId);
+            try {
+                String json = objectMapper.writeValueAsString(
+                        monthlySales.stream().map(row -> java.util.Map.of(
                                 "month", row[0].toString(),
                                 "totalSales", ((Number) row[1]).longValue(),
                                 "totalRevenue", row[2] != null ? row[2].toString() : "0"
-                        );
-                    }).collect(java.util.stream.Collectors.toList())
-            );
-            saveText(storeId, "monthly_sales", json);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                        )).collect(java.util.stream.Collectors.toList())
+                );
+                saveText(storeId, "monthly_sales", json);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-        // Calculate and save sales by family
-        List<Object[]> familySales = histoVenteCleanRepository
-                .getSalesByFamilyByStoreNative(storeId);
-        try {
-            long total = familySales.stream()
-                    .mapToLong(r -> ((Number) r[1]).longValue()).sum();
-            String json = objectMapper.writeValueAsString(
-                    familySales.stream().map(row -> {
-                        long sales = ((Number) row[1]).longValue();
-                        return java.util.Map.of(
-                                "famille", row[0].toString(),
-                                "totalSales", sales,
-                                "percentage", total > 0 ? (sales * 100.0) / total : 0.0
-                        );
-                    }).collect(java.util.stream.Collectors.toList())
-            );
-            saveText(storeId, "sales_by_family", json);
-        } catch (Exception e) {
-            e.printStackTrace();
+            // Sales by family
+            List<Object[]> familySales = histoVenteCleanRepository
+                    .getSalesByFamilyByStoreNative(storeId);
+            try {
+                long total = familySales.stream()
+                        .mapToLong(r -> ((Number) r[1]).longValue()).sum();
+                String json = objectMapper.writeValueAsString(
+                        familySales.stream().map(row -> {
+                            long sales = ((Number) row[1]).longValue();
+                            return java.util.Map.of(
+                                    "famille", row[0].toString(),
+                                    "totalSales", sales,
+                                    "percentage", total > 0 ? (sales * 100.0) / total : 0.0
+                            );
+                        }).collect(java.util.stream.Collectors.toList())
+                );
+                saveText(storeId, "sales_by_family", json);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        } finally {
+            calculatingStores.remove(storeId); // ← ALWAYS runs at end
         }
     }
 

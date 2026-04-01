@@ -156,7 +156,7 @@ export class ResponsableMagasin implements OnInit {
     const interval = setInterval(() => {
       this.storeAnalyticsService.getStatus(this.storeId!).subscribe({
         next: (status) => {
-          if (status.hasData) {
+          if (!status.isCalculating && status.hasData) {
             clearInterval(interval);
             this.isCalculating = false;
             this.loadStoreData();

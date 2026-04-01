@@ -59,10 +59,13 @@ public class StoreAnalyticsController {
     // Check if calculation is done
     @GetMapping("/{storeId}/status")
     public ResponseEntity<Map<String, Object>> getStatus(@PathVariable Long storeId) {
+        boolean isCalculating = StoreAnalyticsService.isCalculating(storeId);
         boolean hasData = storeAnalyticsService.hasData(storeId);
         LocalDateTime lastUpdated = storeAnalyticsService.getLastUpdated(storeId);
+
         return ResponseEntity.ok(Map.of(
                 "hasData", hasData,
+                "isCalculating", isCalculating,
                 "lastUpdated", lastUpdated != null ? lastUpdated.toString() : "Never"
         ));
     }

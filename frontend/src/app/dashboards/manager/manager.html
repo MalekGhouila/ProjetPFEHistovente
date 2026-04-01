@@ -1,10 +1,41 @@
 <div class="dashboard">
 
-  <!-- Page Title -->
+  <!-- Header -->
   <div class="dashboard-header">
-    <h1>Manager Dashboard</h1>
-    <p>{{welcomeMessage}}</p>
+    <div class="header-row">
+      <div>
+        <h1>Manager Dashboard</h1>
+        <p>Welcome back, sales overview for NAF NAF</p>
+      </div>
+      <div class="header-actions">
+        @if (isCalculating) {
+          <span class="calculating-msg">
+            <i class="pi pi-spin pi-spinner"></i>
+            Calculating new data... please wait
+          </span>
+        } @else {
+          <div class="data-info">
+            @if (lastUpdated) {
+              <span class="last-updated-msg">
+                Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </span>
+              <span class="refresh-hint">
+                For up-to-date data, click Refresh and wait.
+              </span>
+            }
+          </div>
+          <p-button
+            label="Refresh Data"
+            icon="pi pi-refresh"
+            severity="secondary"
+            (onClick)="refreshData()"/>
+        }
+      </div>
+    </div>
   </div>
+
+  <!-- KPI Cards -->
+  <!-- ... rest of your existing HTML stays the same ... -->
 
   <!-- KPI Cards -->
   <div class="kpi-grid">
