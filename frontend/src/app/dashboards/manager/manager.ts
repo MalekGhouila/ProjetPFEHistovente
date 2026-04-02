@@ -44,11 +44,26 @@ export class Manager implements OnInit {
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()!}`;
     this.initChartOptions();
+    this.checkIfCalculating();
     this.loadRefreshStatus();
     this.loadKpis();
     this.loadMonthlySales();
     this.loadTopStores();
     this.loadSalesByFamily();
+  }
+
+  checkIfCalculating() {
+    this.analyticsService.getRefreshStatus().subscribe({
+      next: (status) => {
+        this.lastUpdated = status.lastUpdated;
+        if (status.isCalculating) {
+          this.isCalculating = true;
+          this.pollStatus(); // resume polling!
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error checking status:', err)
+    });
   }
 
   initChartOptions() {
@@ -99,7 +114,7 @@ export class Manager implements OnInit {
           const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           this.monthlySalesData = {
-            labels: data.map(d => monthNames[parseInt(d.month) - 1]),
+            labels: data.map(d => monthNames[parseInt(d.month.split('-')[1]) - 1]),
             datasets: [{
               label: 'Sales 2024',
               data: data.map(d => d.totalSales),
@@ -156,6 +171,7 @@ export class Manager implements OnInit {
   }
 
   refreshData() {
+    if (this.isCalculating) return; // ← ADD THIS
     this.isCalculating = true;
     this.cdr.detectChanges();
 
@@ -172,18 +188,28 @@ export class Manager implements OnInit {
   }
 
   pollStatus() {
+    const startTime = new Date().toISOString(); // Record when refresh started
+
     const interval = setInterval(() => {
       this.analyticsService.getRefreshStatus().subscribe({
         next: (status) => {
-          if (!status.isCalculating) {
+          // Only stop when:
+          // 1. Not calculating
+          // 2. Last updated time is AFTER when we started refreshing
+          if (!status.isCalculating &&
+            status.lastUpdated !== 'Never' &&
+            new Date(status.lastUpdated) > new Date(startTime)) {
+
             clearInterval(interval);
-            this.isCalculating = false;
             this.lastUpdated = status.lastUpdated;
             this.loadKpis();
             this.loadMonthlySales();
             this.loadTopStores();
             this.loadSalesByFamily();
-            this.cdr.detectChanges();
+            setTimeout(() => {
+              this.isCalculating = false;
+              this.cdr.detectChanges();
+            }, 1500);
           }
         }
       });

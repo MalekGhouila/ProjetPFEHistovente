@@ -29,7 +29,7 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
             "COUNT(*) as totalSales, SUM(Total) as totalRevenue " +
             "FROM histovente_clean_v1 " +
             "WHERE TypeVente = 'VENTE' AND YEAR(Date) = 2024 " +
-            "GROUP BY YEAR(Date), MONTH(Date) " +
+            "GROUP BY YEAR(Date), MONTH(Date), CONCAT(YEAR(Date), '-', LPAD(MONTH(Date), 2, '0')) " +
             "ORDER BY YEAR(Date), MONTH(Date)",
             nativeQuery = true)
     List<Object[]> getMonthlySalesNative();
