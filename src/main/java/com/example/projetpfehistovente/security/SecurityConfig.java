@@ -44,6 +44,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/articles/**").hasAnyRole("ADMIN", "MANAGER", "DATA_ANALYST")
                         .requestMatchers("/api/analytics/**").hasAnyRole("ADMIN", "MANAGER", "DATA_ANALYST", "RESPONSABLE_MAGASIN")
                         .requestMatchers("/api/store-analytics/**").hasAnyRole("ADMIN", "RESPONSABLE_MAGASIN")
+                        // ← ML endpoints
+                        .requestMatchers("/api/ml/predict").hasAnyRole("ADMIN", "MANAGER", "DATA_ANALYST")
+                        .requestMatchers("/api/ml/status").hasAnyRole("ADMIN", "MANAGER", "DATA_ANALYST")
+
                         // All other endpoints need authentication
                         .anyRequest().authenticated()
                 )
