@@ -1,0 +1,93 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>At-Risk Products</h1>
+    <p>Products with declining sales performance in {{ storeName }}</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon high">
+        <i class="pi pi-exclamation-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">High Risk</span>
+        <span class="kpi-value high-value">2</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon medium">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Medium Risk</span>
+        <span class="kpi-value medium-value">2</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon low">
+        <i class="pi pi-info-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Low Risk</span>
+        <span class="kpi-value low-value">1</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon total">
+        <i class="pi pi-list"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total At-Risk</span>
+        <span class="kpi-value">5</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- At-Risk Table -->
+  <div class="table-card">
+    <h3>At-Risk Products Detail</h3>
+    <p-table [value]="atRiskData" [paginator]="true" [rows]="5">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Product</th>
+          <th>Family</th>
+          <th>Current Sales</th>
+          <th>Previous Sales</th>
+          <th>Decline %</th>
+          <th>Return Rate %</th>
+          <th>Risk Level</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>
+            <strong>{{ item.product }}</strong>
+            <br>
+            <small style="color: var(--text-muted)">{{ item.code }}</small>
+          </td>
+          <td>{{ item.famille }}</td>
+          <td>{{ item.currentSales }}</td>
+          <td>{{ item.previousSales }}</td>
+          <td>
+            <span class="decline-value">{{ item.decline }}%</span>
+          </td>
+          <td>{{ item.returnRate }}%</td>
+          <td>
+            <p-tag
+              [value]="getRiskLabel(item.risk)"
+              [severity]="getRiskSeverity(item.risk)"/>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

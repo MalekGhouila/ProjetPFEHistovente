@@ -1,0 +1,89 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Stock Forecast</h1>
+    <p>Stock levels and restock recommendations for {{ storeName }}</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon critical">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Critical Stock</span>
+        <span class="kpi-value critical-value">3</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon warning">
+        <i class="pi pi-clock"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Restock Soon</span>
+        <span class="kpi-value warning-value">2</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon good">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Good Stock</span>
+        <span class="kpi-value good-value">3</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon total">
+        <i class="pi pi-box"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Products</span>
+        <span class="kpi-value">8</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Table -->
+  <div class="table-card">
+    <h3>Product Stock Details</h3>
+    <p-table [value]="stockData" [paginator]="true" [rows]="5">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Product</th>
+          <th>Code</th>
+          <th>Current Stock</th>
+          <th>Sales/Day</th>
+          <th>Days Left</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td><strong>{{ item.product }}</strong></td>
+          <td>{{ item.code }}</td>
+          <td>{{ item.currentStock }}</td>
+          <td>{{ item.salesVelocity }}</td>
+          <td>
+            <span [class]="'days-' + item.status">
+              {{ item.daysLeft }} days
+            </span>
+          </td>
+          <td>
+            <p-tag
+              [value]="getStatusLabel(item.status)"
+              [severity]="getStatusSeverity(item.status)"/>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

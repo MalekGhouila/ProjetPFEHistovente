@@ -1,0 +1,104 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>ML Model Evolution</h1>
+    <p>Model performance analysis and family-level metrics</p>
+  </div>
+
+  <!-- Global Model Metrics -->
+  @if (modelStatus) {
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon model">
+          <i class="pi pi-cpu"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Best Model</span>
+          <span class="kpi-value">Ridge</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon wmape">
+          <i class="pi pi-chart-bar"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Global WMAPE</span>
+          <span class="kpi-value warn-value">{{ modelStatus.wmape }}%</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon r2">
+          <i class="pi pi-chart-line"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">R² Score</span>
+          <span class="kpi-value success-value">{{ modelStatus.r2 }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon families">
+          <i class="pi pi-tag"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Families Supported</span>
+          <span class="kpi-value">{{ modelStatus.families_supported.length }}</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Charts Row -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Model Comparison (WMAPE %)</h3>
+      <p class="chart-subtitle">Lower is better - Ridge wins!</p>
+      <p-chart type="bar"
+               [data]="modelComparisonData"
+               [options]="modelComparisonOptions"
+               height="300px"/>
+    </div>
+
+    <div class="chart-card">
+      <h3>Performance by Family (WMAPE %)</h3>
+      <p class="chart-subtitle">Lower is better</p>
+      <p-chart type="bar"
+               [data]="familyChartData"
+               [options]="familyChartOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+  <!-- Family Performance Table -->
+  <div class="table-card">
+    <h3>Detailed Family Performance</h3>
+    <p-table [value]="familyPerformance" [paginator]="true" [rows]="5">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Family</th>
+          <th>WMAPE %</th>
+          <th>R² Score</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td><strong>{{ item.family }}</strong></td>
+          <td>{{ item.wmape }}%</td>
+          <td>{{ item.r2 }}</td>
+          <td>
+            <p-tag
+              [value]="item.status.toUpperCase()"
+              [severity]="getStatusSeverity(item.status)"/>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

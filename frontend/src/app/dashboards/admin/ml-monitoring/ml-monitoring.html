@@ -1,0 +1,108 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>ML Model Monitoring</h1>
+    <p>Ridge Regression model health and performance metrics</p>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Loading model status...</p>
+    </div>
+  }
+
+  @if (error) {
+    <div class="error-container">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>ML Server Unavailable</h3>
+      <p>Make sure the FastAPI server is running on port 8000</p>
+    </div>
+  }
+
+  @if (modelStatus && !isLoading) {
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon status">
+          <i class="pi pi-heart"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Model Status</span>
+          <p-tag
+            [value]="modelStatus.status.toUpperCase()"
+            [severity]="getStatusSeverity()"/>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon accuracy">
+          <i class="pi pi-chart-bar"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">WMAPE</span>
+          <span class="kpi-value">{{ modelStatus.wmape }}%</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon r2">
+          <i class="pi pi-chart-line"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">R² Score</span>
+          <span class="kpi-value">{{ modelStatus.r2 }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon trained">
+          <i class="pi pi-calendar"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Last Trained</span>
+          <span class="kpi-value">{{ modelStatus.last_trained }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-grid">
+
+      <div class="detail-card">
+        <h3>Model Information</h3>
+        <div class="detail-list">
+          <div class="detail-item">
+            <span class="detail-label">Model Name</span>
+            <span class="detail-value">{{ modelStatus.model_name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Accuracy Level</span>
+            <p-tag
+              [value]="modelStatus.wmape < 50 ? 'HIGH' : modelStatus.wmape < 75 ? 'MEDIUM' : 'LOW'"
+              [severity]="getAccuracySeverity()"/>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Families Supported</span>
+            <span class="detail-value">{{ modelStatus.families_supported.length }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Algorithm</span>
+            <span class="detail-value">Ridge Regression (α=1.0)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3>Supported Families</h3>
+        <div class="families-grid">
+          @for (family of modelStatus.families_supported; track family) {
+            <span class="family-badge">{{ family }}</span>
+          }
+        </div>
+      </div>
+
+    </div>
+
+  }
+
+</div>

@@ -1,0 +1,62 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Product Families</h1>
+    <p>Overview of all NAF NAF product families</p>
+  </div>
+
+  <div class="families-card">
+
+    <div class="table-toolbar">
+      <input
+        pInputText
+        type="text"
+        placeholder="Search families..."
+        (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        class="search-input"/>
+    </div>
+
+    <p-table
+      #dt
+      [value]="families"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [globalFilterFields]="['famille', 'code']">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>ID</th>
+          <th>Family Name</th>
+          <th>Code</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-family>
+        <tr>
+          <td>{{ family.idArFamille }}</td>
+          <td>
+            <i class="pi pi-tag"></i>
+            {{ family.famille }}
+          </td>
+          <td>{{ family.code }}</td>
+          <td>
+            <p-tag
+              [value]="getStatusLabel(family.etat)"
+              [severity]="getStatusSeverity(family.etat)"/>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4" style="text-align: center">
+            No families found
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>

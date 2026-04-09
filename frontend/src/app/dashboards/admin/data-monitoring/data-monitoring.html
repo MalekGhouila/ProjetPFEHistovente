@@ -1,0 +1,100 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Data Monitoring</h1>
+    <p>Overview of data quality and database status</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon raw">
+        <i class="pi pi-database"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Raw Records</span>
+        <span class="kpi-value">{{ rawRecords }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon clean">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Clean Records</span>
+        <span class="kpi-value clean-value">{{ cleanRecords }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon removed">
+        <i class="pi pi-times-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Removed Records</span>
+        <span class="kpi-value removed-value">{{ removedRecords }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon quality">
+        <i class="pi pi-star"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Quality Score</span>
+        <span class="kpi-value quality-value">{{ qualityScore }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Data Cleaning Results</h3>
+      <p-chart type="doughnut"
+               [data]="cleaningChartData"
+               [options]="cleaningChartOptions"
+               height="300px"/>
+    </div>
+
+    <div class="chart-card">
+      <h3>Data Quality by Year (%)</h3>
+      <p-chart type="bar"
+               [data]="qualityChartData"
+               [options]="qualityChartOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+  <!-- Data Sources Table -->
+  <div class="table-card">
+    <h3>Data Sources Status</h3>
+    <p-table [value]="dataSourcesStatus">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Data Source</th>
+          <th>Total Records</th>
+          <th>Last Update</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td><strong>{{ item.source }}</strong></td>
+          <td>{{ item.records }}</td>
+          <td>{{ item.lastUpdate }}</td>
+          <td>
+            <p-tag
+              [value]="item.status.toUpperCase()"
+              [severity]="getStatusSeverity(item.status)"/>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

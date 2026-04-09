@@ -1,0 +1,86 @@
+.dashboard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.dashboard-header p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.families-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.table-toolbar {
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 300px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: var(--font-family), sans-serif;
+  font-size: 0.9rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+:host ::ng-deep .p-datatable {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+:host ::ng-deep .p-datatable-thead > tr > th {
+  background: var(--bg-primary) !important;
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-bottom: 2px solid var(--border-color) !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: background 0.2s ease !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr:hover {
+  background: var(--bg-primary) !important;
+}
+
+:host ::ng-deep .p-paginator {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+
+:host ::ng-deep .p-paginator .p-paginator-page.p-highlight {
+  background: var(--brand-primary) !important;
+  color: white !important;
+  border-radius: 8px !important;
+}

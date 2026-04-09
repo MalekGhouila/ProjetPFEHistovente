@@ -1,0 +1,97 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Data Quality Report</h1>
+    <p>Detailed analysis of NAF NAF historical sales data quality</p>
+  </div>
+
+  <!-- Quality Score Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card quality-score-card">
+      <div class="score-circle">
+        <span class="score-number">{{ qualityScore }}%</span>
+        <span class="score-label">Quality Score</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon total">
+        <i class="pi pi-database"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Records</span>
+        <span class="kpi-value">{{ totalRecords }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon clean">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Clean Records</span>
+        <span class="kpi-value clean-value">{{ cleanRecords }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon problematic">
+        <i class="pi pi-times-circle"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Problematic Records</span>
+        <span class="kpi-value problematic-value">{{ problematicRecords }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-grid">
+    <div class="chart-card wide">
+      <h3>Missing Values by Column (%)</h3>
+      <p-chart type="bar"
+               [data]="missingValuesChartData"
+               [options]="missingValuesChartOptions"
+               height="300px"/>
+    </div>
+
+    <div class="chart-card">
+      <h3>Data Completeness by Year</h3>
+      <p-chart type="bar"
+               [data]="qualityByYearData"
+               [options]="qualityByYearOptions"
+               height="300px"/>
+    </div>
+  </div>
+
+  <!-- Missing Values Table -->
+  <div class="table-card">
+    <h3>Missing Values Detail</h3>
+    <p-table [value]="missingValuesData" [paginator]="true" [rows]="5">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Column</th>
+          <th>Missing Count</th>
+          <th>Percentage</th>
+          <th>Severity</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><strong>{{ row.column }}</strong></td>
+          <td>{{ row.missing | number }}</td>
+          <td>{{ row.percentage }}%</td>
+          <td>
+            <p-tag
+              [value]="row.severity.toUpperCase()"
+              [severity]="getSeverity(row.severity)"/>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

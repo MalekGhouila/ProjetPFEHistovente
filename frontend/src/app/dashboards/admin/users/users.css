@@ -1,0 +1,181 @@
+.dashboard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.dashboard-header p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.users-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.delete-btn {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+  background: #e74c3c;
+  color: white;
+}
+
+/* Override PrimeNG dark table */
+:host ::ng-deep .p-datatable {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+:host ::ng-deep .p-datatable-thead > tr > th {
+  background: var(--bg-primary) !important;
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-bottom: 2px solid var(--border-color) !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: background 0.2s ease !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr:hover {
+  background: var(--bg-primary) !important;
+}
+
+:host ::ng-deep .p-paginator {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+
+/* Fix role and status badges */
+:host ::ng-deep .p-tag {
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+}
+
+:host ::ng-deep .p-tag.p-tag-danger {
+  background: rgba(231, 76, 60, 0.15) !important;
+  color: #e74c3c !important;
+}
+
+:host ::ng-deep .p-tag.p-tag-info {
+  background: rgba(52, 152, 219, 0.15) !important;
+  color: #3498db !important;
+}
+
+:host ::ng-deep .p-tag.p-tag-warn {
+  background: rgba(241, 196, 15, 0.15) !important;
+  color: #d4a017 !important;
+}
+
+:host ::ng-deep .p-tag.p-tag-success {
+  background: rgba(46, 204, 113, 0.15) !important;
+  color: #27ae60 !important;
+}
+
+/* Fix pagination active page */
+:host ::ng-deep .p-paginator .p-paginator-page.p-highlight {
+  background: var(--brand-primary) !important;
+  color: white !important;
+  border-radius: 8px !important;
+}
+
+/* Header row with button */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Dialog form */
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.dialog-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dialog-form .field label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.dialog-form input,
+.dialog-form p-password,
+.dialog-form p-select {
+  width: 100%;
+}
+
+/* Actions cell */
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Edit store button */
+.edit-btn {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.edit-btn:hover {
+  background: #3498db;
+  color: white;
+}
+
+/* Store option in autocomplete */
+.store-option {
+  padding: 4px 0;
+}
+
+td {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+

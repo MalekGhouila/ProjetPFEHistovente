@@ -1,0 +1,184 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <div class="header-row">
+      <div>
+        <h1>Users Management</h1>
+        <p>Manage all platform users and their roles</p>
+      </div>
+      <p-button
+        label="Add User"
+        icon="pi pi-plus"
+        (onClick)="openCreateDialog()"/>
+    </div>
+  </div>
+
+  <div class="users-card">
+    <p-table
+      [value]="users"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Store</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>
+            <i class="pi pi-user"></i>
+            {{ user.username }}
+          </td>
+          <td>{{ user.email }}</td>
+          <td>
+            <p-tag
+              [value]="user.role"
+              [severity]="getRoleSeverity(user.role)"/>
+          </td>
+          <td [title]="getStoreName(user.idMagasin)">{{ getStoreName(user.idMagasin) }}</td>
+          <td>
+            <p-tag
+              [value]="user.active ? 'Active' : 'Inactive'"
+              [severity]="getActiveSeverity(user.active)"
+              style="cursor: pointer"
+              (click)="toggleActive(user)"
+              [title]="user.active ? 'Click to deactivate' : 'Click to activate'"/>
+          </td>
+
+          <td class="actions-cell">
+            <button class="delete-btn" (click)="deleteUser(user.id)">
+              <i class="pi pi-trash"></i>
+            </button>
+            @if (user.role === 'RESPONSABLE_MAGASIN') {
+              <button class="edit-btn" (click)="openEditStoreDialog(user)">
+                <i class="pi pi-building"></i>
+              </button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" style="text-align: center">No users found</td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+  <!-- Create User Dialog -->
+  <p-dialog
+    header="Create New User"
+    [(visible)]="showDialog"
+    [modal]="true"
+    [style]="{width: '450px'}">
+
+    <div class="dialog-form">
+
+      <div class="field">
+        <label>Username</label>
+        <input pInputText [(ngModel)]="newUser.username" placeholder="Enter username"/>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input pInputText [(ngModel)]="newUser.email" placeholder="Enter email"/>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <p-password
+          [(ngModel)]="newUser.password"
+          [feedback]="false"
+          [toggleMask]="true"
+          placeholder="Enter password"/>
+      </div>
+
+      <div class="field">
+        <label>Role</label>
+        <p-select
+          [(ngModel)]="newUser.role"
+          [options]="roles"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select role"
+          appendTo="body"/>
+      </div>
+
+      @if (newUser.role === 'RESPONSABLE_MAGASIN') {
+        <div class="field">
+          <label>Store <span style="color: red">*</span></label>
+          <p-autoComplete
+            [(ngModel)]="selectedStoreText"
+            [suggestions]="filteredStores"
+            (completeMethod)="searchStores($event)"
+            (onSelect)="onStoreSelect($event)"
+            placeholder="Search store by name or code..."
+            appendTo="body"
+            [forceSelection]="true">
+            <ng-template let-store pTemplate="item">
+              <div>
+                <strong>{{ store.magasin }}</strong>
+                <span style="color: var(--text-muted)"> - {{ store.code }}</span>
+              </div>
+            </ng-template>
+          </p-autoComplete>
+        </div>
+      }
+
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" (onClick)="showDialog = false"/>
+      <p-button label="Create" (onClick)="createUser()"/>
+    </ng-template>
+
+  </p-dialog>
+
+  <!-- Edit Store Dialog -->
+  <p-dialog
+    header="Change Store Assignment"
+    [(visible)]="showEditStoreDialog"
+    [modal]="true"
+    [style]="{width: '400px'}">
+
+    <div class="dialog-form">
+      <div class="field">
+        <label>Select New Store</label>
+        <p-autoComplete
+          [(ngModel)]="selectedEditStoreText"
+          [suggestions]="filteredEditStores"
+          (completeMethod)="searchEditStores($event)"
+          (onSelect)="onEditStoreSelect($event)"
+          placeholder="Search store..."
+          appendTo="body"
+          [forceSelection]="true">
+          <ng-template let-store pTemplate="item">
+            <div>
+              <strong>{{ store.magasin }}</strong>
+              <span style="color: var(--text-muted)"> - {{ store.code }}</span>
+            </div>
+          </ng-template>
+        </p-autoComplete>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" (onClick)="showEditStoreDialog = false"/>
+      <p-button label="Update" (onClick)="updateStore()"/>
+    </ng-template>
+
+  </p-dialog>
+
+</div>
