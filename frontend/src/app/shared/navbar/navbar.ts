@@ -1,12 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { TaskNotificationService, Task } from '../../core/services/task-notification';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
@@ -30,6 +29,14 @@ export class Navbar implements OnInit {
     // Subscribe to task notifications
     this.taskService.task$.subscribe((task: Task | null) => {
       this.currentTask = task;
+      // Change browser tab title based on task status
+      if (task?.status === 'ready') {
+        document.title = '🔔 Analysis Ready! - NAF NAF';
+      } else if (task?.status === 'calculating') {
+        document.title = '⏳ Calculating... - NAF NAF';
+      } else {
+        document.title = 'NAF NAF - Sales Intelligence Platform';
+      }
       this.cdr.detectChanges();
     });
   }

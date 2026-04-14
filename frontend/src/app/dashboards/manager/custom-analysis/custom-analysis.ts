@@ -40,6 +40,7 @@ export class CustomAnalysis implements OnInit {
 
   private apiUrl = 'http://localhost:8080/api/analytics/custom';
   private storageKey = 'customAnalysisCalculating';
+  private lastFilterKey = 'lastCustomFilter';
 
   constructor(
     private http: HttpClient,
@@ -53,14 +54,16 @@ export class CustomAnalysis implements OnInit {
     this.initChartOptions();
 
     const savedState = localStorage.getItem(this.storageKey);
+    const lastFilter = localStorage.getItem(this.lastFilterKey);
+
     if (savedState) {
+      // Calculation was running before page refresh
       const state = JSON.parse(savedState);
       this.selectedFamille = state.famille || '';
       this.selectedSaison = state.saison || '';
       this.selectedCodeMag = state.codeMag || '';
       this.isCalculating = true;
 
-      // Restore task notification
       this.taskService.setTask({
         filterKey: this.buildFilterKey(),
         famille: this.selectedFamille,
@@ -74,6 +77,16 @@ export class CustomAnalysis implements OnInit {
       this.cdr.detectChanges();
       const params = this.buildParamsFromValues(state.famille, state.saison, state.codeMag);
       this.pollStatusWithCancel(params, state.startTime);
+
+    } else if (lastFilter) {
+      // Redirected from notification → load last filtered results
+      const filter = JSON.parse(lastFilter);
+      this.selectedFamille = filter.famille || '';
+      this.selectedSaison = filter.saison || '';
+      this.selectedCodeMag = filter.codeMag || '';
+      const params = this.buildParamsFromValues(filter.famille, filter.saison, filter.codeMag);
+      this.loadResults(params);
+
     } else {
       this.loadGlobalData();
     }
@@ -181,13 +194,12 @@ export class CustomAnalysis implements OnInit {
 
   cancelCalculation() {
     this.clearCalculatingState();
-    this.taskService.clearTask(); // ← notify service
+    this.taskService.clearTask();
     this.isCalculating = false;
     this.cdr.detectChanges();
   }
 
   generateAnalysis() {
-    // Check if task already running
     if (this.taskService.isCalculating()) {
       if (!confirm('A calculation is already running. Stop it and start new one?')) {
         return;
@@ -198,7 +210,6 @@ export class CustomAnalysis implements OnInit {
     this.isCalculating = true;
     this.saveCalculatingState();
 
-    // Set task in notification service
     this.taskService.setTask({
       filterKey: this.buildFilterKey(),
       famille: this.selectedFamille,
@@ -252,7 +263,7 @@ export class CustomAnalysis implements OnInit {
             new Date(status.lastUpdated) > new Date(startTime)) {
             clearInterval(interval);
             this.clearCalculatingState();
-            this.taskService.setReady(); // ← notify ready!
+            this.taskService.setReady();
             this.loadResults(params);
           }
         }
@@ -262,6 +273,13 @@ export class CustomAnalysis implements OnInit {
 
   loadResults(params: string) {
     this.clearCalculatingState();
+
+    // Save last filter for redirect from notification
+    localStorage.setItem(this.lastFilterKey, JSON.stringify({
+      famille: this.selectedFamille,
+      saison: this.selectedSaison,
+      codeMag: this.selectedCodeMag
+    }));
 
     this.http.get<any>(`${this.apiUrl}/kpis${params}`).subscribe({
       next: (data) => {
@@ -353,5 +371,7 @@ export class CustomAnalysis implements OnInit {
     this.selectedFamille = '';
     this.selectedSaison = '';
     this.selectedCodeMag = '';
+    localStorage.removeItem(this.lastFilterKey);
+    this.loadGlobalData();
   }
 }
