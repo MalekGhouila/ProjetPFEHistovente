@@ -225,4 +225,49 @@ public class AnalyticsService {
                 .map(s -> s.getMetricText())
                 .orElse(null);
     }
+
+    public Map<String, Object> getFilteredAnalytics(
+            String famille, String saison, String codeMag) {
+
+        Long count = histoVenteCleanRepository.countFiltered(famille, saison, codeMag);
+        Double revenue = histoVenteCleanRepository.sumFiltered(famille, saison, codeMag);
+
+        List<Object[]> familyResults = histoVenteCleanRepository
+                .getSalesByFamilyFiltered(famille, saison, codeMag);
+
+        List<Object[]> monthlyResults = histoVenteCleanRepository
+                .getMonthlySalesFiltered(famille, saison, codeMag);
+
+        long total = familyResults.stream()
+                .mapToLong(r -> ((Number) r[1]).longValue()).sum();
+
+        List<Map<String, Object>> familyData = familyResults.stream().map(row -> {
+            long sales = ((Number) row[1]).longValue();
+            return Map.<String, Object>of(
+                    "famille", row[0].toString(),
+                    "totalSales", sales,
+                    "percentage", total > 0 ? (sales * 100.0) / total : 0.0
+            );
+        }).collect(Collectors.toList());
+
+        List<Map<String, Object>> monthlyData = monthlyResults.stream().map(row ->
+                Map.<String, Object>of(
+                        "month", row[0].toString(),
+                        "totalSales", ((Number) row[1]).longValue(),
+                        "totalRevenue", row[2] != null ? row[2].toString() : "0"
+                )
+        ).collect(Collectors.toList());
+
+        return Map.of(
+                "totalTransactions", count != null ? count : 0L,
+                "totalRevenue", revenue != null ? revenue : 0.0,
+                "salesByFamily", familyData,
+                "monthlySales", monthlyData,
+                "filters", Map.of(
+                        "famille", famille != null ? famille : "All",
+                        "saison", saison != null ? saison : "All",
+                        "codeMag", codeMag != null ? codeMag : "All"
+                )
+        );
+    }
 }

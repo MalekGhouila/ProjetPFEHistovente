@@ -63,4 +63,14 @@ public class AnalyticsController {
         ));
     }
 
+    @GetMapping("/filtered")
+    public ResponseEntity<Map<String, Object>> getFilteredAnalytics(
+            @RequestParam(required = false) String famille,
+            @RequestParam(required = false) String saison,
+            @RequestParam(required = false) String codeMag) {
+        return ResponseEntity.ok(
+                analyticsService.getFilteredAnalytics(famille, saison, codeMag)
+        );
+    }
+
 }

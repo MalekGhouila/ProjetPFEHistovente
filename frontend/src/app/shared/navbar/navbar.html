@@ -10,6 +10,57 @@
       {{ username }}
     </span>
     <span class="navbar-role">{{ getRoleDisplay(role) }}</span>
+
+    <!-- Notification Bell (only for MANAGER) -->
+    @if (role === 'MANAGER' && currentTask) {
+      <div class="notification-wrapper">
+        <button class="notification-btn" (click)="toggleNotifications()">
+          <i class="pi pi-bell"></i>
+          @if (currentTask.status === 'calculating') {
+            <span class="badge calculating">
+              <i class="pi pi-spin pi-spinner" style="font-size: 0.6rem"></i>
+            </span>
+          }
+          @if (currentTask.status === 'ready') {
+            <span class="badge ready">1</span>
+          }
+        </button>
+
+        @if (showNotifications) {
+          <div class="notification-dropdown">
+            @if (currentTask.status === 'calculating') {
+              <div class="notification-item calculating">
+                <i class="pi pi-spin pi-spinner"></i>
+                <div class="notification-content">
+                  <span class="notification-title">Analysis Running</span>
+                  <span class="notification-detail">
+                    {{ currentTask.famille || 'All' }} |
+                    {{ currentTask.saison || 'All' }} |
+                    {{ currentTask.codeMag || 'All stores' }}
+                  </span>
+                </div>
+              </div>
+            }
+            @if (currentTask.status === 'ready') {
+              <div class="notification-item ready" (click)="goToResults()">
+                <i class="pi pi-check-circle"></i>
+                <div class="notification-content">
+                  <span class="notification-title">Analysis Ready! Click to view</span>
+                  <span class="notification-detail">
+                    {{ currentTask.famille || 'All' }} |
+                    {{ currentTask.saison || 'All' }}
+                  </span>
+                </div>
+                <button class="clear-btn" (click)="$event.stopPropagation(); clearNotification()">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
     <button class="logout-btn" (click)="logout()">
       <i class="pi pi-sign-out"></i>
       Logout

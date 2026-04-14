@@ -31,6 +31,7 @@ import { Users } from './dashboards/admin/users/users';
 import { DataMonitoring } from './dashboards/admin/data-monitoring/data-monitoring';
 import { MlMonitoring } from './dashboards/admin/ml-monitoring/ml-monitoring';
 import { Settings } from './dashboards/admin/settings/settings';
+import { CustomAnalysis } from './dashboards/manager/custom-analysis/custom-analysis';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -66,6 +67,8 @@ export const routes: Routes = [
       { path: 'data-analyst', component: DataAnalyst },
       { path: 'data-analyst/data-quality', component: DataQuality },
       { path: 'data-analyst/ml-evolution', component: MlEvolution },
+
+      { path: 'manager/custom-analysis', component: CustomAnalysis },
     ]
   },
   { path: '**', redirectTo: 'login' }

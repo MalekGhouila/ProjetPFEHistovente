@@ -1,0 +1,146 @@
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>Custom Analysis</h1>
+    <p>Filter sales data by family, season and store</p>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-card">
+    <h3>Select Filters</h3>
+    <div class="filter-grid">
+
+      <div class="field">
+        <label>Product Family</label>
+        <p-select
+          [(ngModel)]="selectedFamille"
+          [options]="familles"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All families"
+          [showClear]="true"
+          appendTo="body"/>
+      </div>
+
+      <div class="field">
+        <label>Season</label>
+        <p-select
+          [(ngModel)]="selectedSaison"
+          [options]="saisons"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All seasons"
+          [showClear]="true"
+          appendTo="body"/>
+      </div>
+
+      <div class="field">
+        <label>Store</label>
+        <p-select
+          [(ngModel)]="selectedCodeMag"
+          [options]="stores"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All stores"
+          [showClear]="true"
+          appendTo="body"/>
+      </div>
+
+    </div>
+
+    <div class="filter-actions">
+      <div class="filter-info">
+        @if (lastUpdated) {
+          <span class="last-updated">
+    Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
+  </span>
+          @if (selectedFamille || selectedSaison || selectedCodeMag) {
+            <span class="refresh-hint">Showing filtered results. Change filters and regenerate for new analysis.</span>
+          } @else {
+            <span class="refresh-hint">Showing global data. Select filters and click Generate for custom analysis.</span>
+          }
+        }
+      </div>
+
+      <div class="filter-buttons">
+        <p-button
+          label="Reset"
+          icon="pi pi-refresh"
+          severity="secondary"
+          (onClick)="resetFilters()"/>
+        <p-button
+          [label]="isCalculating ? 'Calculating...' : 'Generate Analysis'"
+          icon="pi pi-bolt"
+          [disabled]="isCalculating"
+          (onClick)="generateAnalysis()"/>
+      </div>
+    </div>
+
+    @if (isCalculating) {
+      <div class="calculating-msg">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Calculating filtered data... You will be notified when data is ready. You can navigate to other pages.</span>
+        <p-button
+          label="Cancel"
+          severity="danger"
+          size="small"
+          (onClick)="cancelCalculation()"/>
+      </div>
+    }
+  </div>
+
+  <!-- KPI Cards -->
+  @if (hasData) {
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon transactions">
+          <i class="pi pi-shopping-cart"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Transactions</span>
+          <span class="kpi-value">{{ totalTransactions }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon revenue">
+          <i class="pi pi-euro"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Revenue</span>
+          <span class="kpi-value">{{ totalRevenue }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card wide">
+        <h3>Monthly Sales Trend 2024</h3>
+        <p-chart type="line"
+                 [data]="monthlySalesData"
+                 [options]="monthlySalesOptions"
+                 height="300px"/>
+      </div>
+
+      @if (!selectedFamille) {
+        <div class="chart-card">
+          <h3>Sales by Family</h3>
+          <p-chart type="doughnut"
+                   [data]="familyData"
+                   [options]="familyOptions"
+                   height="300px"/>
+        </div>
+      }
+    </div>
+  }
+
+  @if (!hasData && !isCalculating) {
+    <div class="no-data">
+      <i class="pi pi-chart-bar"></i>
+      <h3>No data yet</h3>
+      <p>Select filters and click "Generate Analysis" to see results</p>
+    </div>
+  }
+
+</div>

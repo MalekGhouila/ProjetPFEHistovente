@@ -86,4 +86,51 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
             "LIMIT 6",
             nativeQuery = true)
     List<Object[]> getSalesByFamilyByStoreNative(@Param("storeId") Long storeId);
+
+    // ===== FILTERED QUERIES =====
+    @Query(value = "SELECT COUNT(*) FROM histovente_clean_v1 " +
+            "WHERE TypeVente = 'VENTE' " +
+            "AND (:famille IS NULL OR Famille = :famille) " +
+            "AND (:saison IS NULL OR Saison = :saison) " +
+            "AND (:codeMag IS NULL OR CodeMag = :codeMag)",
+            nativeQuery = true)
+    Long countFiltered(@Param("famille") String famille,
+                       @Param("saison") String saison,
+                       @Param("codeMag") String codeMag);
+
+    @Query(value = "SELECT SUM(Total) FROM histovente_clean_v1 " +
+            "WHERE TypeVente = 'VENTE' " +
+            "AND (:famille IS NULL OR Famille = :famille) " +
+            "AND (:saison IS NULL OR Saison = :saison) " +
+            "AND (:codeMag IS NULL OR CodeMag = :codeMag)",
+            nativeQuery = true)
+    Double sumFiltered(@Param("famille") String famille,
+                       @Param("saison") String saison,
+                       @Param("codeMag") String codeMag);
+
+    @Query(value = "SELECT Famille, COUNT(*) as sales " +
+            "FROM histovente_clean_v1 " +
+            "WHERE TypeVente = 'VENTE' " +
+            "AND (:famille IS NULL OR Famille = :famille) " +
+            "AND (:saison IS NULL OR Saison = :saison) " +
+            "AND (:codeMag IS NULL OR CodeMag = :codeMag) " +
+            "GROUP BY Famille ORDER BY sales DESC LIMIT 6",
+            nativeQuery = true)
+    List<Object[]> getSalesByFamilyFiltered(@Param("famille") String famille,
+                                            @Param("saison") String saison,
+                                            @Param("codeMag") String codeMag);
+
+    @Query(value = "SELECT CONCAT(YEAR(Date), '-', LPAD(MONTH(Date), 2, '0')) as month, " +
+            "COUNT(*) as totalSales, SUM(Total) as totalRevenue " +
+            "FROM histovente_clean_v1 " +
+            "WHERE TypeVente = 'VENTE' AND YEAR(Date) = 2024 " +
+            "AND (:famille IS NULL OR Famille = :famille) " +
+            "AND (:saison IS NULL OR Saison = :saison) " +
+            "AND (:codeMag IS NULL OR CodeMag = :codeMag) " +
+            "GROUP BY YEAR(Date), MONTH(Date), CONCAT(YEAR(Date), '-', LPAD(MONTH(Date), 2, '0')) " +
+            "ORDER BY YEAR(Date), MONTH(Date)",
+            nativeQuery = true)
+    List<Object[]> getMonthlySalesFiltered(@Param("famille") String famille,
+                                           @Param("saison") String saison,
+                                           @Param("codeMag") String codeMag);
 }
