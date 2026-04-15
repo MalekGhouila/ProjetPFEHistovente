@@ -52,12 +52,16 @@
       <div class="filter-info">
         @if (lastUpdated) {
           <span class="last-updated">
-    Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
-  </span>
+      Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
+    </span>
           @if (selectedFamille || selectedSaison || selectedCodeMag) {
-            <span class="refresh-hint">Showing filtered results. Change filters and regenerate for new analysis.</span>
+            <span class="refresh-hint">
+        Showing filtered results.
+        <a class="recalculate-link" (click)="forceRecalculate()">Generate new data</a>
+        for fresh results.
+      </span>
           } @else {
-            <span class="refresh-hint">Showing global data. Select filters and click Generate for custom analysis.</span>
+            <span class="refresh-hint">Showing global data. Select filters and click Generate.</span>
           }
         }
       </div>

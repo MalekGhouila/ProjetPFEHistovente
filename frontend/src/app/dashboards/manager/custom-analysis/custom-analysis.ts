@@ -217,33 +217,33 @@ export class CustomAnalysis implements OnInit {
       this.cancelCalculation();
     }
 
-    const taskId = Date.now().toString();
-    this.isCalculating = true;
-    this.saveCalculatingState(taskId);
-
-    this.taskService.addTask({
-      id: taskId,
-      filterKey: this.buildFilterKey(),
-      famille: this.selectedFamille,
-      saison: this.selectedSaison,
-      codeMag: this.selectedCodeMag,
-      status: 'calculating',
-      startTime: new Date().toISOString(),
-      params: this.buildParams()
-    });
-
-    this.cdr.detectChanges();
-
     const params = this.buildParams();
     const filterKey = this.buildFilterKey();
 
+    // Check if already calculated
     this.http.get<any>(`${this.apiUrl}/status${params}`).subscribe({
       next: (status) => {
         if (status.hasData && !status.isCalculating) {
-          this.clearCalculatingState();
-          this.taskService.setReady(filterKey);
+          // ← Already calculated! Show existing data instantly
           this.loadResults(params);
+          // isCalculating stays false - no spinner needed
         } else if (!status.isCalculating) {
+          // Not calculated → trigger calculation
+          const taskId = Date.now().toString();
+          this.isCalculating = true;
+          this.saveCalculatingState(taskId);
+          this.taskService.addTask({
+            id: taskId,
+            filterKey: filterKey,
+            famille: this.selectedFamille,
+            saison: this.selectedSaison,
+            codeMag: this.selectedCodeMag,
+            status: 'calculating',
+            startTime: new Date().toISOString(),
+            params: params
+          });
+          this.cdr.detectChanges();
+
           this.http.post<any>(`${this.apiUrl}/calculate${params}`, {}).subscribe({
             next: () => this.pollStatusWithCancel(params, new Date().toISOString(), filterKey),
             error: (err: any) => {
@@ -386,5 +386,46 @@ export class CustomAnalysis implements OnInit {
     this.selectedCodeMag = '';
     localStorage.removeItem(this.lastFilterKey);
     this.loadGlobalData();
+  }
+
+  forceRecalculate() {
+    if (this.taskService.isCalculating()) {
+      if (!confirm('A calculation is already running. Stop it and start new one?')) {
+        return;
+      }
+      this.cancelCalculation();
+    }
+
+    const taskId = Date.now().toString();
+    const params = this.buildParams();
+    const filterKey = this.buildFilterKey();
+
+    this.isCalculating = true;
+    this.saveCalculatingState(taskId);
+
+    this.taskService.addTask({
+      id: taskId,
+      filterKey: filterKey,
+      famille: this.selectedFamille,
+      saison: this.selectedSaison,
+      codeMag: this.selectedCodeMag,
+      status: 'calculating',
+      startTime: new Date().toISOString(),
+      params: params
+    });
+
+    this.cdr.detectChanges();
+
+    this.http.post<any>(`${this.apiUrl}/calculate${params}`, {}).subscribe({
+      next: () => this.pollStatusWithCancel(params, new Date().toISOString(), filterKey),
+      error: (err: any) => {
+        console.error(err);
+        this.clearCalculatingState();
+        const calc = this.taskService.getCalculatingTask();
+        if (calc) this.taskService.deleteTask(calc.id);
+        this.isCalculating = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

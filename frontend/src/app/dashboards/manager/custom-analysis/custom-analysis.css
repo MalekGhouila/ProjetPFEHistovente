@@ -203,3 +203,14 @@
   color: var(--text-primary);
   font-size: 1.2rem;
 }
+
+.recalculate-link {
+  color: var(--brand-accent);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.8rem;
+}
+
+.recalculate-link:hover {
+  color: var(--brand-primary);
+}
