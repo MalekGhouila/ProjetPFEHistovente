@@ -41,6 +41,7 @@ export class CustomAnalysis implements OnInit {
   private apiUrl = 'http://localhost:8080/api/analytics/custom';
   private storageKey = 'customAnalysisCalculating';
   private lastFilterKey = 'lastCustomFilter';
+  private redirectKey = 'redirectedFromNotification';
 
   constructor(
     private http: HttpClient,
@@ -54,17 +55,18 @@ export class CustomAnalysis implements OnInit {
     this.initChartOptions();
 
     const savedState = localStorage.getItem(this.storageKey);
-    const lastFilter = localStorage.getItem(this.lastFilterKey);
+    const redirectFromNotification = localStorage.getItem(this.redirectKey);
 
     if (savedState) {
-      // Calculation was running before page refresh
       const state = JSON.parse(savedState);
       this.selectedFamille = state.famille || '';
       this.selectedSaison = state.saison || '';
       this.selectedCodeMag = state.codeMag || '';
       this.isCalculating = true;
 
-      this.taskService.setTask({
+      // Restore task using addTask
+      this.taskService.addTask({
+        id: state.id || Date.now().toString(),
         filterKey: this.buildFilterKey(),
         famille: this.selectedFamille,
         saison: this.selectedSaison,
@@ -76,18 +78,23 @@ export class CustomAnalysis implements OnInit {
 
       this.cdr.detectChanges();
       const params = this.buildParamsFromValues(state.famille, state.saison, state.codeMag);
-      this.pollStatusWithCancel(params, state.startTime);
+      this.pollStatusWithCancel(params, state.startTime, this.buildFilterKey());
 
-    } else if (lastFilter) {
-      // Redirected from notification → load last filtered results
-      const filter = JSON.parse(lastFilter);
-      this.selectedFamille = filter.famille || '';
-      this.selectedSaison = filter.saison || '';
-      this.selectedCodeMag = filter.codeMag || '';
-      const params = this.buildParamsFromValues(filter.famille, filter.saison, filter.codeMag);
-      this.loadResults(params);
-
+    } else if (redirectFromNotification) {
+      localStorage.removeItem(this.redirectKey);
+      const lastFilter = localStorage.getItem(this.lastFilterKey);
+      if (lastFilter) {
+        const filter = JSON.parse(lastFilter);
+        this.selectedFamille = filter.famille || '';
+        this.selectedSaison = filter.saison || '';
+        this.selectedCodeMag = filter.codeMag || '';
+        const params = this.buildParamsFromValues(filter.famille, filter.saison, filter.codeMag);
+        this.loadResults(params);
+      } else {
+        this.loadGlobalData();
+      }
     } else {
+      localStorage.removeItem(this.lastFilterKey);
       this.loadGlobalData();
     }
   }
@@ -178,8 +185,9 @@ export class CustomAnalysis implements OnInit {
     });
   }
 
-  saveCalculatingState() {
+  saveCalculatingState(id: string) {
     const state = {
+      id: id,
       famille: this.selectedFamille,
       saison: this.selectedSaison,
       codeMag: this.selectedCodeMag,
@@ -194,7 +202,9 @@ export class CustomAnalysis implements OnInit {
 
   cancelCalculation() {
     this.clearCalculatingState();
-    this.taskService.clearTask();
+    // Remove calculating task from service
+    const calc = this.taskService.getCalculatingTask();
+    if (calc) this.taskService.deleteTask(calc.id);
     this.isCalculating = false;
     this.cdr.detectChanges();
   }
@@ -207,10 +217,12 @@ export class CustomAnalysis implements OnInit {
       this.cancelCalculation();
     }
 
+    const taskId = Date.now().toString();
     this.isCalculating = true;
-    this.saveCalculatingState();
+    this.saveCalculatingState(taskId);
 
-    this.taskService.setTask({
+    this.taskService.addTask({
+      id: taskId,
       filterKey: this.buildFilterKey(),
       famille: this.selectedFamille,
       saison: this.selectedSaison,
@@ -223,32 +235,34 @@ export class CustomAnalysis implements OnInit {
     this.cdr.detectChanges();
 
     const params = this.buildParams();
+    const filterKey = this.buildFilterKey();
 
     this.http.get<any>(`${this.apiUrl}/status${params}`).subscribe({
       next: (status) => {
         if (status.hasData && !status.isCalculating) {
           this.clearCalculatingState();
-          this.taskService.setReady();
+          this.taskService.setReady(filterKey);
           this.loadResults(params);
         } else if (!status.isCalculating) {
           this.http.post<any>(`${this.apiUrl}/calculate${params}`, {}).subscribe({
-            next: () => this.pollStatusWithCancel(params, new Date().toISOString()),
+            next: () => this.pollStatusWithCancel(params, new Date().toISOString(), filterKey),
             error: (err: any) => {
               console.error(err);
               this.clearCalculatingState();
-              this.taskService.clearTask();
+              const calc = this.taskService.getCalculatingTask();
+              if (calc) this.taskService.deleteTask(calc.id);
               this.isCalculating = false;
               this.cdr.detectChanges();
             }
           });
         } else {
-          this.pollStatusWithCancel(params, new Date().toISOString());
+          this.pollStatusWithCancel(params, new Date().toISOString(), filterKey);
         }
       }
     });
   }
 
-  pollStatusWithCancel(params: string, startTime: string) {
+  pollStatusWithCancel(params: string, startTime: string, filterKey: string) {
     const interval = setInterval(() => {
       if (!localStorage.getItem(this.storageKey)) {
         clearInterval(interval);
@@ -263,7 +277,7 @@ export class CustomAnalysis implements OnInit {
             new Date(status.lastUpdated) > new Date(startTime)) {
             clearInterval(interval);
             this.clearCalculatingState();
-            this.taskService.setReady();
+            this.taskService.setReady(filterKey);
             this.loadResults(params);
           }
         }
@@ -274,7 +288,6 @@ export class CustomAnalysis implements OnInit {
   loadResults(params: string) {
     this.clearCalculatingState();
 
-    // Save last filter for redirect from notification
     localStorage.setItem(this.lastFilterKey, JSON.stringify({
       famille: this.selectedFamille,
       saison: this.selectedSaison,

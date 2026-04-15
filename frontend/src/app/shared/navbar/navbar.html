@@ -12,50 +12,69 @@
     <span class="navbar-role">{{ getRoleDisplay(role) }}</span>
 
     <!-- Notification Bell (only for MANAGER) -->
-    @if (role === 'MANAGER' && currentTask) {
+    @if (role === 'MANAGER') {
       <div class="notification-wrapper">
         <button class="notification-btn" (click)="toggleNotifications()">
           <i class="pi pi-bell"></i>
-          @if (currentTask.status === 'calculating') {
-            <span class="badge calculating">
-              <i class="pi pi-spin pi-spinner" style="font-size: 0.6rem"></i>
+          @if (tasks.length > 0) {
+            <span class="badge" [class.calculating]="tasks[0].status === 'calculating'"
+                  [class.ready]="tasks[0].status === 'ready'">
+              {{ tasks.length }}
             </span>
-          }
-          @if (currentTask.status === 'ready') {
-            <span class="badge ready">1</span>
           }
         </button>
 
         @if (showNotifications) {
           <div class="notification-dropdown">
-            @if (currentTask.status === 'calculating') {
-              <div class="notification-item calculating">
-                <i class="pi pi-spin pi-spinner"></i>
-                <div class="notification-content">
-                  <span class="notification-title">Analysis Running</span>
-                  <span class="notification-detail">
-                    {{ currentTask.famille || 'All' }} |
-                    {{ currentTask.saison || 'All' }} |
-                    {{ currentTask.codeMag || 'All stores' }}
-                  </span>
-                </div>
+
+            <div class="notification-header">
+              <span>Notifications ({{ tasks.length }})</span>
+              @if (tasks.length > 0) {
+                <button class="clear-all-btn" (click)="clearAllNotifications()">
+                  Clear all
+                </button>
+              }
+            </div>
+
+            @if (tasks.length === 0) {
+              <div class="no-notifications">
+                <i class="pi pi-bell-slash"></i>
+                <span>No notifications</span>
               </div>
             }
-            @if (currentTask.status === 'ready') {
-              <div class="notification-item ready" (click)="goToResults()">
-                <i class="pi pi-check-circle"></i>
-                <div class="notification-content">
-                  <span class="notification-title">Analysis Ready! Click to view</span>
-                  <span class="notification-detail">
-                    {{ currentTask.famille || 'All' }} |
-                    {{ currentTask.saison || 'All' }}
-                  </span>
+
+            @for (task of tasks; track task.id) {
+              <div class="notification-item"
+                   [class.ready]="task.status === 'ready'"
+                   [class.calculating]="task.status === 'calculating'"
+                   (click)="task.status === 'ready' && goToResults(task)">
+
+                <div class="notification-icon">
+                  @if (task.status === 'calculating') {
+                    <i class="pi pi-spin pi-spinner"></i>
+                  }
+                  @if (task.status === 'ready') {
+                    <i class="pi pi-check-circle"></i>
+                  }
                 </div>
-                <button class="clear-btn" (click)="$event.stopPropagation(); clearNotification()">
+
+                <div class="notification-content">
+                  <span class="notification-title">
+                    @if (task.status === 'calculating') { Calculating... }
+                    @if (task.status === 'ready') { Analysis Ready! Click to view }
+                  </span>
+                  <span class="notification-detail">{{ getTaskLabel(task) }}</span>
+                  <span class="notification-time">{{ task.startTime | date:'HH:mm' }}</span>
+                </div>
+
+                <button class="delete-btn"
+                        (click)="$event.stopPropagation(); deleteNotification(task)">
                   <i class="pi pi-times"></i>
                 </button>
+
               </div>
             }
+
           </div>
         }
       </div>
