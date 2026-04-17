@@ -123,3 +123,35 @@
   color: var(--text-primary);
   margin-bottom: 20px;
 }
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calculating-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-primary);
+  font-weight: 500;
+}
+
+.data-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+.last-updated-msg {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}

@@ -43,6 +43,12 @@ public class AnalyticsService {
                 .orElse("Never");
     }
 
+    public String getLastUpdated(String metricName) {
+        return summaryRepository.findByMetricName(metricName)
+                .map(s -> s.getComputedAt() != null ? s.getComputedAt().toString() : "Never")
+                .orElse("Never");
+    }
+
     // ===== GLOBAL KPIs =====
     public KpiResponse getGlobalKpis() {
         Double totalTransactions = getValue("total_transactions");
@@ -101,12 +107,16 @@ public class AnalyticsService {
 
     // ===== DATA QUALITY =====
     public DataQualityResponse getDataQuality() {
-        Double totalRecords = getValue("total_transactions");
+        Double totalRaw = getValue("total_raw_records");
+        Double qualityScore = getValue("quality_score");
+        Double missingPercentage = getValue("missing_percentage");
+        Double outliers = getValue("outliers_count");
+
         return new DataQualityResponse(
-                totalRecords != null ? totalRecords.longValue() : 0L,
-                74.0,
-                26.0,
-                0L
+                totalRaw != null ? totalRaw.longValue() : 0L,
+                qualityScore != null ? qualityScore : 0.0,
+                missingPercentage != null ? missingPercentage : 0.0,
+                outliers != null ? outliers.longValue() : 0L
         );
     }
 
@@ -270,4 +280,7 @@ public class AnalyticsService {
                 )
         );
     }
+
+
+
 }

@@ -2,8 +2,28 @@
 
   <!-- Header -->
   <div class="dashboard-header">
-    <h1>Data Analyst Dashboard</h1>
-    <p>{{ welcomeMessage }} - Data Quality & Analytics Overview</p>
+    <div class="header-row">
+      <div>
+        <h1>Data Analyst Dashboard</h1>
+        <p>{{ welcomeMessage }} - Data Quality & Analytics Overview</p>
+      </div>
+      <div class="header-actions">
+        @if (isCalculating) {
+          <span class="calculating-msg">
+            <i class="pi pi-spin pi-spinner"></i>
+            Recalculating data quality...
+          </span>
+        } @else {
+          <div class="data-info">
+            @if (lastUpdated) {
+              <span class="last-updated-msg">
+                Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </span>
+            }
+          </div>
+        }
+      </div>
+    </div>
   </div>
 
   <!-- KPI Cards -->
@@ -54,8 +74,8 @@
     <div class="chart-card">
       <h3>Missing Values by Column</h3>
       <p-chart type="bar"
-               [data]="missingValuesData"
-               [options]="missingValuesOptions"
+               [data]="missingValuesChartData"
+               [options]="missingValuesChartOptions"
                height="300px"/>
     </div>
 

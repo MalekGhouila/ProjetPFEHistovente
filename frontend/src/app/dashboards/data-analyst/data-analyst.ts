@@ -1,47 +1,88 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
+import { ButtonModule } from 'primeng/button';
+import { DatePipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-data-analyst',
   standalone: true,
-  imports: [ChartModule],
+  imports: [ChartModule, ButtonModule, DatePipe],
   templateUrl: './data-analyst.html',
   styleUrl: './data-analyst.css'
 })
 export class DataAnalyst implements OnInit {
 
   welcomeMessage: string = '';
+  lastUpdated: string = '';
+  isCalculating: boolean = false;
 
-  // Data Quality KPIs
-  totalRecords = '16,277,213';
-  dataQualityScore = '74%';
-  missingValues = '26%';
-  outliersDetected = '12,453';
+  // KPI Data - real from DB
+  totalRecords = '...';
+  dataQualityScore = '...';
+  missingValues = '...';
+  outliersDetected = '...';
 
-  // Missing Values Chart
-  missingValuesData: any;
-  missingValuesOptions: any;
-
-  // Data Completeness Chart
+  // Charts
+  missingValuesChartData: any;
+  missingValuesChartOptions: any;
   completenessData: any;
   completenessOptions: any;
-
-  // Outliers Chart
   outliersData: any;
   outliersOptions: any;
 
-  constructor(private authService: AuthService) {}
+  private apiUrl = 'http://localhost:8080/api/analytics';
+
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
-    this.initMissingValuesChart();
-    this.initCompletenessChart();
-    this.initOutliersChart();
+    this.initChartOptions();
+    this.loadQualityStatus();
+    this.loadKpis();
   }
 
-  initMissingValuesChart() {
-    this.missingValuesData = {
+  initChartOptions() {
+    this.missingValuesChartOptions = {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { callback: (value: number) => value + '%' }
+        }
+      }
+    };
+
+    this.completenessOptions = {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        x: { stacked: true },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          max: 100,
+          ticks: { callback: (value: number) => value + '%' }
+        }
+      }
+    };
+
+    this.outliersOptions = {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    };
+
+    // Mock chart data (stays mock for now)
+    this.missingValuesChartData = {
       labels: ['IDArCouleur', 'IDVille', 'IDRegion', 'Saison', 'CodeArticle', 'Famille'],
       datasets: [{
         label: 'Missing Values %',
@@ -58,38 +99,18 @@ export class DataAnalyst implements OnInit {
       }]
     };
 
-    this.missingValuesOptions = {
-      responsive: true,
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false },
-        title: { display: false }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: (value: number) => value + '%'
-          }
-        }
-      }
-    };
-  }
-
-  initCompletenessChart() {
     this.completenessData = {
       labels: ['2021', '2022', '2023', '2024', '2025'],
       datasets: [
         {
-          label: 'Complete Records',
+          label: 'Complete Records %',
           data: [85, 78, 72, 74, 76],
           backgroundColor: 'rgba(46, 204, 113, 0.7)',
           borderColor: '#2ecc71',
           borderWidth: 1
         },
         {
-          label: 'Incomplete Records',
+          label: 'Incomplete Records %',
           data: [15, 22, 28, 26, 24],
           backgroundColor: 'rgba(231, 76, 60, 0.7)',
           borderColor: '#e74c3c',
@@ -98,26 +119,6 @@ export class DataAnalyst implements OnInit {
       ]
     };
 
-    this.completenessOptions = {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' }
-      },
-      scales: {
-        x: { stacked: true },
-        y: {
-          stacked: true,
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: (value: number) => value + '%'
-          }
-        }
-      }
-    };
-  }
-
-  initOutliersChart() {
     this.outliersData = {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -131,15 +132,29 @@ export class DataAnalyst implements OnInit {
         fill: true
       }]
     };
+  }
 
-    this.outliersOptions = {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' }
+  loadQualityStatus() {
+    this.http.get<any>(`${this.apiUrl}/quality-status`).subscribe({
+      next: (status) => {
+        this.lastUpdated = status.lastUpdated;
+        this.isCalculating = status.isCalculating;
+        this.cdr.detectChanges();
       },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    };
+      error: (err: any) => console.error('Error loading quality status:', err)
+    });
+  }
+
+  loadKpis() {
+    this.http.get<any>(`${this.apiUrl}/data-quality`).subscribe({
+      next: (data) => {
+        this.totalRecords = data.totalRecords.toLocaleString();
+        this.dataQualityScore = data.qualityScore.toFixed(1) + '%';
+        this.missingValues = data.missingValuesPercentage.toFixed(1) + '%';
+        this.outliersDetected = data.outliersCount.toLocaleString();
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error loading quality KPIs:', err)
+    });
   }
 }

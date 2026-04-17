@@ -73,4 +73,12 @@ public class AnalyticsController {
         );
     }
 
+    @GetMapping("/quality-status")
+    public ResponseEntity<Map<String, Object>> getQualityStatus() {
+        return ResponseEntity.ok(Map.of(
+                "lastUpdated", analyticsService.getLastUpdated("total_raw_records"),
+                "isCalculating", false
+        ));
+    }
+
 }
