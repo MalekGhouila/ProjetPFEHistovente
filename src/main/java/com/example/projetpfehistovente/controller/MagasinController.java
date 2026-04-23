@@ -3,10 +3,13 @@ package com.example.projetpfehistovente.controller;
 import com.example.projetpfehistovente.entity.Magasin;
 import com.example.projetpfehistovente.service.MagasinService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/magasins")
@@ -16,11 +19,22 @@ public class MagasinController {
     @Autowired
     private MagasinService magasinService;
 
-    @GetMapping
+    // ── Original endpoint (kept for backward compat, e.g. dropdowns) ──────────
+    @GetMapping("/all")
     public List<Magasin> getAll() {
         return magasinService.findAll();
     }
 
+    // ── Paginated + search (new, used by the manager page) ────────────────────
+    @GetMapping
+    public ResponseEntity<Page<Magasin>> getPaginated(
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(magasinService.getMagasinsPaginated(search, page, size));
+    }
+
+    // ── GET single ────────────────────────────────────────────────────────────
     @GetMapping("/{id}")
     public ResponseEntity<Magasin> getById(@PathVariable Long id) {
         return magasinService.findById(id)
@@ -28,28 +42,44 @@ public class MagasinController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // ── CREATE ────────────────────────────────────────────────────────────────
     @PostMapping
-    public Magasin create(@RequestBody Magasin magasin) {
-        return magasinService.save(magasin);
+    public ResponseEntity<?> create(@RequestBody Magasin magasin) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(magasinService.create(magasin));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
+    // ── UPDATE ────────────────────────────────────────────────────────────────
     @PutMapping("/{id}")
-    public ResponseEntity<Magasin> update(@PathVariable Long id, @RequestBody Magasin magasin) {
-        return magasinService.findById(id)
-                .map(existing -> {
-                    magasin.setIdMagasin(id);
-                    return ResponseEntity.ok(magasinService.save(magasin));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Magasin magasin) {
+        try {
+            return ResponseEntity.ok(magasinService.update(id, magasin));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
+    // ── TOGGLE ETAT ───────────────────────────────────────────────────────────
+    @PatchMapping("/{id}/toggle-etat")
+    public ResponseEntity<?> toggleEtat(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(magasinService.toggleEtat(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // ── DELETE ────────────────────────────────────────────────────────────────
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        return magasinService.findById(id)
-                .map(existing -> {
-                    magasinService.deleteById(id);
-                    return ResponseEntity.<Void>ok().<Void>build();
-                })
-                .orElseGet(() -> ResponseEntity.<Void>notFound().build());
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            magasinService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

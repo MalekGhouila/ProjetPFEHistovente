@@ -155,3 +155,9 @@
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
+
+.refresh-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

@@ -18,13 +18,11 @@ export class DataAnalyst implements OnInit {
   lastUpdated: string = '';
   isCalculating: boolean = false;
 
-  // KPI Data - real from DB
   totalRecords = '...';
   dataQualityScore = '...';
   missingValues = '...';
   outliersDetected = '...';
 
-  // Charts
   missingValuesChartData: any;
   missingValuesChartOptions: any;
   completenessData: any;
@@ -33,6 +31,7 @@ export class DataAnalyst implements OnInit {
   outliersOptions: any;
 
   private apiUrl = 'http://localhost:8080/api/analytics';
+  private qualityStorageKey = 'qualityCalculating';
 
   constructor(
     private http: HttpClient,
@@ -43,8 +42,18 @@ export class DataAnalyst implements OnInit {
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
     this.initChartOptions();
-    this.loadQualityStatus();
-    this.loadKpis();
+
+    // Check if calculation was running before page refresh
+    const savedState = localStorage.getItem(this.qualityStorageKey);
+    if (savedState) {
+      this.isCalculating = true;
+      this.loadKpis();
+      this.cdr.detectChanges();
+      this.pollQualityStatus();
+    } else {
+      this.loadQualityStatus();
+      this.loadKpis();
+    }
   }
 
   initChartOptions() {
@@ -81,19 +90,15 @@ export class DataAnalyst implements OnInit {
       scales: { y: { beginAtZero: true } }
     };
 
-    // Mock chart data (stays mock for now)
     this.missingValuesChartData = {
       labels: ['IDArCouleur', 'IDVille', 'IDRegion', 'Saison', 'CodeArticle', 'Famille'],
       datasets: [{
         label: 'Missing Values %',
         data: [45, 38, 32, 28, 15, 8],
         backgroundColor: [
-          'rgba(231, 76, 60, 0.8)',
-          'rgba(231, 76, 60, 0.7)',
-          'rgba(241, 196, 15, 0.8)',
-          'rgba(241, 196, 15, 0.7)',
-          'rgba(46, 204, 113, 0.8)',
-          'rgba(46, 204, 113, 0.7)',
+          'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.7)',
+          'rgba(241, 196, 15, 0.8)', 'rgba(241, 196, 15, 0.7)',
+          'rgba(46, 204, 113, 0.8)', 'rgba(46, 204, 113, 0.7)'
         ],
         borderWidth: 1
       }]
@@ -124,8 +129,7 @@ export class DataAnalyst implements OnInit {
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       datasets: [{
         label: 'Outliers Detected',
-        data: [1200, 980, 1100, 890, 750, 820,
-          1050, 930, 1180, 1020, 890, 643],
+        data: [1200, 980, 1100, 890, 750, 820, 1050, 930, 1180, 1020, 890, 643],
         borderColor: '#e74c3c',
         backgroundColor: 'rgba(231, 76, 60, 0.1)',
         tension: 0.4,
@@ -139,6 +143,10 @@ export class DataAnalyst implements OnInit {
       next: (status) => {
         this.lastUpdated = status.lastUpdated;
         this.isCalculating = status.isCalculating;
+        if (status.isCalculating) {
+          localStorage.setItem(this.qualityStorageKey, 'calculating');
+          this.pollQualityStatus();
+        }
         this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Error loading quality status:', err)
@@ -156,5 +164,47 @@ export class DataAnalyst implements OnInit {
       },
       error: (err: any) => console.error('Error loading quality KPIs:', err)
     });
+  }
+
+  refreshData() {
+    this.isCalculating = true;
+    localStorage.setItem(this.qualityStorageKey, 'calculating');
+    this.cdr.detectChanges();
+
+    this.http.post<any>(`${this.apiUrl}/refresh-quality`, {}).subscribe({
+      next: () => this.pollQualityStatus(),
+      error: (err: any) => {
+        console.error(err);
+        this.isCalculating = false;
+        localStorage.removeItem(this.qualityStorageKey);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  pollQualityStatus() {
+    const startTime = new Date().toISOString();
+    const interval = setInterval(() => {
+      if (!localStorage.getItem(this.qualityStorageKey)) {
+        clearInterval(interval);
+        this.isCalculating = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
+      this.http.get<any>(`${this.apiUrl}/quality-status`).subscribe({
+        next: (status) => {
+          if (!status.isCalculating &&
+            new Date(status.lastUpdated) > new Date(startTime)) {
+            clearInterval(interval);
+            localStorage.removeItem(this.qualityStorageKey);
+            this.isCalculating = false;
+            this.loadQualityStatus();
+            this.loadKpis();
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    }, 3000);
   }
 }

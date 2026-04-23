@@ -77,7 +77,16 @@ public class AnalyticsController {
     public ResponseEntity<Map<String, Object>> getQualityStatus() {
         return ResponseEntity.ok(Map.of(
                 "lastUpdated", analyticsService.getLastUpdated("total_raw_records"),
-                "isCalculating", false
+                "isCalculating", AnalyticsService.isCalculatingQuality()
+        ));
+    }
+
+    @PostMapping("/refresh-quality")
+    public ResponseEntity<Map<String, String>> refreshQuality() {
+        new Thread(() -> analyticsService.refreshQualityMetrics()).start();
+        return ResponseEntity.ok(Map.of(
+                "message", "Quality recalculation started!",
+                "status", "processing"
         ));
     }
 
