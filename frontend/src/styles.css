@@ -38,7 +38,6 @@
   --navbar-height: 60px;
 }
 
-
 /* ===== GLOBAL RESET ===== */
 * {
   margin: 0;
@@ -47,8 +46,9 @@
 }
 
 body {
-  font-family: var(--font-family),sans-serif;
+  font-family: var(--font-family), sans-serif;
 }
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
@@ -69,4 +69,31 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--brand-primary);
+}
+
+/* ===== PrimeNG Sort Icon Fix ===== */
+/* Default — faded */
+.p-datatable .p-datatable-sortable-column .p-datatable-sort-icon {
+  color: var(--text-secondary) !important;
+  opacity: 0.45 !important;
+  transition: color 0.2s, opacity 0.2s;
+}
+
+/* Hover */
+.p-datatable .p-datatable-sortable-column:hover .p-datatable-sort-icon {
+  color: var(--text-primary) !important;
+  opacity: 1 !important;
+}
+
+/* Active / sorted column */
+.p-datatable .p-datatable-column-sorted .p-datatable-sort-icon {
+  color: var(--brand-primary) !important;
+  opacity: 1 !important;
+}
+
+/* Remove focus ring on sort click */
+.p-datatable .p-datatable-sortable-column:focus,
+.p-datatable .p-datatable-sortable-column:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }

@@ -1,8 +1,15 @@
 <div class="dashboard">
+  <p-toast />
+  <p-confirmDialog />
 
   <div class="dashboard-header">
-    <h1>Product Families</h1>
-    <p>Overview of all NAF NAF product families</p>
+    <div>
+      <h1>Families Management</h1>
+      <p>Manage all NAF NAF product families — add, edit, enable/disable or delete</p>
+    </div>
+    <button class="btn-add" (click)="openAddDialog()">
+      <i class="pi pi-plus"></i> Add Family
+    </button>
   </div>
 
   <div class="families-card">
@@ -11,47 +18,77 @@
       <input
         pInputText
         type="text"
-        placeholder="Search families..."
-        (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-        class="search-input"/>
+        placeholder="Search by name or code..."
+        [(ngModel)]="searchValue"
+        (ngModelChange)="onSearch()"
+        class="search-input"
+      />
     </div>
 
     <p-table
-      #dt
       [value]="families"
       [loading]="loading"
       [paginator]="true"
-      [rows]="10"
-      [globalFilterFields]="['famille', 'code']">
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [lazy]="true"
+      (onLazyLoad)="onPageChange($event)"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [sortField]="sortField"
+      [sortOrder]="sortOrder">
 
       <ng-template pTemplate="header">
         <tr>
-          <th>ID</th>
-          <th>Family Name</th>
-          <th>Code</th>
-          <th>Status</th>
+          <th pSortableColumn="idArFamille" style="width: 80px">
+            ID <p-sortIcon field="idArFamille" />
+          </th>
+          <th pSortableColumn="famille">
+            Family Name <p-sortIcon field="famille" />
+          </th>
+          <th pSortableColumn="code" style="width: 120px">
+            Code <p-sortIcon field="code" />
+          </th>
+          <th pSortableColumn="etat" style="width: 140px">
+            Status <p-sortIcon field="etat" />
+          </th>
+          <th style="width: 100px">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-family>
         <tr>
-          <td>{{ family.idArFamille }}</td>
+          <td class="id-cell">{{ family.idArFamille }}</td>
           <td>
-            <i class="pi pi-tag"></i>
-            {{ family.famille }}
+            <i class="pi pi-tag" style="margin-right: 8px; color: var(--text-secondary)"></i>
+            {{ family.famille || '—' }}
           </td>
-          <td>{{ family.code }}</td>
+          <td><span class="code-badge">{{ family.code || '—' }}</span></td>
           <td>
-            <p-tag
-              [value]="getStatusLabel(family.etat)"
-              [severity]="getStatusSeverity(family.etat)"/>
+            <button
+              [class]="family.etat ? 'status-btn active' : 'status-btn inactive'"
+              (click)="toggleEtat(family)"
+              [title]="family.etat ? 'Click to disable' : 'Click to enable'">
+              <i [class]="family.etat ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i>
+              {{ family.etat ? 'Active' : 'Inactive' }}
+            </button>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-btn edit" (click)="openEditDialog(family)" title="Edit">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button class="action-btn delete" (click)="confirmDelete(family)" title="Delete">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
           </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="4" style="text-align: center">
+          <td colspan="5" style="text-align: center; padding: 48px; color: var(--text-secondary)">
+            <i class="pi pi-inbox" style="font-size: 2rem; display: block; margin-bottom: 12px"></i>
             No families found
           </td>
         </tr>
@@ -60,3 +97,35 @@
     </p-table>
   </div>
 </div>
+
+<!-- Add / Edit Dialog -->
+<p-dialog
+  [(visible)]="showDialog"
+  [header]="isEditMode ? 'Edit Family' : 'New Family'"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [closable]="true"
+  styleClass="dark-dialog"
+  contentStyleClass="dark-dialog-content">
+
+  <div class="dialog-form">
+    <div class="form-group">
+      <label>Family Name <span class="required">*</span></label>
+      <input pInputText type="text" [(ngModel)]="formData.famille"
+             placeholder="e.g. Manteaux" class="form-input" />
+    </div>
+    <div class="form-group">
+      <label>Code</label>
+      <input pInputText type="text" [(ngModel)]="formData.code"
+             placeholder="e.g. MAN" class="form-input" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-cancel" (click)="showDialog = false" [disabled]="saving">Cancel</button>
+    <button class="btn-save" (click)="saveDialog()" [disabled]="saving">
+      @if (saving) { <i class="pi pi-spin pi-spinner"></i> }
+      {{ isEditMode ? 'Update' : 'Create' }}
+    </button>
+  </ng-template>
+</p-dialog>

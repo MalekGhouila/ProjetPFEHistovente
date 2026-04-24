@@ -3,22 +3,40 @@ package com.example.projetpfehistovente.controller;
 import com.example.projetpfehistovente.entity.SousFamille;
 import com.example.projetpfehistovente.service.SousFamilleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/sousfamilles")
+@RequestMapping("/api/sous-familles")
 @CrossOrigin(origins = "http://localhost:4200")
 public class SousFamilleController {
 
     @Autowired
     private SousFamilleService sousFamilleService;
 
-    @GetMapping
+    // all (for dropdowns)
+    @GetMapping("/all")
     public List<SousFamille> getAll() {
         return sousFamilleService.findAll();
+    }
+
+    // by parent famille (for dropdowns filtered by famille)
+    @GetMapping("/by-famille/{idArFamille}")
+    public List<SousFamille> getByFamille(@PathVariable Long idArFamille) {
+        return sousFamilleService.findByFamille(idArFamille);
+    }
+
+    // paginated + search + optional famille filter
+    @GetMapping
+    public ResponseEntity<Page<SousFamille>> getPaginated(
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(required = false) Long idArFamille,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(sousFamilleService.getPaginated(search, idArFamille, page, size));
     }
 
     @GetMapping("/{id}")
@@ -29,18 +47,18 @@ public class SousFamilleController {
     }
 
     @PostMapping
-    public SousFamille create(@RequestBody SousFamille sousFamille) {
-        return sousFamilleService.save(sousFamille);
+    public ResponseEntity<SousFamille> create(@RequestBody SousFamille sf) {
+        return ResponseEntity.ok(sousFamilleService.create(sf));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SousFamille> update(@PathVariable Long id, @RequestBody SousFamille sousFamille) {
-        return sousFamilleService.findById(id)
-                .map(existing -> {
-                    sousFamille.setIdArSousFamille(id);
-                    return ResponseEntity.ok(sousFamilleService.save(sousFamille));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<SousFamille> update(@PathVariable Long id, @RequestBody SousFamille sf) {
+        return ResponseEntity.ok(sousFamilleService.update(id, sf));
+    }
+
+    @PatchMapping("/{id}/toggle-etat")
+    public ResponseEntity<SousFamille> toggleEtat(@PathVariable Long id) {
+        return ResponseEntity.ok(sousFamilleService.toggleEtat(id));
     }
 
     @DeleteMapping("/{id}")
@@ -48,8 +66,8 @@ public class SousFamilleController {
         return sousFamilleService.findById(id)
                 .map(existing -> {
                     sousFamilleService.deleteById(id);
-                    return ResponseEntity.<Void>ok().<Void>build();
+                    return ResponseEntity.<Void>noContent().<Void>build();
                 })
-                .orElseGet(() -> ResponseEntity.<Void>notFound().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 }

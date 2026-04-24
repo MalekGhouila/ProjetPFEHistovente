@@ -23,4 +23,14 @@ public class ArFamille {
     private String famille;
 
     private Boolean etat = true;
+
+    // ── fields that were missing ──
+    @Column(name = "Type")
+    private Integer type;
+
+    @Column(name = "CodeDouane", length = 50)
+    private String codeDouane;
+
+    @Column(name = "SaisonObligatoire")
+    private Integer saisonObligatoire;
 }
