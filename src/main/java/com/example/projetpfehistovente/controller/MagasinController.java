@@ -25,13 +25,15 @@ public class MagasinController {
         return magasinService.findAll();
     }
 
-    // ── Paginated + search (new, used by the manager page) ────────────────────
+    // ── Paginated + search + sort ──────────────────────────────────────────────
     @GetMapping
     public ResponseEntity<Page<Magasin>> getPaginated(
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(magasinService.getMagasinsPaginated(search, page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "idMagasin") String sort,
+            @RequestParam(defaultValue = "asc") String direction) {
+        return ResponseEntity.ok(magasinService.getMagasinsPaginated(search, page, size, sort, direction));
     }
 
     // ── GET single ────────────────────────────────────────────────────────────

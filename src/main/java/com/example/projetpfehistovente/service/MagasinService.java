@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -16,8 +17,8 @@ public class MagasinService {
     @Autowired
     private MagasinRepository magasinRepository;
 
-    // Keep existing methods (used elsewhere potentially)
-    public java.util.List<Magasin> findAll() {
+    // ── Kept for dropdowns / backward compat ──────────────────────────────────
+    public List<Magasin> findAll() {
         return magasinRepository.findAll();
     }
 
@@ -33,13 +34,16 @@ public class MagasinService {
         magasinRepository.deleteById(id);
     }
 
-    // --- NEW methods for CRUD ---
-
-    public Page<Magasin> getMagasinsPaginated(String search, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size, Sort.by("magasin").ascending());
+    // ── Paginated + search + sort ──────────────────────────────────────────────
+    public Page<Magasin> getMagasinsPaginated(String search, int page, int size, String sortField, String direction) {
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortField).descending()
+                : Sort.by(sortField).ascending();
+        PageRequest pageable = PageRequest.of(page, size, sort);
         return magasinRepository.searchMagasins(search, pageable);
     }
 
+    // ── CREATE ────────────────────────────────────────────────────────────────
     public Magasin create(Magasin magasin) {
         if (magasin.getCode() != null && !magasin.getCode().isBlank()
                 && magasinRepository.existsByCode(magasin.getCode())) {
@@ -49,6 +53,7 @@ public class MagasinService {
         return magasinRepository.save(magasin);
     }
 
+    // ── UPDATE ────────────────────────────────────────────────────────────────
     public Magasin update(Long id, Magasin updated) {
         Magasin existing = magasinRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Magasin not found: " + id));
@@ -61,11 +66,12 @@ public class MagasinService {
         existing.setMagasin(updated.getMagasin());
         existing.setCode(updated.getCode());
         existing.setIsBoutique(updated.getIsBoutique());
-        existing.setIdPays(updated.getIdPays());           // ← add
-        existing.setIdCategorie(updated.getIdCategorie()); // ← add
+        existing.setIdPays(updated.getIdPays());
+        existing.setIdCategorie(updated.getIdCategorie());
         return magasinRepository.save(existing);
     }
 
+    // ── TOGGLE ETAT ───────────────────────────────────────────────────────────
     public Magasin toggleEtat(Long id) {
         Magasin m = magasinRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Magasin not found: " + id));
@@ -73,6 +79,7 @@ public class MagasinService {
         return magasinRepository.save(m);
     }
 
+    // ── DELETE ────────────────────────────────────────────────────────────────
     public void delete(Long id) {
         if (!magasinRepository.existsById(id)) {
             throw new RuntimeException("Magasin not found: " + id);

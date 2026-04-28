@@ -8,8 +8,8 @@ export interface Magasin {
   code: string;
   etat: number;
   isBoutique: number;
-  idPays: number;       // ← add
-  idCategorie: number;  // ← add
+  idPays: number;
+  idCategorie: number;
 }
 
 export interface PageResponse<T> {
@@ -27,16 +27,23 @@ export class MagasinService {
 
   constructor(private http: HttpClient) {}
 
-  // kept for any dropdown/other usage
   getAll(): Observable<any> {
     return this.http.get<any>(this.apiUrl);
   }
 
-  getPaginated(search: string = '', page: number = 0, size: number = 10): Observable<PageResponse<Magasin>> {
+  getPaginated(
+    search: string = '',
+    page: number = 0,
+    size: number = 10,
+    sortField: string = 'idMagasin',
+    sortDir: string = 'asc'
+  ): Observable<PageResponse<Magasin>> {
     const params = new HttpParams()
       .set('search', search)
       .set('page', page.toString())
-      .set('size', size.toString());
+      .set('size', size.toString())
+      .set('sort', sortField)
+      .set('direction', sortDir);
     return this.http.get<PageResponse<Magasin>>(this.apiUrl, { params });
   }
 

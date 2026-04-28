@@ -31,7 +31,11 @@ export class Stores implements OnInit {
   searchValue = '';
   searchTimeout: any;
 
-  // Dialog
+  // ── Sort state ──
+  sortField: string = 'idMagasin';
+  sortOrder: number = 1; // 1 = asc, -1 = desc
+
+  // ── Dialog ──
   showDialog = false;
   isEditMode = false;
   saving = false;
@@ -53,7 +57,14 @@ export class Stores implements OnInit {
 
   loadStores() {
     this.loading = true;
-    this.magasinService.getPaginated(this.searchValue, this.currentPage, this.pageSize).subscribe({
+    const direction = this.sortOrder === 1 ? 'asc' : 'desc';
+    this.magasinService.getPaginated(
+      this.searchValue,
+      this.currentPage,
+      this.pageSize,
+      this.sortField,
+      direction
+    ).subscribe({
       next: (data) => {
         this.stores = data.content;
         this.totalRecords = data.totalElements;
@@ -78,6 +89,10 @@ export class Stores implements OnInit {
   onPageChange(event: any) {
     this.currentPage = event.first / event.rows;
     this.pageSize = event.rows;
+    if (event.sortField) {
+      this.sortField = event.sortField;
+      this.sortOrder = event.sortOrder ?? 1;
+    }
     this.loadStores();
   }
 
@@ -98,8 +113,8 @@ export class Stores implements OnInit {
       code:        store.code,
       etat:        store.etat,
       isBoutique:  store.isBoutique,
-      idPays:      Number(store.idPays),      // ← forces number type for select match
-      idCategorie: Number(store.idCategorie)  // ← forces number type for select match
+      idPays:      Number(store.idPays),
+      idCategorie: Number(store.idCategorie)
     };
     this.showDialog = true;
   }

@@ -3,16 +3,45 @@
 
     @if (role === 'ADMIN') {
       <li class="sidebar-item">
-      <a routerLink="/admin" routerLinkActive="active">
-        <i class="pi pi-home"></i>
-        <span>Dashboard</span>
-      </a>
+        <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+          <i class="pi pi-home"></i>
+          <span>Dashboard</span>
+        </a>
       </li>
-
       <li class="sidebar-item">
         <a routerLink="/admin/users" routerLinkActive="active">
           <i class="pi pi-users"></i>
           <span>Users Management</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/stores" routerLinkActive="active">
+          <i class="pi pi-building"></i>
+          <span>Stores</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/families" routerLinkActive="active">
+          <i class="pi pi-tag"></i>
+          <span>Families</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/predictions" routerLinkActive="active">
+          <i class="pi pi-bolt"></i>
+          <span>Predictions</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/alerts" routerLinkActive="active">
+          <i class="pi pi-bell"></i>
+          <span>Alerts</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a routerLink="/admin/custom-analysis" routerLinkActive="active">
+          <i class="pi pi-sliders-h"></i>
+          <span>Custom Analysis</span>
         </a>
       </li>
       <li class="sidebar-item">
@@ -37,7 +66,7 @@
 
     @if (role === 'MANAGER') {
       <li class="sidebar-item">
-        <a routerLink="/manager" routerLinkActive="active">
+        <a routerLink="/manager" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
           <i class="pi pi-home"></i>
           <span>Dashboard</span>
         </a>
@@ -76,7 +105,7 @@
 
     @if (role === 'RESPONSABLE_MAGASIN') {
       <li class="sidebar-item">
-        <a routerLink="/responsable-magasin" routerLinkActive="active">
+        <a routerLink="/responsable-magasin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
           <i class="pi pi-home"></i>
           <span>Dashboard</span>
         </a>
@@ -103,7 +132,7 @@
 
     @if (role === 'DATA_ANALYST') {
       <li class="sidebar-item">
-        <a routerLink="/data-analyst" routerLinkActive="active">
+        <a routerLink="/data-analyst" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
           <i class="pi pi-home"></i>
           <span>Dashboard</span>
         </a>

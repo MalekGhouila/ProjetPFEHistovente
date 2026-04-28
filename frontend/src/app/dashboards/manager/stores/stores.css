@@ -31,7 +31,7 @@
   margin-bottom: 16px;
 }
 
-/* PrimeNG Table Overrides */
+/* ── PrimeNG Table Overrides ── */
 :host ::ng-deep .p-datatable {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
@@ -47,6 +47,28 @@
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
   border-bottom: 2px solid var(--border-color) !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+}
+
+:host ::ng-deep .p-datatable-thead > tr > th:hover {
+  background: var(--border-color) !important;
+}
+
+:host ::ng-deep .p-datatable-thead > tr > th.p-highlight {
+  color: var(--brand-primary) !important;
+}
+
+:host ::ng-deep .p-sortable-column-icon {
+  color: var(--text-secondary) !important;
+  font-size: 0.75rem !important;
+  margin-left: 4px !important;
+  vertical-align: middle !important;
+}
+
+:host ::ng-deep .p-highlight .p-sortable-column-icon {
+  color: var(--brand-primary) !important;
 }
 
 :host ::ng-deep .p-datatable-tbody > tr {
@@ -78,6 +100,7 @@
   padding: 0 0 16px 0 !important;
 }
 
+/* ── Toolbar & Search ── */
 .table-toolbar {
   margin-bottom: 16px;
 }
@@ -92,7 +115,6 @@
   background: var(--bg-primary);
   color: var(--text-primary);
 }
-
 .search-input:focus {
   outline: none;
   border-color: var(--brand-primary);
@@ -122,6 +144,12 @@
   white-space: nowrap;
 }
 .btn-add:hover { opacity: 0.88; }
+
+/* ── ID cell ── */
+.id-cell {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
 
 /* ── Code badge ── */
 .code-badge {
@@ -161,7 +189,7 @@
 }
 .status-btn.active   { background: rgba(46,204,113,0.15); color: #27ae60; }
 .status-btn.inactive { background: rgba(231,76,60,0.12);  color: #e74c3c; }
-.status-btn:hover { filter: brightness(0.9); }
+.status-btn:hover    { filter: brightness(0.9); }
 
 /* ── Action buttons ── */
 .action-buttons { display: flex; gap: 8px; }
@@ -176,6 +204,25 @@
 .action-btn.edit:hover  { background: rgba(108,52,131,0.22); }
 .action-btn.delete      { background: rgba(231,76,60,0.1);   color: #e74c3c; }
 .action-btn.delete:hover { background: rgba(231,76,60,0.22); }
+
+/* ── Pays column ── */
+.pays-cell { font-size: 0.88rem; }
+
+/* ── Category tags ── */
+.cat-tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.cat-franchise { background: rgba(108,52,131,0.12); color: #6c3483; }
+.cat-groupe    { background: rgba(52,152,219,0.12);  color: #2980b9; }
+.cat-direct    { background: rgba(46,204,113,0.15);  color: #27ae60; }
+.cat-ecom      { background: rgba(231,76,60,0.12);   color: #e74c3c; }
+.cat-market    { background: rgba(243,156,18,0.15);  color: #e67e22; }
+.cat-corner    { background: rgba(52,73,94,0.12);    color: #34495e; }
+.cat-autre     { background: rgba(150,150,150,0.12); color: #888;    }
 
 /* ── Dialog form ── */
 .dialog-form { display: flex; flex-direction: column; gap: 18px; padding: 4px 0; }
@@ -196,6 +243,29 @@
 .form-input:focus    { outline: none; border-color: var(--brand-primary); }
 .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ── Dialog two-col row ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.form-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ── Toggle group (isBoutique) ── */
 .toggle-group { display: flex; gap: 8px; }
 .toggle-option {
   flex: 1; padding: 9px;
@@ -233,42 +303,6 @@
 .btn-save:hover:not(:disabled) { opacity: 0.88; }
 .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ── Pays column ── */
-.pays-cell { font-size: 0.88rem; }
-
-/* ── Dialog two-col row ── */
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.form-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 32px;
-  cursor: pointer;
-}
-
-/* ── Category tags ── */
-.cat-tag {
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.cat-franchise { background: rgba(108,52,131,0.12); color: #6c3483; }
-.cat-groupe    { background: rgba(52,152,219,0.12);  color: #2980b9; }
-.cat-direct    { background: rgba(46,204,113,0.15);  color: #27ae60; }
-.cat-ecom      { background: rgba(231,76,60,0.12);   color: #e74c3c; }
-.cat-market    { background: rgba(243,156,18,0.15);  color: #e67e22; }
-.cat-corner    { background: rgba(52,73,94,0.12);    color: #34495e; }
-.cat-autre     { background: rgba(150,150,150,0.12); color: #888;    }
-
 /* ── Dialog dark theme overrides ── */
 :host ::ng-deep .dark-dialog .p-dialog-header {
   background: var(--bg-card) !important;
@@ -303,10 +337,4 @@
 :host ::ng-deep .dark-dialog .p-dialog-header-close:hover {
   background: var(--bg-primary) !important;
   color: var(--text-primary) !important;
-}
-
-/* ── Select options dark theme ── */
-.form-select option {
-  background: var(--bg-card);
-  color: var(--text-primary);
 }

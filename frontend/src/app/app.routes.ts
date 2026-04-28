@@ -49,6 +49,11 @@ export const routes: Routes = [
       { path: 'admin/data-monitoring', component: DataMonitoring },
       { path: 'admin/ml-monitoring', component: MlMonitoring },
       { path: 'admin/settings', component: Settings },
+      { path: 'admin/stores', component: Stores },
+      { path: 'admin/families', component: Families },
+      { path: 'admin/predictions', component: Predictions },
+      { path: 'admin/alerts', component: Alerts },
+      { path: 'admin/custom-analysis', component: CustomAnalysis },
 
       // Manager routes
       { path: 'manager', component: Manager },
@@ -56,6 +61,7 @@ export const routes: Routes = [
       { path: 'manager/families', component: Families },
       { path: 'manager/predictions', component: Predictions },
       { path: 'manager/alerts', component: Alerts },
+      { path: 'manager/custom-analysis', component: CustomAnalysis },
 
       // Responsable Magasin routes (with storeGuard!)
       { path: 'responsable-magasin', component: ResponsableMagasin, canActivate: [storeGuard] },
@@ -67,8 +73,6 @@ export const routes: Routes = [
       { path: 'data-analyst', component: DataAnalyst },
       { path: 'data-analyst/data-quality', component: DataQuality },
       { path: 'data-analyst/ml-evolution', component: MlEvolution },
-
-      { path: 'manager/custom-analysis', component: CustomAnalysis },
     ]
   },
   { path: '**', redirectTo: 'login' }

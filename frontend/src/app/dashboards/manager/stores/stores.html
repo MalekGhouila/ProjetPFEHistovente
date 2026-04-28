@@ -33,17 +33,31 @@
       [totalRecords]="totalRecords"
       [lazy]="true"
       (onLazyLoad)="onPageChange($event)"
-      [rowsPerPageOptions]="[10, 25, 50]">
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [sortField]="sortField"
+      [sortOrder]="sortOrder">
 
       <ng-template pTemplate="header">
         <tr>
-          <th>ID</th>
-          <th>Store Name</th>
-          <th>Code</th>
-          <th>Pays</th>
-          <th>Catégorie</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th pSortableColumn="idMagasin" style="width: 80px">
+            ID <p-sortIcon field="idMagasin" />
+          </th>
+          <th pSortableColumn="magasin">
+            Store Name <p-sortIcon field="magasin" />
+          </th>
+          <th pSortableColumn="code" style="width: 110px">
+            Code <p-sortIcon field="code" />
+          </th>
+          <th pSortableColumn="idPays" style="width: 150px">
+            Pays <p-sortIcon field="idPays" />
+          </th>
+          <th pSortableColumn="idCategorie" style="width: 150px">
+            Catégorie <p-sortIcon field="idCategorie" />
+          </th>
+          <th pSortableColumn="etat" style="width: 140px">
+            Status <p-sortIcon field="etat" />
+          </th>
+          <th style="width: 100px">Actions</th>
         </tr>
       </ng-template>
 
@@ -120,7 +134,9 @@
              placeholder="e.g. F054" class="form-input"
              [disabled]="isEditMode" />
       @if (isEditMode) {
-        <small style="color: var(--text-secondary); font-size: 0.78rem">Code cannot be changed after creation</small>
+        <small style="color: var(--text-secondary); font-size: 0.78rem">
+          Code cannot be changed after creation
+        </small>
       }
     </div>
 
