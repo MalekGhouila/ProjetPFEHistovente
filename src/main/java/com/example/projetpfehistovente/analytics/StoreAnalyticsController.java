@@ -1,10 +1,14 @@
 package com.example.projetpfehistovente.analytics;
 
+import com.example.projetpfehistovente.dto.AtRiskDTO;
+import com.example.projetpfehistovente.dto.DormantDTO;
+import com.example.projetpfehistovente.dto.StockForecastDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -68,5 +72,23 @@ public class StoreAnalyticsController {
                 "isCalculating", isCalculating,
                 "lastUpdated", lastUpdated != null ? lastUpdated.toString() : "Never"
         ));
+    }
+
+    // Get stock forecast for a store
+    @GetMapping("/{storeId}/stock-forecast")
+    public ResponseEntity<List<StockForecastDTO>> getStockForecast(@PathVariable Long storeId) {
+        return ResponseEntity.ok(storeAnalyticsService.getStockForecast(storeId));
+    }
+
+    // Get at-risk articles for a store
+    @GetMapping("/{storeId}/at-risk")
+    public ResponseEntity<List<AtRiskDTO>> getAtRisk(@PathVariable Long storeId) {
+        return ResponseEntity.ok(storeAnalyticsService.getAtRisk(storeId));
+    }
+
+    // Get dormant articles for a store
+    @GetMapping("/{storeId}/dormant")
+    public ResponseEntity<List<DormantDTO>> getDormant(@PathVariable Long storeId) {
+        return ResponseEntity.ok(storeAnalyticsService.getDormant(storeId));
     }
 }

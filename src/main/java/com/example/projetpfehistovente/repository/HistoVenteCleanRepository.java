@@ -133,4 +133,47 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
     List<Object[]> getMonthlySalesFiltered(@Param("famille") String famille,
                                            @Param("saison") String saison,
                                            @Param("codeMag") String codeMag);
+
+    // ===== STOCK FORECAST =====
+    // Returns: [0]CodeArticle [1]Designation [2]Famille [3]avgDailySales [4]avgDailySalesPrev [5]lastSaleDate
+    @Query(value = "SELECT CodeArticle, MAX(Designation) as Designation, MAX(Famille) as Famille, " +
+            "ROUND(SUM(CASE WHEN Date >= DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 30 DAY) THEN Quantite ELSE 0 END)/30.0,2) as avgDailySales, " +
+            "ROUND(SUM(CASE WHEN Date BETWEEN DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 60 DAY) AND DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 30 DAY) THEN Quantite ELSE 0 END)/30.0,2) as avgDailySalesPrev, " +
+            "MAX(Date) as lastSaleDate " +
+            "FROM histovente_clean_v1 " +
+            "WHERE IDMagasin = :storeId " +
+            "AND Date >= DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 60 DAY) " +
+            "AND Quantite > 0 AND TypeVente NOT IN ('RETOUR','AVOIR') " +
+            "GROUP BY CodeArticle HAVING avgDailySales > 0 " +
+            "ORDER BY avgDailySales DESC LIMIT 50",
+            nativeQuery = true)
+    List<Object[]> getStockForecast(@Param("storeId") Long storeId);
+
+    // ===== AT RISK =====
+    // Returns: [0]CodeArticle [1]Designation [2]Famille [3]recentSales [4]previousSales
+    @Query(value = "SELECT CodeArticle, MAX(Designation) as Designation, MAX(Famille) as Famille, " +
+            "SUM(CASE WHEN Date >= DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 4 WEEK) THEN Quantite ELSE 0 END) as recentSales, " +
+            "SUM(CASE WHEN Date BETWEEN DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 8 WEEK) AND DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 4 WEEK) THEN Quantite ELSE 0 END) as previousSales " +
+            "FROM histovente_clean_v1 " +
+            "WHERE IDMagasin = :storeId " +
+            "AND Date >= DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 8 WEEK) " +
+            "AND Quantite > 0 AND TypeVente NOT IN ('RETOUR','AVOIR') " +
+            "GROUP BY CodeArticle HAVING previousSales > 5 AND recentSales < previousSales * 0.6 " +
+            "ORDER BY (recentSales - previousSales) / previousSales ASC LIMIT 50",
+            nativeQuery = true)
+    List<Object[]> getAtRisk(@Param("storeId") Long storeId);
+
+    // ===== DORMANT =====
+    // Returns: [0]CodeArticle [1]Designation [2]Famille [3]lastSaleDate [4]daysDormant [5]totalSold
+    @Query(value = "SELECT CodeArticle, MAX(Designation) as Designation, MAX(Famille) as Famille, " +
+            "MAX(Date) as lastSaleDate, " +
+            "DATEDIFF((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), MAX(Date)) as daysDormant, " +
+            "SUM(Quantite) as totalSold " +
+            "FROM histovente_clean_v1 " +
+            "WHERE IDMagasin = :storeId " +
+            "AND Quantite > 0 AND TypeVente NOT IN ('RETOUR','AVOIR') " +
+            "GROUP BY CodeArticle HAVING daysDormant >= 90 " +
+            "ORDER BY daysDormant DESC LIMIT 50",
+            nativeQuery = true)
+    List<Object[]> getDormant(@Param("storeId") Long storeId);
 }
