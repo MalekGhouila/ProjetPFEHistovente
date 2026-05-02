@@ -1,89 +1,104 @@
 <div class="dashboard">
 
+  <!-- ── Always visible header ── -->
   <div class="dashboard-header">
     <h1>Stock Forecast</h1>
     <p>Stock levels and restock recommendations for {{ storeName }}</p>
   </div>
 
-  <!-- KPI Cards -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-icon critical">
-        <i class="pi pi-exclamation-triangle"></i>
+  <!-- ── Skeleton while loading ── -->
+  @if (loading) {
+    <div class="loading-grid">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton-kpi">
+          <div class="skeleton skeleton-icon"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton skeleton-line short"></div>
+            <div class="skeleton skeleton-line long"></div>
+          </div>
+        </div>
+      }
+    </div>
+    <div class="skeleton-table">
+      <div class="skeleton skeleton-table-header"></div>
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="skeleton skeleton-row"></div>
+      }
+    </div>
+  }
+
+  <!-- ── Real content ── -->
+  @if (!loading) {
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon critical"><i class="pi pi-exclamation-triangle"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Critical Stock</span>
+          <span class="kpi-value critical-value">{{ criticalCount }}</span>
+        </div>
       </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Critical Stock</span>
-        <span class="kpi-value critical-value">3</span>
+      <div class="kpi-card">
+        <div class="kpi-icon warning"><i class="pi pi-clock"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Restock Soon</span>
+          <span class="kpi-value warning-value">{{ warningCount }}</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon good"><i class="pi pi-check-circle"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Good Stock</span>
+          <span class="kpi-value good-value">{{ goodCount }}</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon total"><i class="pi pi-box"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Products</span>
+          <span class="kpi-value">{{ totalCount }}</span>
+        </div>
       </div>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-icon warning">
-        <i class="pi pi-clock"></i>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Restock Soon</span>
-        <span class="kpi-value warning-value">2</span>
-      </div>
+    <div class="table-card">
+      <h3>Product Stock Details</h3>
+      <p-table [value]="stockData" [paginator]="true" [rows]="10">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Product</th>
+            <th>Family</th>
+            <th>Avg Daily Sales</th>
+            <th>Trend</th>
+            <th>Last Sale Date</th>
+            <th>Status</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>
+              <strong>{{ item.designation || item.codeArticle }}</strong><br>
+              <small style="color: var(--text-muted)">{{ item.codeArticle }}</small>
+            </td>
+            <td>{{ item.famille }}</td>
+            <td>{{ item.avgDailySales | number:'1.2-2' }}</td>
+            <td>
+              <span [class]="getTrendColor(item.avgDailySales, item.avgDailySalesPrev)">
+                <i [class]="getTrendIcon(item.avgDailySales, item.avgDailySalesPrev)"></i>
+              </span>
+            </td>
+            <td>{{ item.lastSaleDate }}</td>
+            <td>
+              <p-tag
+                [value]="getStatusLabel(item.status)"
+                [severity]="getStatusSeverity(item.status)"/>
+            </td>
+          </tr>
+        </ng-template>
+
+      </p-table>
     </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon good">
-        <i class="pi pi-check-circle"></i>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Good Stock</span>
-        <span class="kpi-value good-value">3</span>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon total">
-        <i class="pi pi-box"></i>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Total Products</span>
-        <span class="kpi-value">8</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Stock Table -->
-  <div class="table-card">
-    <h3>Product Stock Details</h3>
-    <p-table [value]="stockData" [paginator]="true" [rows]="5">
-
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Product</th>
-          <th>Code</th>
-          <th>Current Stock</th>
-          <th>Sales/Day</th>
-          <th>Days Left</th>
-          <th>Status</th>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="body" let-item>
-        <tr>
-          <td><strong>{{ item.product }}</strong></td>
-          <td>{{ item.code }}</td>
-          <td>{{ item.currentStock }}</td>
-          <td>{{ item.salesVelocity }}</td>
-          <td>
-            <span [class]="'days-' + item.status">
-              {{ item.daysLeft }} days
-            </span>
-          </td>
-          <td>
-            <p-tag
-              [value]="getStatusLabel(item.status)"
-              [severity]="getStatusSeverity(item.status)"/>
-          </td>
-        </tr>
-      </ng-template>
-
-    </p-table>
-  </div>
+  }
 
 </div>

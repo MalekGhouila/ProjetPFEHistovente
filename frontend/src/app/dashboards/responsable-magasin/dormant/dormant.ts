@@ -1,14 +1,13 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { StoreAnalyticsService } from '../../../core/services/store-analytics.service';
 
 @Component({
   selector: 'app-dormant',
   standalone: true,
-  imports: [TableModule, TagModule, CommonModule],
+  imports: [TableModule, TagModule],
   templateUrl: './dormant.html',
   styleUrl: './dormant.css'
 })
