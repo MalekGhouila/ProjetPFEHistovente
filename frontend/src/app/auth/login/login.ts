@@ -1,5 +1,6 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
@@ -23,7 +24,8 @@ export class Login {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient
   ) {}
 
   onLogin() {
@@ -37,6 +39,15 @@ export class Login {
       next: (response) => {
         this.authService.saveToken(response.token);
         this.authService.saveUser(response.username, response.role, response.idMagasin);
+
+        if (response.idMagasin) {
+          this.http.get<any>(`http://localhost:8080/api/magasins/${response.idMagasin}`, {
+            headers: new HttpHeaders({ Authorization: `Bearer ${response.token}` })
+          }).subscribe({
+            next: (store) => this.authService.saveStoreName(store.magasin),
+            error: () => this.authService.saveStoreName(null)
+          });
+        }
 
         switch(response.role) {
           case 'ADMIN':
@@ -60,7 +71,7 @@ export class Login {
       error: (err) => {
         this.errorMessage = 'Invalid username or password!';
         this.loading = false;
-        this.cdr.detectChanges(); // ← Forces UI to update immediately!
+        this.cdr.detectChanges();
       }
     });
   }

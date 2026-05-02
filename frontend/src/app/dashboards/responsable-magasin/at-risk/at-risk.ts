@@ -32,7 +32,10 @@ export class AtRisk implements OnInit {
 
   ngOnInit() {
     const storeId = this.authService.getIdMagasin();
-    this.storeName = `Store #${storeId}`;
+    const name = this.authService.getStoreName();
+    this.storeName = name?.trim()
+      ? `${name} (#${storeId})`
+      : `Store #${storeId}`;
     if (storeId !== null) {
       this.loadAtRisk(storeId);
     }

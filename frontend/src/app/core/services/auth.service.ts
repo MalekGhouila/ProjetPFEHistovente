@@ -54,9 +54,23 @@ export class AuthService {
     return this.getToken() !== null;
   }
 
+  saveStoreName(name: string | null): void {
+    if (name?.trim()) {
+      localStorage.setItem('storeName', name);
+    } else {
+      localStorage.removeItem('storeName');
+    }
+  }
+
+  getStoreName(): string | null {
+    return localStorage.getItem('storeName');
+  }
+
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('role');
+    localStorage.removeItem('idMagasin');
+    localStorage.removeItem('storeName');
   }
 }
