@@ -30,4 +30,16 @@ export class StoreAnalyticsService {
   calculate(storeId: number): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/${storeId}/calculate`, {});
   }
+
+  getDormant(storeId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${storeId}/dormant`);
+  }
+
+  getAtRisk(storeId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${storeId}/at-risk`);
+  }
+
+  getStockForecast(storeId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${storeId}/stock-forecast`);
+  }
 }

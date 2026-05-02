@@ -1,93 +1,103 @@
 <div class="dashboard">
 
-  <div class="dashboard-header">
-    <h1>Dormant Products</h1>
-    <p>Products with no sales activity in {{ storeName }}</p>
-  </div>
+  <!-- ── Skeleton while loading ── -->
+  <ng-container *ngIf="loading">
+    <div class="dashboard-header">
+      <div class="skeleton" style="height:28px; width:220px; border-radius:8px;"></div>
+      <div class="skeleton" style="height:14px; width:160px; border-radius:6px; margin-top:8px;"></div>
+    </div>
 
-  <!-- KPI Cards -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-icon dormant">
-        <i class="pi pi-moon"></i>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Total Dormant</span>
-        <span class="kpi-value">6</span>
+    <div class="loading-grid">
+      <div class="skeleton-kpi" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton skeleton-icon"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton skeleton-line short"></div>
+          <div class="skeleton skeleton-line long"></div>
+        </div>
       </div>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-icon remove">
-        <i class="pi pi-trash"></i>
+    <div class="skeleton-table">
+      <div class="skeleton skeleton-table-header"></div>
+      <div class="skeleton skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
+    </div>
+  </ng-container>
+
+  <!-- ── Real content ── -->
+  <ng-container *ngIf="!loading">
+
+    <div class="dashboard-header">
+      <h1>Dormant Products</h1>
+      <p>Products with no sales activity in {{ storeName }}</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon dormant"><i class="pi pi-moon"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Dormant</span>
+          <span class="kpi-value">{{ totalDormant }}</span>
+        </div>
       </div>
-      <div class="kpi-info">
-        <span class="kpi-label">To Remove</span>
-        <span class="kpi-value remove-value">2</span>
+      <div class="kpi-card">
+        <div class="kpi-icon remove"><i class="pi pi-trash"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">To Remove</span>
+          <span class="kpi-value remove-value">{{ toRemove }}</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon discount"><i class="pi pi-tag"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Apply Discount</span>
+          <span class="kpi-value discount-value">{{ toDiscount }}</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon avg"><i class="pi pi-clock"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Avg Days Dormant</span>
+          <span class="kpi-value">{{ avgDaysDormant }}</span>
+        </div>
       </div>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-icon discount">
-        <i class="pi pi-tag"></i>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Apply Discount</span>
-        <span class="kpi-value discount-value">4</span>
-      </div>
+    <div class="table-card">
+      <h3>Dormant Products Detail</h3>
+      <p-table [value]="dormantData" [paginator]="true" [rows]="10">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Product</th>
+            <th>Family</th>
+            <th>Last Sale Date</th>
+            <th>Days Dormant</th>
+            <th>Total Sold</th>
+            <th>Recommended Action</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>
+              <strong>{{ item.designation || item.codeArticle }}</strong><br>
+              <small style="color: var(--text-muted)">{{ item.codeArticle }}</small>
+            </td>
+            <td>{{ item.famille }}</td>
+            <td>{{ item.lastSaleDate }}</td>
+            <td>
+              <span [class]="getDaysColor(item.daysDormant)">
+                {{ item.daysDormant }} days
+              </span>
+            </td>
+            <td>{{ item.totalSold }}</td>
+            <td>
+              <p-tag
+                [value]="getActionLabel(item.action)"
+                [severity]="getActionSeverity(item.action)"/>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-icon avg">
-        <i class="pi pi-clock"></i>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Avg Days Dormant</span>
-        <span class="kpi-value">191</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dormant Table -->
-  <div class="table-card">
-    <h3>Dormant Products Detail</h3>
-    <p-table [value]="dormantData" [paginator]="true" [rows]="5">
-
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Product</th>
-          <th>Family</th>
-          <th>Last Sale Date</th>
-          <th>Days Dormant</th>
-          <th>Total Sold</th>
-          <th>Recommended Action</th>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="body" let-item>
-        <tr>
-          <td>
-            <strong>{{ item.product }}</strong>
-            <br>
-            <small style="color: var(--text-muted)">{{ item.code }}</small>
-          </td>
-          <td>{{ item.famille }}</td>
-          <td>{{ item.lastSale }}</td>
-          <td>
-            <span [class]="getDaysColor(item.daysSinceLastSale)">
-              {{ item.daysSinceLastSale }} days
-            </span>
-          </td>
-          <td>{{ item.totalSold }}</td>
-          <td>
-            <p-tag
-              [value]="getActionLabel(item.action)"
-              [severity]="getActionSeverity(item.action)"/>
-          </td>
-        </tr>
-      </ng-template>
-
-    </p-table>
-  </div>
-
+  </ng-container>
 </div>

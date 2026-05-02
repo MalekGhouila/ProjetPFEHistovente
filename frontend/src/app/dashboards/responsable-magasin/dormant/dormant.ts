@@ -1,39 +1,66 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { StoreAnalyticsService } from '../../../core/services/store-analytics.service';
 
 @Component({
   selector: 'app-dormant',
   standalone: true,
-  imports: [TableModule, TagModule],
+  imports: [TableModule, TagModule, CommonModule],
   templateUrl: './dormant.html',
   styleUrl: './dormant.css'
 })
 export class Dormant implements OnInit {
 
   storeName: string = '';
+  dormantData: any[] = [];
+  loading: boolean = true;
 
-  dormantData = [
-    { product: 'PULL HIVER 2022', code: 'SENH22A', famille: 'PULL',
-      lastSale: '2025-09-15', daysSinceLastSale: 189, totalSold: 45, action: 'discount' },
-    { product: 'ROBE ETE 2021', code: 'SENR21B', famille: 'ROBE',
-      lastSale: '2025-08-20', daysSinceLastSale: 215, totalSold: 23, action: 'remove' },
-    { product: 'CHEMISE VINTAGE', code: 'SENC21A', famille: 'CHEMISE',
-      lastSale: '2025-10-01', daysSinceLastSale: 173, totalSold: 67, action: 'discount' },
-    { product: 'VESTE ANCIENNE', code: 'SENV22C', famille: 'VESTE',
-      lastSale: '2025-07-10', daysSinceLastSale: 256, totalSold: 12, action: 'remove' },
-    { product: 'TEE-SHIRT BASIQUE', code: 'SENT20A', famille: 'T-SHIRT',
-      lastSale: '2025-11-05', daysSinceLastSale: 138, totalSold: 89, action: 'discount' },
-    { product: 'JEAN CLASSIQUE', code: 'SENJ21B', famille: 'PANTALON',
-      lastSale: '2025-09-30', daysSinceLastSale: 174, totalSold: 34, action: 'discount' },
-  ];
+  totalDormant: number = 0;
+  toRemove: number = 0;
+  toDiscount: number = 0;
+  avgDaysDormant: number = 0;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private storeAnalyticsService: StoreAnalyticsService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     const storeId = this.authService.getIdMagasin();
     this.storeName = `Store #${storeId}`;
+    if (storeId !== null) {
+      this.loadDormant(storeId);
+    }
+  }
+
+  loadDormant(storeId: number) {
+    this.loading = true;
+    this.storeAnalyticsService.getDormant(storeId).subscribe({
+      next: (data) => {
+        this.dormantData = data;
+        this.computeKpis(data);
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading dormant data', err);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  computeKpis(data: any[]) {
+    this.totalDormant = data.length;
+    this.toRemove = data.filter(i => i.action === 'remove').length;
+    this.toDiscount = data.filter(i => i.action === 'discount').length;
+    this.avgDaysDormant = data.length
+      ? Math.round(data.reduce((sum, i) => sum + i.daysDormant, 0) / data.length)
+      : 0;
   }
 
   getActionSeverity(action: string): 'warn' | 'danger' {
