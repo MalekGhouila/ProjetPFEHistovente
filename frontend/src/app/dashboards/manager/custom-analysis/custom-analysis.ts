@@ -112,21 +112,26 @@ export class CustomAnalysis implements OnInit {
   }
 
   loadFilterOptions() {
-    this.http.get<any[]>('http://localhost:8080/api/familles').subscribe({
+    const headers = { Authorization: `Bearer ${this.authService.getToken()}` };
+
+    this.http.get<any>('http://localhost:8080/api/familles?size=100', { headers }).subscribe({
       next: (data) => {
-        this.familles = data.filter(f => f.famille).map(f => ({ label: f.famille, value: f.famille }));
+        const list = data.content || data; // 👈 handle paginated OR flat
+        this.familles = list.filter((f: any) => f.famille)
+          .map((f: any) => ({ label: f.famille, value: f.famille }));
         this.cdr.detectChanges();
       }
     });
 
-    this.http.get<any[]>('http://localhost:8080/api/saisons').subscribe({
+    this.http.get<any[]>('http://localhost:8080/api/saisons', { headers }).subscribe({
       next: (data) => {
-        this.saisons = data.filter(s => s.saison).map(s => ({ label: s.saison, value: s.code }));
+        this.saisons = data.filter(s => s.saison)
+          .map(s => ({ label: s.saison, value: s.code }));
         this.cdr.detectChanges();
       }
     });
 
-    this.http.get<any>('http://localhost:8080/api/magasins').subscribe({
+    this.http.get<any>('http://localhost:8080/api/magasins?size=200', { headers }).subscribe({
       next: (data) => {
         const stores = data.content || data;
         this.stores = stores.filter((s: any) => s.magasin)
