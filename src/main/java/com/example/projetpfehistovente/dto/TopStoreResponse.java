@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TopStoreResponse {
+    private String storeCode;
     private String storeName;
     private Long totalSales;
     private BigDecimal totalRevenue;

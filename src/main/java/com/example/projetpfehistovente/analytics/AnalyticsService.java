@@ -190,9 +190,10 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getTopStoresNative();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "storeName", row[0].toString(),
-                            "totalSales", ((Number) row[1]).longValue(),
-                            "totalRevenue", row[2] != null ? row[2].toString() : "0"
+                            "storeCode", row[0].toString(),
+                            "storeName", row[1].toString(),
+                            "totalSales", ((Number) row[2]).longValue(),
+                            "totalRevenue", row[3] != null ? row[3].toString() : "0"
                     )).collect(Collectors.toList())
             );
             recalculateText("top_stores", json);

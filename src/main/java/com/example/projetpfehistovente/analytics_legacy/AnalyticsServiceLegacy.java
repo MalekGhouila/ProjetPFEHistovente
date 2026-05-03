@@ -65,7 +65,7 @@ public class AnalyticsServiceLegacy {
                 row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO
         )).collect(Collectors.toList());
     }
-
+/*
     public List<TopStoreResponse> getTopStores() {
         List<Object[]> results = histoVenteCleanRepository.getTopStoresNative();
         return results.stream().map(row -> new TopStoreResponse(
@@ -73,7 +73,7 @@ public class AnalyticsServiceLegacy {
                 ((Number) row[1]).longValue(),
                 row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO
         )).collect(Collectors.toList());
-    }
+    }   */
 
     public List<FamilySalesResponse> getSalesByFamily() {
         List<Object[]> results = histoVenteCleanRepository.getSalesByFamilyNative();

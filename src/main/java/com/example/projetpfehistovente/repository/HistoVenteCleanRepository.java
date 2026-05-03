@@ -35,10 +35,12 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
     List<Object[]> getMonthlySalesNative();
 
     // ===== TOP STORES =====
-    @Query(value = "SELECT CodeMag as storeName, COUNT(*) as totalSales, SUM(Total) as totalRevenue " +
-            "FROM histovente_clean_v1 " +
-            "WHERE TypeVente = 'VENTE' " +
-            "GROUP BY CodeMag " +
+    @Query(value = "SELECT h.CodeMag as storeCode, COALESCE(m.Magasin, h.CodeMag) as storeName, " +
+            "COUNT(*) as totalSales, SUM(h.Total) as totalRevenue " +
+            "FROM histovente_clean_v1 h " +
+            "LEFT JOIN magasin m ON m.Code = h.CodeMag " +
+            "WHERE h.TypeVente = 'VENTE' " +
+            "GROUP BY h.CodeMag, m.Magasin " +
             "ORDER BY totalSales DESC " +
             "LIMIT 10",
             nativeQuery = true)

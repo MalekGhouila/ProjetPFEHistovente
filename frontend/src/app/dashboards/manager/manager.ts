@@ -135,7 +135,7 @@ export class Manager implements OnInit {
       .subscribe({
         next: (data) => {
           this.topStoresData = {
-            labels: data.map(d => d.storeName),
+            labels: data.map(d => d.storeName + (d.storeCode ? ` (${d.storeCode})` : '')), // 👈 only this line changed
             datasets: [{
               label: 'Total Sales',
               data: data.map(d => d.totalSales),
