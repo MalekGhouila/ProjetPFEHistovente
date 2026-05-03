@@ -137,7 +137,6 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
                                            @Param("codeMag") String codeMag);
 
     // ===== STOCK FORECAST =====
-    // Returns: [0]CodeArticle [1]Designation [2]Famille [3]avgDailySales [4]avgDailySalesPrev [5]lastSaleDate
     @Query(value = "SELECT CodeArticle, MAX(Designation) as Designation, MAX(Famille) as Famille, " +
             "ROUND(SUM(CASE WHEN Date >= DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 30 DAY) THEN Quantite ELSE 0 END)/30.0,2) as avgDailySales, " +
             "ROUND(SUM(CASE WHEN Date BETWEEN DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 60 DAY) AND DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 30 DAY) THEN Quantite ELSE 0 END)/30.0,2) as avgDailySalesPrev, " +
@@ -152,7 +151,6 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
     List<Object[]> getStockForecast(@Param("storeId") Long storeId);
 
     // ===== AT RISK =====
-    // Returns: [0]CodeArticle [1]Designation [2]Famille [3]recentSales [4]previousSales
     @Query(value = "SELECT CodeArticle, MAX(Designation) as Designation, MAX(Famille) as Famille, " +
             "SUM(CASE WHEN Date >= DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 4 WEEK) THEN Quantite ELSE 0 END) as recentSales, " +
             "SUM(CASE WHEN Date BETWEEN DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 8 WEEK) AND DATE_SUB((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), INTERVAL 4 WEEK) THEN Quantite ELSE 0 END) as previousSales " +
@@ -166,7 +164,6 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
     List<Object[]> getAtRisk(@Param("storeId") Long storeId);
 
     // ===== DORMANT =====
-    // Returns: [0]CodeArticle [1]Designation [2]Famille [3]lastSaleDate [4]daysDormant [5]totalSold
     @Query(value = "SELECT CodeArticle, MAX(Designation) as Designation, MAX(Famille) as Famille, " +
             "MAX(Date) as lastSaleDate, " +
             "DATEDIFF((SELECT MAX(Date) FROM histovente_clean_v1 WHERE IDMagasin = :storeId), MAX(Date)) as daysDormant, " +
@@ -178,4 +175,37 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
             "ORDER BY daysDormant DESC LIMIT 50",
             nativeQuery = true)
     List<Object[]> getDormant(@Param("storeId") Long storeId);
+
+    // ===== DATA QUALITY =====
+    @Query(value = "SELECT COUNT(*) FROM histovente_clean_v1",
+            nativeQuery = true)
+    Long countTotalRawRecords();
+
+    @Query(value = "SELECT COUNT(*) FROM histovente_clean_v1 WHERE Quantite <= 0 OR Prix <= 0",
+            nativeQuery = true)
+    Long countOutliers();
+
+    @Query(value = """
+            SELECT
+              SUM(CASE WHEN IDArCouleur IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+              SUM(CASE WHEN IDVille IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+              SUM(CASE WHEN IDRegion IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+              SUM(CASE WHEN Saison IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+              SUM(CASE WHEN CodeArticle IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+              SUM(CASE WHEN Famille IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+              COUNT(*),
+              SUM(CASE WHEN IDArCouleur IS NULL OR IDVille IS NULL OR IDRegion IS NULL
+                       OR Saison IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
+            FROM histovente_clean_v1
+            """, nativeQuery = true)
+    List<Object[]> getMissingValuesStats();
+
+    @Query(value = """
+            SELECT MONTH(Date) as month, COUNT(*) as recordCount
+            FROM histovente_clean_v1
+            WHERE YEAR(Date) = 2024
+            GROUP BY MONTH(Date)
+            ORDER BY MONTH(Date)
+            """, nativeQuery = true)
+    List<Object[]> getRecordsPerMonth2024();
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
 import { DatePipe } from '@angular/common';
@@ -12,7 +12,7 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './data-analyst.html',
   styleUrl: './data-analyst.css'
 })
-export class DataAnalyst implements OnInit {
+export class DataAnalyst implements OnInit, OnDestroy {
 
   welcomeMessage: string = '';
   lastUpdated: string = '';
@@ -32,6 +32,7 @@ export class DataAnalyst implements OnInit {
 
   private apiUrl = 'http://localhost:8080/api/analytics';
   private qualityStorageKey = 'qualityCalculating';
+  private pollInterval: any = null;
 
   constructor(
     private http: HttpClient,
@@ -42,17 +43,20 @@ export class DataAnalyst implements OnInit {
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
     this.initChartOptions();
-
-    // Check if calculation was running before page refresh
-    const savedState = localStorage.getItem(this.qualityStorageKey);
-    if (savedState) {
+    if (localStorage.getItem(this.qualityStorageKey)) {
       this.isCalculating = true;
-      this.loadKpis();
       this.cdr.detectChanges();
-      this.pollQualityStatus();
-    } else {
-      this.loadQualityStatus();
-      this.loadKpis();
+    }
+    this.loadQualityStatus();
+    this.loadKpis();
+    this.loadRecordsPerMonth();
+    this.loadMissingByColumn();
+  }
+
+  ngOnDestroy() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
     }
   }
 
@@ -90,11 +94,12 @@ export class DataAnalyst implements OnInit {
       scales: { y: { beginAtZero: true } }
     };
 
+    // Placeholder until real data loads
     this.missingValuesChartData = {
       labels: ['IDArCouleur', 'IDVille', 'IDRegion', 'Saison', 'CodeArticle', 'Famille'],
       datasets: [{
         label: 'Missing Values %',
-        data: [45, 38, 32, 28, 15, 8],
+        data: [0, 0, 0, 0, 0, 0],
         backgroundColor: [
           'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.7)',
           'rgba(241, 196, 15, 0.8)', 'rgba(241, 196, 15, 0.7)',
@@ -124,18 +129,65 @@ export class DataAnalyst implements OnInit {
       ]
     };
 
+    // Placeholder until real data loads
     this.outliersData = {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       datasets: [{
-        label: 'Outliers Detected',
-        data: [1200, 980, 1100, 890, 750, 820, 1050, 930, 1180, 1020, 890, 643],
-        borderColor: '#e74c3c',
-        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+        label: 'Records per Month (2024)',
+        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4,
         fill: true
       }]
     };
+  }
+
+  loadRecordsPerMonth() {
+    this.http.get<any[]>(`${this.apiUrl}/records-per-month`).subscribe({
+      next: (data) => {
+        if (!data || data.length === 0) return;
+        this.outliersData = {
+          labels: data.map(d => d['month']),
+          datasets: [{
+            label: 'Records per Month (2024)',
+            data: data.map(d => d['recordCount']),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        };
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error loading records per month:', err)
+    });
+  }
+
+  loadMissingByColumn() {
+    this.http.get<any>(`${this.apiUrl}/missing-by-column`).subscribe({
+      next: (data) => {
+        if (!data) return;
+        const labels = Object.keys(data);
+        const values = Object.values(data) as number[];
+        this.missingValuesChartData = {
+          labels,
+          datasets: [{
+            label: 'Missing Values %',
+            data: values.map(v => parseFloat(v.toFixed(2))),
+            backgroundColor: [
+              'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.7)',
+              'rgba(241, 196, 15, 0.8)', 'rgba(241, 196, 15, 0.7)',
+              'rgba(46, 204, 113, 0.8)', 'rgba(46, 204, 113, 0.7)'
+            ],
+            borderWidth: 1
+          }]
+        };
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error loading missing by column:', err)
+    });
   }
 
   loadQualityStatus() {
@@ -145,7 +197,9 @@ export class DataAnalyst implements OnInit {
         this.isCalculating = status.isCalculating;
         if (status.isCalculating) {
           localStorage.setItem(this.qualityStorageKey, 'calculating');
-          this.pollQualityStatus();
+          this.startPolling();
+        } else {
+          localStorage.removeItem(this.qualityStorageKey);
         }
         this.cdr.detectChanges();
       },
@@ -172,7 +226,7 @@ export class DataAnalyst implements OnInit {
     this.cdr.detectChanges();
 
     this.http.post<any>(`${this.apiUrl}/refresh-quality`, {}).subscribe({
-      next: () => this.pollQualityStatus(),
+      next: () => this.startPolling(),
       error: (err: any) => {
         console.error(err);
         this.isCalculating = false;
@@ -182,29 +236,31 @@ export class DataAnalyst implements OnInit {
     });
   }
 
-  pollQualityStatus() {
-    const startTime = new Date().toISOString();
-    const interval = setInterval(() => {
-      if (!localStorage.getItem(this.qualityStorageKey)) {
-        clearInterval(interval);
-        this.isCalculating = false;
-        this.cdr.detectChanges();
-        return;
-      }
+  startPolling() {
+    if (this.pollInterval) return;
 
+    const startTime = new Date().toISOString();
+    this.pollInterval = setInterval(() => {
       this.http.get<any>(`${this.apiUrl}/quality-status`).subscribe({
         next: (status) => {
           if (!status.isCalculating &&
             new Date(status.lastUpdated) > new Date(startTime)) {
-            clearInterval(interval);
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
             localStorage.removeItem(this.qualityStorageKey);
             this.isCalculating = false;
-            this.loadQualityStatus();
+            this.lastUpdated = status.lastUpdated;
             this.loadKpis();
+            this.loadRecordsPerMonth();
+            this.loadMissingByColumn();
             this.cdr.detectChanges();
           }
         }
       });
     }, 3000);
+  }
+
+  pollQualityStatus() {
+    this.startPolling();
   }
 }

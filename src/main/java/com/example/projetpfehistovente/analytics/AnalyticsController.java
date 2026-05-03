@@ -90,4 +90,14 @@ public class AnalyticsController {
         ));
     }
 
+    @GetMapping("/records-per-month")
+    public ResponseEntity<List<Map<String, Object>>> getRecordsPerMonth() {
+        return ResponseEntity.ok(analyticsService.getRecordsPerMonth());
+    }
+
+    @GetMapping("/missing-by-column")
+    public ResponseEntity<Map<String, Double>> getMissingByColumn() {
+        return ResponseEntity.ok(analyticsService.getMissingValuesByColumn());
+    }
+
 }

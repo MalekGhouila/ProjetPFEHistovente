@@ -1,6 +1,7 @@
 package com.example.projetpfehistovente.analytics;
 
 import com.example.projetpfehistovente.dto.*;
+import com.example.projetpfehistovente.entity.AnalyticsSummary;
 import com.example.projetpfehistovente.repository.AnalyticsSummaryRepository;
 import com.example.projetpfehistovente.repository.HistoVenteCleanRepository;
 import com.example.projetpfehistovente.repository.MagasinRepository;
@@ -123,6 +124,37 @@ public class AnalyticsService {
         );
     }
 
+    // ===== MISSING VALUES BY COLUMN =====
+    public Map<String, Double> getMissingValuesByColumn() {
+        Double couleur = getValue("missing_couleur");
+        Double ville   = getValue("missing_ville");
+        Double region  = getValue("missing_region");
+        Double saison  = getValue("missing_saison");
+        Double article = getValue("missing_article");
+        Double famille = getValue("missing_famille");
+
+        return Map.of(
+                "IDArCouleur", couleur  != null ? couleur  : 0.0,
+                "IDVille",     ville    != null ? ville    : 0.0,
+                "IDRegion",    region   != null ? region   : 0.0,
+                "Saison",      saison   != null ? saison   : 0.0,
+                "CodeArticle", article  != null ? article  : 0.0,
+                "Famille",     famille  != null ? famille  : 0.0
+        );
+    }
+
+    // ===== RECORDS PER MONTH =====
+    public List<Map<String, Object>> getRecordsPerMonth() {
+        String json = getText("records_per_month_2024");
+        if (json == null) return List.of();
+        try {
+            return objectMapper.readValue(json,
+                    new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
     // ===== STORE KPIs =====
     public KpiResponse getStoreKpis(Long storeId) {
         Double transactions = getValue("store_transactions_" + storeId);
@@ -165,24 +197,72 @@ public class AnalyticsService {
     public void refreshQualityMetrics() {
         calculatingQuality = true;
         try {
-            recalculateMetric("quality_score", 74.0);
-            recalculateMetric("missing_percentage", 26.0);
-            recalculateMetric("outliers_count", 12453.0);
-            recalculateMetric("total_raw_records", 16277213.0);
-            recalculateMetric("clean_records", 11842122.0);
-            recalculateMetric("missing_couleur", 113467.0);
-            recalculateMetric("missing_famille", 263212.0);
+            Long total = histoVenteCleanRepository.countTotalRawRecords();
+            recalculateMetric("total_raw_records", total != null ? total.doubleValue() : 0.0);
+
+            Long outliers = histoVenteCleanRepository.countOutliers();
+            recalculateMetric("outliers_count", outliers != null ? outliers.doubleValue() : 0.0);
+
+            // FIX: getMissingValuesStats() returns List<Object[]>, get first row
+            List<Object[]> statsList = histoVenteCleanRepository.getMissingValuesStats();
+            if (statsList != null && !statsList.isEmpty()) {
+                Object[] stats = statsList.get(0);
+
+                double missingCouleur = stats[0] != null ? ((Number) stats[0]).doubleValue() : 0.0;
+                double missingVille   = stats[1] != null ? ((Number) stats[1]).doubleValue() : 0.0;
+                double missingRegion  = stats[2] != null ? ((Number) stats[2]).doubleValue() : 0.0;
+                double missingSaison  = stats[3] != null ? ((Number) stats[3]).doubleValue() : 0.0;
+                double missingArticle = stats[4] != null ? ((Number) stats[4]).doubleValue() : 0.0;
+                double missingFamille = stats[5] != null ? ((Number) stats[5]).doubleValue() : 0.0;
+                double overallMissing = stats[7] != null ? ((Number) stats[7]).doubleValue() : 0.0;
+
+                recalculateMetric("missing_couleur",    missingCouleur);
+                recalculateMetric("missing_ville",      missingVille);
+                recalculateMetric("missing_region",     missingRegion);
+                recalculateMetric("missing_saison",     missingSaison);
+                recalculateMetric("missing_article",    missingArticle);
+                recalculateMetric("missing_famille",    missingFamille);
+                recalculateMetric("missing_percentage", overallMissing);
+                recalculateMetric("quality_score",      100.0 - overallMissing);
+            }
+
+            recalculateRecordsPerMonth();
+
         } finally {
             calculatingQuality = false;
         }
     }
 
+    private void recalculateRecordsPerMonth() {
+        try {
+            List<Object[]> results = histoVenteCleanRepository.getRecordsPerMonth2024();
+            String[] monthNames = {"Jan","Feb","Mar","Apr","May","Jun",
+                    "Jul","Aug","Sep","Oct","Nov","Dec"};
+            String json = objectMapper.writeValueAsString(
+                    results.stream().map(row -> Map.of(
+                            "month", monthNames[((Number) row[0]).intValue() - 1],
+                            "recordCount", ((Number) row[1]).longValue()
+                    )).collect(Collectors.toList())
+            );
+            recalculateText("records_per_month_2024", json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void recalculateMetric(String metricName, Double value) {
-        summaryRepository.findByMetricName(metricName).ifPresent(existing -> {
-            existing.setMetricValue(value);
-            existing.setComputedAt(LocalDateTime.now());
-            summaryRepository.save(existing);
-        });
+        var existing = summaryRepository.findByMetricName(metricName);
+        if (existing.isPresent()) {
+            existing.get().setMetricValue(value);
+            existing.get().setComputedAt(LocalDateTime.now());
+            summaryRepository.save(existing.get());
+        } else {
+            AnalyticsSummary newRow = new AnalyticsSummary();
+            newRow.setMetricName(metricName);
+            newRow.setMetricValue(value);
+            newRow.setComputedAt(LocalDateTime.now());
+            summaryRepository.save(newRow);
+        }
     }
 
     private void recalculateTopStores() {
@@ -190,9 +270,9 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getTopStoresNative();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "storeCode", row[0].toString(),
-                            "storeName", row[1].toString(),
-                            "totalSales", ((Number) row[2]).longValue(),
+                            "storeCode",    row[0].toString(),
+                            "storeName",    row[1].toString(),
+                            "totalSales",   ((Number) row[2]).longValue(),
                             "totalRevenue", row[3] != null ? row[3].toString() : "0"
                     )).collect(Collectors.toList())
             );
@@ -207,7 +287,7 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getSalesByFamilyNative();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "famille", row[0].toString(),
+                            "famille",    row[0].toString(),
                             "totalSales", ((Number) row[1]).longValue()
                     )).collect(Collectors.toList())
             );
@@ -222,8 +302,8 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getMonthlySalesNative();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "month", row[0].toString(),
-                            "totalSales", ((Number) row[1]).longValue(),
+                            "month",        row[0].toString(),
+                            "totalSales",   ((Number) row[1]).longValue(),
                             "totalRevenue", row[2] != null ? row[2].toString() : "0"
                     )).collect(Collectors.toList())
             );
@@ -234,11 +314,18 @@ public class AnalyticsService {
     }
 
     private void recalculateText(String metricName, String text) {
-        summaryRepository.findByMetricName(metricName).ifPresent(existing -> {
-            existing.setMetricText(text);
-            existing.setComputedAt(LocalDateTime.now());
-            summaryRepository.save(existing);
-        });
+        var existing = summaryRepository.findByMetricName(metricName);
+        if (existing.isPresent()) {
+            existing.get().setMetricText(text);
+            existing.get().setComputedAt(LocalDateTime.now());
+            summaryRepository.save(existing.get());
+        } else {
+            AnalyticsSummary newRow = new AnalyticsSummary();
+            newRow.setMetricName(metricName);
+            newRow.setMetricText(text);
+            newRow.setComputedAt(LocalDateTime.now());
+            summaryRepository.save(newRow);
+        }
     }
 
     // ===== HELPER METHODS =====
@@ -272,7 +359,7 @@ public class AnalyticsService {
         List<Map<String, Object>> familyData = familyResults.stream().map(row -> {
             long sales = ((Number) row[1]).longValue();
             return Map.<String, Object>of(
-                    "famille", row[0].toString(),
+                    "famille",    row[0].toString(),
                     "totalSales", sales,
                     "percentage", total > 0 ? (sales * 100.0) / total : 0.0
             );
@@ -280,21 +367,21 @@ public class AnalyticsService {
 
         List<Map<String, Object>> monthlyData = monthlyResults.stream().map(row ->
                 Map.<String, Object>of(
-                        "month", row[0].toString(),
-                        "totalSales", ((Number) row[1]).longValue(),
+                        "month",        row[0].toString(),
+                        "totalSales",   ((Number) row[1]).longValue(),
                         "totalRevenue", row[2] != null ? row[2].toString() : "0"
                 )
         ).collect(Collectors.toList());
 
         return Map.of(
                 "totalTransactions", count != null ? count : 0L,
-                "totalRevenue", revenue != null ? revenue : 0.0,
-                "salesByFamily", familyData,
-                "monthlySales", monthlyData,
+                "totalRevenue",      revenue != null ? revenue : 0.0,
+                "salesByFamily",     familyData,
+                "monthlySales",      monthlyData,
                 "filters", Map.of(
-                        "famille", famille != null ? famille : "All",
-                        "saison", saison != null ? saison : "All",
-                        "codeMag", codeMag != null ? codeMag : "All"
+                        "famille",  famille  != null ? famille  : "All",
+                        "saison",   saison   != null ? saison   : "All",
+                        "codeMag",  codeMag  != null ? codeMag  : "All"
                 )
         );
     }
