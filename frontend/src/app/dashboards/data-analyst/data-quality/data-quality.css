@@ -5,6 +5,7 @@
   gap: 24px;
 }
 
+/* ===== HEADER ===== */
 .dashboard-header h1 {
   font-size: 1.8rem;
   font-weight: 700;
@@ -15,6 +16,44 @@
 .dashboard-header p {
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calculating-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-primary);
+  font-weight: 500;
+}
+
+.data-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+.last-updated-msg {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.refresh-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 /* ===== KPI CARDS ===== */
@@ -41,7 +80,6 @@
   box-shadow: var(--shadow-md);
 }
 
-/* Quality Score Card */
 .quality-score-card {
   justify-content: center;
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent)) !important;
@@ -119,7 +157,7 @@
 /* ===== CHARTS ===== */
 .charts-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
@@ -138,7 +176,7 @@
   margin-bottom: 20px;
 }
 
-/* ===== TABLE ===== */
+/* ===== TABLES ===== */
 .table-card {
   background: var(--bg-card);
   border-radius: 16px;

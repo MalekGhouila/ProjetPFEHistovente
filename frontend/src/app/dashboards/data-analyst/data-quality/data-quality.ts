@@ -1,119 +1,197 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, DatePipe } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
+import { DataQualityService } from '../../../core/services/data-quality.service';
 
 @Component({
   selector: 'app-data-quality',
   standalone: true,
-  imports: [ChartModule, TableModule, TagModule, DecimalPipe],
+  imports: [ChartModule, TableModule, TagModule, DecimalPipe, DatePipe, ButtonModule],
   templateUrl: './data-quality.html',
   styleUrl: './data-quality.css'
 })
-
 export class DataQuality implements OnInit {
 
-  // Overall Score
-  qualityScore = 74;
-  totalRecords = '16,277,213';
-  cleanRecords = '12,044,937';
-  problematicRecords = '4,232,276';
+  loading = true;
+  isCalculating = false;
+  lastUpdated: string = '';
 
-  // Missing Values Table
-  missingValuesData = [
-    { column: 'IDArCouleur', missing: 4580234, percentage: 28.1, severity: 'high' },
-    { column: 'IDVille', missing: 3890123, percentage: 23.9, severity: 'high' },
-    { column: 'IDRegion', missing: 3456789, percentage: 21.2, severity: 'high' },
-    { column: 'Saison', missing: 2345678, percentage: 14.4, severity: 'medium' },
-    { column: 'CodeArticle', missing: 1234567, percentage: 7.6, severity: 'medium' },
-    { column: 'Famille', missing: 456789, percentage: 2.8, severity: 'low' },
-    { column: 'PrixVente', missing: 234567, percentage: 1.4, severity: 'low' },
-    { column: 'Couleur', missing: 123456, percentage: 0.8, severity: 'low' },
-  ];
+  // KPI cards
+  qualityScore = 0;
+  totalRecords = 0;
+  cleanRecords = 0;
+  removedRecords = 0;
+
+  // Filter stats table
+  filterStatsData: { filter: string; removed: number }[] = [];
+
+  // Dropped columns table
+  droppedColumns: { name: string; reason: string; nullPct: number }[] = [];
 
   // Charts
-  missingValuesChartData: any;
-  missingValuesChartOptions: any;
-  qualityByYearData: any;
-  qualityByYearOptions: any;
+  typeVenteChartData: any;
+  typeVenteChartOptions: any;
+  yearDistChartData: any;
+  yearDistChartOptions: any;
+
+  constructor(
+    private dataQualityService: DataQualityService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
-    this.initMissingValuesChart();
-    this.initQualityByYearChart();
+    this.dataQualityService.getStatus().subscribe({
+      next: (s) => {
+        this.lastUpdated = s.lastUpdated;
+        this.isCalculating = s.isCalculating;
+        if (s.isCalculating) this.pollStatus();
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+    this.loadStats();
   }
 
-  initMissingValuesChart() {
-    this.missingValuesChartData = {
-      labels: this.missingValuesData.map(d => d.column),
+  loadStats() {
+    this.dataQualityService.getRawStats().subscribe({
+      next: (data) => {
+        this.qualityScore   = data.qualityScore;
+        this.totalRecords   = data.totalRecords;
+        this.cleanRecords   = data.cleanRecords;
+        this.removedRecords = data.removedRecords;
+
+        this.filterStatsData = [
+          { filter: 'Type de vente non valide', removed: data.filterStats.typeVente },
+          { filter: 'Date nulle',               removed: data.filterStats.dateNull },
+          { filter: 'Date < 2020',              removed: data.filterStats.dateOld },
+          { filter: 'Quantité invalide',        removed: data.filterStats.quantite },
+          { filter: 'Prix invalide',            removed: data.filterStats.prix },
+        ];
+
+        this.droppedColumns = data.droppedColumns;
+        this.initTypeVenteChart(data.typeVenteDistribution);
+        this.initYearDistChart(data.distributionByYear);
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load data quality stats', err);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  onRefresh() {
+    if (this.isCalculating) return;
+    this.isCalculating = true;
+    this.cdr.detectChanges();
+
+    this.dataQualityService.refresh().subscribe({
+      next: () => { this.pollStatus(); },
+      error: (err) => {
+        console.error('Error triggering refresh:', err);
+        this.isCalculating = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  pollStatus() {
+    const startTime = new Date().toISOString();
+
+    const interval = setInterval(() => {
+      this.dataQualityService.getStatus().subscribe({
+        next: (status) => {
+          if (!status.isCalculating &&
+            status.lastUpdated !== 'Never' &&
+            new Date(status.lastUpdated) > new Date(startTime)) {
+
+            clearInterval(interval);
+            this.lastUpdated = status.lastUpdated;
+            this.loadStats();
+            setTimeout(() => {
+              this.isCalculating = false;
+              this.cdr.detectChanges();
+            }, 1500);
+          }
+        }
+      });
+    }, 5000);
+  }
+
+  initTypeVenteChart(distribution: { type: string; count: number }[]) {
+    const colors = [
+      '#3b82f6','#10b981','#f59e0b','#ef4444',
+      '#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899','#6b7280'
+    ];
+    this.typeVenteChartData = {
+      labels: distribution.map(d => d.type),
       datasets: [{
-        label: 'Missing Values %',
-        data: this.missingValuesData.map(d => d.percentage),
-        backgroundColor: this.missingValuesData.map(d => {
-          if (d.severity === 'high') return 'rgba(231, 76, 60, 0.8)';
-          if (d.severity === 'medium') return 'rgba(241, 196, 15, 0.8)';
-          return 'rgba(46, 204, 113, 0.8)';
-        }),
-        borderWidth: 1
+        data: distribution.map(d => d.count),
+        backgroundColor: colors.slice(0, distribution.length),
+        borderWidth: 2,
+        borderColor: '#ffffff'
       }]
     };
-
-    this.missingValuesChartOptions = {
+    this.typeVenteChartOptions = {
       responsive: true,
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          beginAtZero: true,
-          max: 100,
-          ticks: { callback: (value: number) => value + '%' }
+      plugins: {
+        legend: { position: 'right' },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => {
+              const total = ctx.dataset.data.reduce((a: number, b: number) => a + b, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ` ${ctx.label}: ${ctx.parsed.toLocaleString()} (${pct}%)`;
+            }
+          }
         }
       }
     };
   }
 
-  initQualityByYearChart() {
-    this.qualityByYearData = {
-      labels: ['2021', '2022', '2023', '2024', '2025'],
-      datasets: [
-        {
-          label: 'Complete Records %',
-          data: [85, 78, 72, 74, 76],
-          backgroundColor: 'rgba(46, 204, 113, 0.7)',
-          borderColor: '#2ecc71',
-          borderWidth: 1
-        },
-        {
-          label: 'Incomplete Records %',
-          data: [15, 22, 28, 26, 24],
-          backgroundColor: 'rgba(231, 76, 60, 0.7)',
-          borderColor: '#e74c3c',
-          borderWidth: 1
-        }
-      ]
+  initYearDistChart(distribution: { year: number; count: number; pct: number }[]) {
+    this.yearDistChartData = {
+      labels: distribution.map(d => d.year.toString()),
+      datasets: [{
+        label: 'Clean Records',
+        data: distribution.map(d => d.count),
+        backgroundColor: ['#3b82f6','#10b981','#f59e0b','#8b5cf6'],
+        borderRadius: 6,
+        borderWidth: 0
+      }]
     };
-
-    this.qualityByYearOptions = {
+    this.yearDistChartOptions = {
       responsive: true,
-      plugins: { legend: { position: 'top' } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => {
+              const pct = distribution[ctx.dataIndex].pct;
+              return ` ${ctx.parsed.y.toLocaleString()} records (${pct}%)`;
+            }
+          }
+        }
+      },
       scales: {
-        x: { stacked: true },
         y: {
-          stacked: true,
           beginAtZero: true,
-          max: 100,
-          ticks: { callback: (value: number) => value + '%' }
+          ticks: {
+            callback: (value: number) => (value / 1000000).toFixed(1) + 'M'
+          }
         }
       }
     };
   }
 
-  getSeverity(severity: string): 'success' | 'warn' | 'danger' {
-    switch(severity) {
-      case 'high': return 'danger';
-      case 'medium': return 'warn';
-      case 'low': return 'success';
-      default: return 'success';
-    }
+  getReasonSeverity(reason: string): 'success' | 'warn' | 'danger' {
+    if (reason === '>60% NULL') return 'danger';
+    if (reason === '100% zéros') return 'warn';
+    return 'warn';
   }
 }

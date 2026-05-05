@@ -1,12 +1,41 @@
 <div class="dashboard">
 
   <div class="dashboard-header">
-    <h1>Data Quality Report</h1>
-    <p>Detailed analysis of NAF NAF historical sales data quality</p>
+    <div class="header-row">
+      <div>
+        <h1>Data Quality Report</h1>
+        <p>Analyse de qualité des données historiques NAF NAF — {{ totalRecords | number }} enregistrements bruts</p>
+      </div>
+      <div class="header-actions">
+        @if (isCalculating) {
+          <span class="calculating-msg">
+            <i class="pi pi-spin pi-spinner"></i>
+            Calculating new data... please wait
+          </span>
+        } @else {
+          <div class="data-info">
+            @if (lastUpdated) {
+              <span class="last-updated-msg">
+                Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </span>
+              <span class="refresh-hint">
+                For up-to-date data, click Refresh and wait.
+              </span>
+            }
+          </div>
+          <p-button
+            label="Refresh Data"
+            icon="pi pi-refresh"
+            severity="secondary"
+            (onClick)="onRefresh()"/>
+        }
+      </div>
+    </div>
   </div>
 
-  <!-- Quality Score Cards -->
+  <!-- KPI Cards -->
   <div class="kpi-grid">
+
     <div class="kpi-card quality-score-card">
       <div class="score-circle">
         <span class="score-number">{{ qualityScore }}%</span>
@@ -15,82 +44,91 @@
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-icon total">
-        <i class="pi pi-database"></i>
-      </div>
+      <div class="kpi-icon total"><i class="pi pi-database"></i></div>
       <div class="kpi-info">
         <span class="kpi-label">Total Records</span>
-        <span class="kpi-value">{{ totalRecords }}</span>
+        <span class="kpi-value">{{ totalRecords | number }}</span>
       </div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-icon clean">
-        <i class="pi pi-check-circle"></i>
-      </div>
+      <div class="kpi-icon clean"><i class="pi pi-check-circle"></i></div>
       <div class="kpi-info">
         <span class="kpi-label">Clean Records</span>
-        <span class="kpi-value clean-value">{{ cleanRecords }}</span>
+        <span class="kpi-value clean-value">{{ cleanRecords | number }}</span>
       </div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-icon problematic">
-        <i class="pi pi-times-circle"></i>
-      </div>
+      <div class="kpi-icon problematic"><i class="pi pi-times-circle"></i></div>
       <div class="kpi-info">
-        <span class="kpi-label">Problematic Records</span>
-        <span class="kpi-value problematic-value">{{ problematicRecords }}</span>
+        <span class="kpi-label">Removed Records</span>
+        <span class="kpi-value problematic-value">{{ removedRecords | number }}</span>
       </div>
     </div>
+
   </div>
 
   <!-- Charts Row -->
   <div class="charts-grid">
-    <div class="chart-card wide">
-      <h3>Missing Values by Column (%)</h3>
-      <p-chart type="bar"
-               [data]="missingValuesChartData"
-               [options]="missingValuesChartOptions"
+
+    <div class="chart-card">
+      <h3>Distribution par Type de Vente</h3>
+      <p-chart type="doughnut"
+               [data]="typeVenteChartData"
+               [options]="typeVenteChartOptions"
                height="300px"/>
     </div>
 
     <div class="chart-card">
-      <h3>Data Completeness by Year</h3>
+      <h3>Répartition des enregistrements par Année</h3>
       <p-chart type="bar"
-               [data]="qualityByYearData"
-               [options]="qualityByYearOptions"
+               [data]="yearDistChartData"
+               [options]="yearDistChartOptions"
                height="300px"/>
     </div>
+
   </div>
 
-  <!-- Missing Values Table -->
+  <!-- Filter Stats Table -->
   <div class="table-card">
-    <h3>Missing Values Detail</h3>
-    <p-table [value]="missingValuesData" [paginator]="true" [rows]="5">
-
+    <h3>Filtres appliqués lors du nettoyage</h3>
+    <p-table [value]="filterStatsData">
       <ng-template pTemplate="header">
         <tr>
-          <th>Column</th>
-          <th>Missing Count</th>
-          <th>Percentage</th>
-          <th>Severity</th>
+          <th>Filtre</th>
+          <th>Enregistrements supprimés</th>
         </tr>
       </ng-template>
-
       <ng-template pTemplate="body" let-row>
         <tr>
-          <td><strong>{{ row.column }}</strong></td>
-          <td>{{ row.missing | number }}</td>
-          <td>{{ row.percentage }}%</td>
-          <td>
-            <p-tag
-              [value]="row.severity.toUpperCase()"
-              [severity]="getSeverity(row.severity)"/>
-          </td>
+          <td><strong>{{ row.filter }}</strong></td>
+          <td>{{ row.removed | number }}</td>
         </tr>
       </ng-template>
+    </p-table>
+  </div>
 
+  <!-- Dropped Columns Table -->
+  <div class="table-card">
+    <h3>Colonnes supprimées ({{ droppedColumns.length }})</h3>
+    <p-table [value]="droppedColumns" [paginator]="true" [rows]="10">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Colonne</th>
+          <th>Raison</th>
+          <th>% NULL</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-col>
+        <tr>
+          <td><strong>{{ col.name }}</strong></td>
+          <td>
+            <p-tag [value]="col.reason" [severity]="getReasonSeverity(col.reason)"/>
+          </td>
+          <td>{{ col.nullPct > 0 ? (col.nullPct + '%') : '—' }}</td>
+        </tr>
+      </ng-template>
     </p-table>
   </div>
 
