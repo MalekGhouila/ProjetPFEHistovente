@@ -208,4 +208,14 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
             ORDER BY MONTH(Date)
             """, nativeQuery = true)
     List<Object[]> getRecordsPerMonth2024();
+
+    @Query(value = """
+    SELECT YEAR(Date) as annee,
+           COUNT(*) as nb,
+           ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) as pct
+    FROM histovente_clean_v1
+    GROUP BY YEAR(Date)
+    ORDER BY annee
+    """, nativeQuery = true)
+    List<Object[]> getDistributionByYear();
 }
