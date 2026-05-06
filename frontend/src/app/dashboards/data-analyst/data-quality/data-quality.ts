@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -13,11 +13,13 @@ import { DataQualityService } from '../../../core/services/data-quality.service'
   templateUrl: './data-quality.html',
   styleUrl: './data-quality.css'
 })
-export class DataQuality implements OnInit {
+export class DataQuality implements OnInit, OnDestroy {
 
   loading = true;
   isCalculating = false;
   lastUpdated: string = '';
+
+  private pollInterval: any = null;
 
   // KPI cards
   qualityScore = 0;
@@ -47,12 +49,21 @@ export class DataQuality implements OnInit {
       next: (s) => {
         this.lastUpdated = s.lastUpdated;
         this.isCalculating = s.isCalculating;
-        if (s.isCalculating) this.pollStatus();
+        if (s.isCalculating) {
+          this.pollStatus(); // keep polling for when it finishes
+        }
+        this.loadStats(); // always load current data regardless
         this.cdr.detectChanges();
       },
-      error: () => {}
+      error: () => { this.loadStats(); }
     });
-    this.loadStats();
+  }
+
+  ngOnDestroy() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
   }
 
   loadStats() {
@@ -101,16 +112,14 @@ export class DataQuality implements OnInit {
   }
 
   pollStatus() {
-    const startTime = new Date().toISOString();
+    if (this.pollInterval) clearInterval(this.pollInterval);
 
-    const interval = setInterval(() => {
+    this.pollInterval = setInterval(() => {
       this.dataQualityService.getStatus().subscribe({
         next: (status) => {
-          if (!status.isCalculating &&
-            status.lastUpdated !== 'Never' &&
-            new Date(status.lastUpdated) > new Date(startTime)) {
-
-            clearInterval(interval);
+          if (!status.isCalculating) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
             this.lastUpdated = status.lastUpdated;
             this.loadStats();
             setTimeout(() => {
