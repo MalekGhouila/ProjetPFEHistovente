@@ -16,6 +16,7 @@ import { Stores } from './dashboards/manager/stores/stores';
 import { Families } from './dashboards/manager/families/families';
 import { Predictions } from './dashboards/manager/predictions/predictions';
 import { Alerts } from './dashboards/manager/alerts/alerts';
+import { CustomAnalysis } from './dashboards/manager/custom-analysis/custom-analysis';
 
 // Responsable sub-pages
 import { Stock } from './dashboards/responsable-magasin/stock/stock';
@@ -25,13 +26,13 @@ import { Dormant } from './dashboards/responsable-magasin/dormant/dormant';
 // Data Analyst sub-pages
 import { DataQuality } from './dashboards/data-analyst/data-quality/data-quality';
 import { MlEvolution } from './dashboards/data-analyst/ml-evolution/ml-evolution';
+import { StagingViewer } from './dashboards/data-analyst/staging-viewer/staging-viewer';
 
 // Admin sub-pages
 import { Users } from './dashboards/admin/users/users';
 import { DataMonitoring } from './dashboards/admin/data-monitoring/data-monitoring';
 import { MlMonitoring } from './dashboards/admin/ml-monitoring/ml-monitoring';
 import { Settings } from './dashboards/admin/settings/settings';
-import { CustomAnalysis } from './dashboards/manager/custom-analysis/custom-analysis';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -63,7 +64,7 @@ export const routes: Routes = [
       { path: 'manager/alerts', component: Alerts },
       { path: 'manager/custom-analysis', component: CustomAnalysis },
 
-      // Responsable Magasin routes (with storeGuard!)
+      // Responsable Magasin routes
       { path: 'responsable-magasin', component: ResponsableMagasin, canActivate: [storeGuard] },
       { path: 'responsable-magasin/stock', component: Stock, canActivate: [storeGuard] },
       { path: 'responsable-magasin/at-risk', component: AtRisk, canActivate: [storeGuard] },
@@ -73,6 +74,7 @@ export const routes: Routes = [
       { path: 'data-analyst', component: DataAnalyst },
       { path: 'data-analyst/data-quality', component: DataQuality },
       { path: 'data-analyst/ml-evolution', component: MlEvolution },
+      { path: 'data-analyst/staging-viewer', component: StagingViewer },
     ]
   },
   { path: '**', redirectTo: 'login' }

@@ -97,3 +97,48 @@ body {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* ===== GLOBAL PAGINATOR FIX ===== */
+.p-paginator .p-paginator-page,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  font-weight: 500 !important;
+}
+
+.p-paginator .p-paginator-page.p-highlight {
+  background: var(--brand-primary) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+}
+
+.p-paginator .p-paginator-page:not(.p-highlight):hover {
+  background: var(--bg-primary) !important;
+  color: var(--brand-primary) !important;
+}
+
+.p-paginator .p-select,
+.p-paginator .p-inputnumber {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+}
+
+.p-paginator .p-select .p-select-label {
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+}
+
+.p-paginator .p-paginator-first .p-icon,
+.p-paginator .p-paginator-prev .p-icon,
+.p-paginator .p-paginator-next .p-icon,
+.p-paginator .p-paginator-last .p-icon {
+  color: var(--text-secondary) !important;
+}
