@@ -27,32 +27,29 @@ public interface HistoVenteStagingRepository extends JpaRepository<HistoVenteSta
 
     long countByStagingStatus(String status);
 
-    // In HistoVenteStagingRepository.java
-
     // Count PENDING rows that have problems
     @Query("SELECT COUNT(s) FROM HistoVenteStaging s WHERE s.stagingStatus = 'PENDING' " +
-            "AND (s.quantite IS NULL OR s.quantite <= 0 OR s.prix IS NULL OR s.prix <= 0 " +
+            "AND (s.quantite IS NULL OR s.quantite <= 0 OR s.prixVente IS NULL OR s.prixVente <= 0 " +
             "OR s.dateVente IS NULL OR s.famille IS NULL OR s.codeMag IS NULL)")
     long countPendingWithProblems();
 
     // Count PENDING rows that are auto-valid (no problems)
     @Query("SELECT COUNT(s) FROM HistoVenteStaging s WHERE s.stagingStatus = 'PENDING' " +
             "AND s.quantite IS NOT NULL AND s.quantite > 0 " +
-            "AND s.prix IS NOT NULL AND s.prix > 0 " +
+            "AND s.prixVente IS NOT NULL AND s.prixVente > 0 " +
             "AND s.dateVente IS NOT NULL AND s.famille IS NOT NULL AND s.codeMag IS NOT NULL")
     long countPendingAutoValid();
 
     // Get PENDING rows with problems (paginated)
     @Query("SELECT s FROM HistoVenteStaging s WHERE s.stagingStatus = 'PENDING' " +
-            "AND (s.quantite IS NULL OR s.quantite <= 0 OR s.prix IS NULL OR s.prix <= 0 " +
+            "AND (s.quantite IS NULL OR s.quantite <= 0 OR s.prixVente IS NULL OR s.prixVente <= 0 " +
             "OR s.dateVente IS NULL OR s.famille IS NULL OR s.codeMag IS NULL)")
     Page<HistoVenteStaging> findPendingWithProblems(Pageable pageable);
 
     // Find all auto-valid PENDING (for bulk approve)
     @Query("SELECT s FROM HistoVenteStaging s WHERE s.stagingStatus = 'PENDING' " +
             "AND s.quantite IS NOT NULL AND s.quantite > 0 " +
-            "AND s.prix IS NOT NULL AND s.prix > 0 " +
+            "AND s.prixVente IS NOT NULL AND s.prixVente > 0 " +
             "AND s.dateVente IS NOT NULL AND s.famille IS NOT NULL AND s.codeMag IS NOT NULL")
     List<HistoVenteStaging> findAllAutoValid();
 }
-

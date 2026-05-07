@@ -37,12 +37,18 @@ export interface StatusCounts {
   REJECTED: number;
 }
 
+export interface ReviewCounts extends StatusCounts {
+  problems: number;
+  autoValid: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class StagingService {
   private baseUrl = 'http://localhost:8080/api/analyst/staging';
 
   constructor(private http: HttpClient) {}
 
+  // ── Existing ──────────────────────────────────────────────────
   getStaging(
     status: string = '',
     codeMag: string = '',
@@ -63,5 +69,27 @@ export class StagingService {
 
   getCounts(): Observable<StatusCounts> {
     return this.http.get<StatusCounts>(`${this.baseUrl}/counts`);
+  }
+
+  // ── NEW ───────────────────────────────────────────────────────
+  getReviewCounts(): Observable<ReviewCounts> {
+    return this.http.get<ReviewCounts>(`${this.baseUrl}/review-counts`);
+  }
+
+  getProblems(page: number = 0, size: number = 50): Observable<PageResponse<StagingRow>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PageResponse<StagingRow>>(`${this.baseUrl}/problems`, { params });
+  }
+
+  approveOne(id: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/approve`, {});
+  }
+
+  rejectOne(id: number, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/reject`, { reason });
+  }
+
+  bulkApprove(): Observable<{ approved: number }> {
+    return this.http.post<{ approved: number }>(`${this.baseUrl}/bulk-approve`, {});
   }
 }

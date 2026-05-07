@@ -27,6 +27,7 @@ import { Dormant } from './dashboards/responsable-magasin/dormant/dormant';
 import { DataQuality } from './dashboards/data-analyst/data-quality/data-quality';
 import { MlEvolution } from './dashboards/data-analyst/ml-evolution/ml-evolution';
 import { StagingViewer } from './dashboards/data-analyst/staging-viewer/staging-viewer';
+import { StagingReview } from './dashboards/data-analyst/staging-review/staging-review';
 
 // Admin sub-pages
 import { Users } from './dashboards/admin/users/users';
@@ -75,6 +76,7 @@ export const routes: Routes = [
       { path: 'data-analyst/data-quality', component: DataQuality },
       { path: 'data-analyst/ml-evolution', component: MlEvolution },
       { path: 'data-analyst/staging-viewer', component: StagingViewer },
+      { path: 'data-analyst/staging-review', component: StagingReview },
     ]
   },
   { path: '**', redirectTo: 'login' }
