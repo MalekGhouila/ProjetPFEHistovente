@@ -1,0 +1,373 @@
+.dashboard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ===== HEADER ===== */
+.dashboard-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.dashboard-header p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* ===== KPI CARDS ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.kpi-icon.pending  { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.kpi-icon.problems { background: rgba(239,  68,  68, 0.12); color: #ef4444; }
+.kpi-icon.valid    { background: rgba( 34, 197,  94, 0.12); color: #22c55e; }
+.kpi-icon.cleaned  { background: rgba(108,  52, 131, 0.12); color: var(--brand-primary); }
+.kpi-icon.rejected { background: rgba(233,  30, 140, 0.12); color: var(--brand-accent); }
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.kpi-value.pending-value  { color: #f59e0b; }
+.kpi-value.problems-value { color: #ef4444; }
+.kpi-value.valid-value    { color: #22c55e; }
+.kpi-value.cleaned-value  { color: var(--brand-primary); }
+.kpi-value.rejected-value { color: var(--brand-accent); }
+
+/* ===== SUCCESS BANNER ===== */
+.success-banner {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #15803d;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== TABLE CARD ===== */
+.table-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.table-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+/* ===== BULK APPROVE BUTTON ===== */
+.btn-bulk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.2s;
+}
+.btn-bulk:hover:not(:disabled) { background: #16a34a; }
+.btn-bulk:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== ACTION BUTTONS ===== */
+.action-btns { display: flex; gap: 6px; align-items: center; }
+
+.btn-approve {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(34, 197, 94, 0.1); color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px;
+  padding: 5px 10px; font-size: 0.8rem; font-weight: 600;
+  font-family: var(--font-family); cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-approve:hover { background: rgba(34, 197, 94, 0.2); }
+
+.btn-reject {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(239, 68, 68, 0.1); color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;
+  padding: 5px 10px; font-size: 0.8rem; font-weight: 600;
+  font-family: var(--font-family); cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-reject:hover { background: rgba(239, 68, 68, 0.2); }
+
+.btn-approve-sm {
+  background: rgba(34, 197, 94, 0.1); color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px;
+  padding: 5px 8px; cursor: pointer; transition: background 0.15s;
+}
+.btn-approve-sm:hover { background: rgba(34, 197, 94, 0.2); }
+
+.btn-reject-sm {
+  background: rgba(239, 68, 68, 0.1); color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;
+  padding: 5px 8px; cursor: pointer; transition: background 0.15s;
+}
+.btn-reject-sm:hover { background: rgba(239, 68, 68, 0.2); }
+
+/* ===== BADGES ===== */
+.issue-badge {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin: 2px;
+  white-space: nowrap;
+}
+
+/* ===== PROBLEM ROW ===== */
+.problem-row { background: rgba(245, 158, 11, 0.04) !important; }
+.cell-error  { color: #dc2626; font-weight: 600; }
+.cell-warn   { color: #d97706; font-weight: 600; }
+
+/* ===== DIALOG ===== */
+.reject-form { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+
+.reject-form label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reject-input { width: 100%; }
+
+.bulk-confirm-msg {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding: 4px 0;
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 0.875rem;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-cancel:hover { background: var(--bg-primary); }
+
+.btn-reject-confirm {
+  background: #dc2626; color: #fff;
+  border: none; border-radius: 8px;
+  padding: 7px 16px; font-size: 0.875rem; font-weight: 600;
+  font-family: var(--font-family); cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s;
+}
+.btn-reject-confirm:hover { background: #b91c1c; }
+.btn-reject-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-bulk-confirm {
+  background: var(--brand-primary); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 7px 16px; font-size: 0.875rem; font-weight: 600;
+  font-family: var(--font-family); cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s;
+}
+.btn-bulk-confirm:hover:not(:disabled) { background: var(--brand-secondary); }
+.btn-bulk-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== PRIMENG TABLE OVERRIDES ===== */
+:host ::ng-deep .p-datatable {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:host ::ng-deep .p-datatable-thead > tr > th {
+  background: var(--bg-primary) !important;
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  font-size: 0.78rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  border-bottom: 2px solid var(--border-color) !important;
+  padding: 12px 16px !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: background 0.15s ease;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr:last-child {
+  border-bottom: none !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr:hover {
+  background: var(--bg-primary) !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr > td {
+  padding: 12px 16px !important;
+  font-size: 0.875rem !important;
+}
+
+:host ::ng-deep .p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+  background: rgba(240, 242, 245, 0.5) !important;
+}
+
+:host ::ng-deep .p-paginator {
+  background: var(--bg-card) !important;
+  border-top: 1px solid var(--border-color) !important;
+  padding: 12px !important;
+}
+
+:host ::ng-deep .p-paginator .p-paginator-page.p-highlight {
+  background: var(--brand-primary) !important;
+  color: white !important;
+  border-radius: 8px !important;
+}
+
+:host ::ng-deep .p-inputtext {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+}
+
+:host ::ng-deep .p-inputtext:focus {
+  border-color: var(--brand-secondary) !important;
+  box-shadow: 0 0 0 3px var(--input-focus-shadow) !important;
+}
+
+/* ===== DIALOG OVERRIDES ===== */
+:host ::ng-deep .p-dialog {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  border-radius: 16px 16px 0 0 !important;
+  padding: 20px 24px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon {
+  color: var(--text-secondary) !important;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon:hover {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-content {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  padding: 20px 24px !important;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-footer {
+  background: var(--bg-card) !important;
+  border-top: 1px solid var(--border-color) !important;
+  border-radius: 0 0 16px 16px !important;
+  padding: 16px 24px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.issue-badge {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .p-datatable {
+  table-layout: fixed !important;
+}

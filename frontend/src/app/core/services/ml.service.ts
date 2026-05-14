@@ -2,49 +2,155 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+// ─── INTERFACES ───────────────────────────────────────────────────────────────
 
 export interface PredictRequest {
-  famille: string;
-  year: number;
+  famille:      string;
+  code_mag:     string;
+  year:         number;
   week_of_year: number;
-  lag1: number;
-  lag2: number;
-  lag4: number;
-  lag52: number;
-  rollingMean4: number;
-  rollingMean12: number;
+  is_soldes?:   number;
 }
 
 export interface PredictResponse {
-  famille: string;
-  year: number;
-  week_of_year: number;
+  famille:            string;
+  code_mag:           string;
+  year:               number;
+  week_of_year:       number;
   predicted_quantity: number;
+  model_used:         string;
+  accuracy:           number;
+  warning_level:      'none' | 'yellow' | 'red';
+  warning_message:    string;
 }
 
 export interface ModelStatus {
-  status: string;
-  model_name: string;
-  wmape: number;
-  r2: number;
-  last_trained: string;
+  status:             string;
+  best_model:         string;
+  accuracy:           number;
+  wmape:              number;
+  r2:                 number;
+  last_trained:       string;
   families_supported: string[];
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface GlobalComparisonResult {
+  model:        string;
+  accuracy:     number;
+  wmape:        number;
+  r2:           number;
+  rmse:         number;
+  train_time_s: number;
+}
+
+export interface FamilleAccuracyRow {
+  famille:           string;
+  XGBoost?:          number;
+  LightGBM?:         number;
+  CatBoost?:         number;
+  RandomForest?:     number;
+  LinearRegression?: number;
+}
+
+export interface FamilyModelConfig {
+  [famille: string]: string;
+}
+
+// ─── NEW: Pipeline interfaces ─────────────────────────────────────────────────
+
+export interface CleanState {
+  status:       'idle' | 'running' | 'done' | 'error';
+  last_run:     string | null;
+  rows_cleaned: number | null;
+  message:      string;
+}
+
+export interface TrainState {
+  status:       'idle' | 'running' | 'done' | 'error';
+  last_run:     string | null;
+  progress_pct: number;
+  message:      string;
+}
+
+export interface DeployState {
+  last_deployed: string | null;
+  families:      number;
+}
+
+export interface PipelineStatus {
+  clean:  CleanState;
+  train:  TrainState;
+  deploy: DeployState;
+}
+
+export interface TrainStatusResponse {
+  status:       'idle' | 'running' | 'done' | 'error';
+  progress_pct: number;
+  message:      string;
+  last_run:     string | null;
+}
+
+// ─── SERVICE ──────────────────────────────────────────────────────────────────
+
+@Injectable({ providedIn: 'root' })
 export class MlService {
 
-  private apiUrl = 'http://localhost:8080/api/ml';
+  private mlApi = 'http://localhost:8000';
 
   constructor(private http: HttpClient) {}
 
-  predict(request: PredictRequest): Observable<PredictResponse> {
-    return this.http.post<PredictResponse>(`${this.apiUrl}/predict`, request);
-  }
+  // ─── Existing methods ──────────────────────────────────────────────────────
 
   getStatus(): Observable<ModelStatus> {
-    return this.http.get<ModelStatus>(`${this.apiUrl}/status`);
+    return this.http.get<ModelStatus>(`${this.mlApi}/model/status`);
+  }
+
+  predict(request: PredictRequest): Observable<PredictResponse> {
+    return this.http.post<PredictResponse>(`${this.mlApi}/predict`, request);
+  }
+
+  getGlobalComparison(): Observable<GlobalComparisonResult[]> {
+    return this.http.get<GlobalComparisonResult[]>(`${this.mlApi}/train/results/global`);
+  }
+
+  getPerFamilleResults(): Observable<FamilleAccuracyRow[]> {
+    return this.http.get<FamilleAccuracyRow[]>(`${this.mlApi}/train/results/per-famille`);
+  }
+
+  getActiveConfig(): Observable<FamilyModelConfig> {
+    return this.http.get<FamilyModelConfig>(`${this.mlApi}/models/config`);
+  }
+
+  deployConfig(config: FamilyModelConfig): Observable<any> {
+    const payload = {
+      config: Object.entries(config).map(([famille, model_name]) => ({ famille, model_name }))
+    };
+    return this.http.post(`${this.mlApi}/models/deploy`, payload);
+  }
+
+  getFamilies(): Observable<{ families: string[] }> {
+    return this.http.get<{ families: string[] }>(`${this.mlApi}/families`);
+  }
+
+  // ─── NEW: Pipeline methods ─────────────────────────────────────────────────
+
+  /** GET /pipeline/status — full clean + train + deploy state */
+  getPipelineStatus(): Observable<PipelineStatus> {
+    return this.http.get<PipelineStatus>(`${this.mlApi}/pipeline/status`);
+  }
+
+  /** POST /data/clean — trigger feature_engineering_v3.py */
+  runClean(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.mlApi}/data/clean`, {});
+  }
+
+  /** POST /train — trigger model_comparison.py (all 5 models) */
+  runTrain(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.mlApi}/train`, {});
+  }
+
+  /** GET /train/status — poll this during training for progress_pct + message */
+  getTrainStatus(): Observable<TrainStatusResponse> {
+    return this.http.get<TrainStatusResponse>(`${this.mlApi}/train/status`);
   }
 }

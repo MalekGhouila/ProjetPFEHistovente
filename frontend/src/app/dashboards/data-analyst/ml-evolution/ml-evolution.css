@@ -1,3 +1,4 @@
+/* ===== WRAPPER ===== */
 .dashboard {
   padding: 24px;
   display: flex;
@@ -5,6 +6,7 @@
   gap: 24px;
 }
 
+/* ===== HEADER ===== */
 .dashboard-header h1 {
   font-size: 1.8rem;
   font-weight: 700;
@@ -17,10 +19,10 @@
   font-size: 0.9rem;
 }
 
-/* KPI Cards */
-.kpi-grid {
+/* ===== KPI ROW ===== */
+.kpi-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
 }
 
@@ -29,8 +31,8 @@
   border-radius: 16px;
   padding: 20px;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -41,45 +43,8 @@
   box-shadow: var(--shadow-md);
 }
 
-.kpi-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  flex-shrink: 0;
-}
-
-.kpi-icon.model {
-  background: rgba(108, 52, 131, 0.12);
-  color: var(--brand-primary);
-}
-
-.kpi-icon.wmape {
-  background: rgba(241, 196, 15, 0.12);
-  color: #f1c40f;
-}
-
-.kpi-icon.r2 {
-  background: rgba(46, 204, 113, 0.12);
-  color: #2ecc71;
-}
-
-.kpi-icon.families {
-  background: rgba(52, 152, 219, 0.12);
-  color: #3498db;
-}
-
-.kpi-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 .kpi-label {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   font-weight: 500;
   text-transform: uppercase;
@@ -87,45 +52,57 @@
 }
 
 .kpi-value {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.warn-value { color: #f1c40f !important; }
-.success-value { color: #2ecc71 !important; }
-
-/* Charts */
-.charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.kpi-value.accent {
+  color: var(--brand-primary);
 }
 
-.chart-card {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+.kpi-value.small {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-.chart-card h3 {
-  font-size: 1rem;
+/* ===== TABS ===== */
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-btn.active {
+  color: var(--brand-primary);
+  border-bottom: 2px solid var(--brand-primary);
   font-weight: 600;
+}
+
+.tab-btn:hover:not(.active) {
+  background: var(--bg-primary);
   color: var(--text-primary);
-  margin-bottom: 4px;
 }
 
-.chart-subtitle {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-style: italic;
-  margin-bottom: 16px;
-}
-
-/* Table */
-.table-card {
+/* ===== SECTION CARDS ===== */
+.section-card {
   background: var(--bg-card);
   border-radius: 16px;
   padding: 24px;
@@ -133,13 +110,52 @@
   border: 1px solid var(--border-color);
 }
 
-.table-card h3 {
+.section-title {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 20px;
 }
 
+/* ===== CONFIG HEADER ===== */
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.config-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+/* ===== ACCURACY COLORS ===== */
+.accuracy-good {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.accuracy-warn {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.accuracy-bad {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ===== LOADING ===== */
+.loading-placeholder {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ===== PRIMENG TABLE OVERRIDES (match other pages) ===== */
 :host ::ng-deep .p-datatable {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
@@ -164,13 +180,271 @@
   background: var(--bg-primary) !important;
 }
 
-:host ::ng-deep .p-paginator {
-  background: var(--bg-card) !important;
-  border-top: 1px solid var(--border-color) !important;
+:host ::ng-deep .p-select {
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  background: var(--bg-primary) !important;
 }
 
-:host ::ng-deep .p-paginator .p-paginator-page.p-highlight {
+:host ::ng-deep .p-select .p-select-label {
+  color: var(--text-primary) !important;
+  font-family: var(--font-family) !important;
+  font-size: 0.875rem !important;
+}
+
+/* ===== MODEL OPTION CARDS ===== */
+.model-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.model-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 110px;
+  background: var(--bg-primary);
+}
+
+.model-option:hover {
+  border-color: var(--brand-secondary);
+  background: var(--bg-secondary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.model-option.selected {
+  border-color: var(--brand-primary);
+  background: rgba(108, 52, 131, 0.08);
+  box-shadow: 0 0 0 2px rgba(108, 52, 131, 0.15);
+}
+
+.model-opt-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.model-opt-acc {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PIPELINE STEPS
+   ═══════════════════════════════════════════════════════════════ */
+
+.pipeline-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Step card ────────────────────────────────────────────────────── */
+.pipeline-step {
+  background: var(--bg-primary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ── Status variants ──────────────────────────────────────────────── */
+.pipeline-step.step-running {
+  border-color: var(--brand-secondary);
+  box-shadow: 0 0 0 3px rgba(108, 52, 131, 0.1);
+}
+
+.pipeline-step.step-done {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.08);
+}
+
+.pipeline-step.step-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
+/* ── Step header row ──────────────────────────────────────────────── */
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Step icon circle ─────────────────────────────────────────────── */
+.step-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  transition: all 0.25s ease;
+}
+
+.step-done .step-icon {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.step-running .step-icon {
+  background: rgba(108, 52, 131, 0.1);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.step-error .step-icon {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* ── Step text ────────────────────────────────────────────────────── */
+.step-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.step-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.step-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ── Step meta (date + rows) ──────────────────────────────────────── */
+.step-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.step-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.step-rows {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+/* ── Step message — base ──────────────────────────────────────────── */
+.step-message {
+  display: flex;
+  align-items: center;
+  font-size: 0.82rem;
+  border-radius: 8px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--border-color);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  line-height: 1.45;
+}
+
+/* ── Live (running) message — purple tint ─────────────────────────── */
+.step-message.live-msg {
+  color: var(--brand-primary);
+  background: rgba(108, 52, 131, 0.06);
+  border-left-color: var(--brand-primary);
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+/* ── Done message — green tint ────────────────────────────────────── */
+.step-message.done-msg {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.06);
+  border-left-color: #22c55e;
+}
+
+/* ── Error message — red tint ─────────────────────────────────────── */
+.step-message.error-msg {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+  border-left-color: #ef4444;
+}
+
+/* ── Subtle pulsing border animation for live messages ────────────── */
+@keyframes pulse-border {
+  0%, 100% { border-left-color: var(--brand-primary); }
+  50%       { border-left-color: var(--brand-secondary); }
+}
+
+/* ── Action button ────────────────────────────────────────────────── */
+.step-btn {
+  align-self: flex-start !important;
+}
+
+/* ── Train progress wrap ──────────────────────────────────────────── */
+.train-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Progress header row (% + label) ─────────────────────────────── */
+.train-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.train-progress-pct {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.train-progress-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ── PrimeNG progress bar override ───────────────────────────────── */
+:host ::ng-deep .train-progress-bar .p-progressbar-value {
   background: var(--brand-primary) !important;
-  color: white !important;
+  transition: width 0.4s ease !important;
+}
+
+:host ::ng-deep .train-progress-bar .p-progressbar {
+  background: var(--bg-secondary) !important;
   border-radius: 8px !important;
+  height: 10px !important;
+}
+
+/* ── Connector arrow between steps ───────────────────────────────── */
+.step-connector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 28px;
+  color: var(--text-muted);
+  font-size: 1rem;
 }

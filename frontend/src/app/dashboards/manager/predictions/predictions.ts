@@ -5,8 +5,13 @@ import { SelectModule } from 'primeng/select';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
 import { TagModule } from 'primeng/tag';
-import { MlService, PredictRequest, PredictResponse } from '../../../core/services/ml.service';
 import { DecimalPipe } from '@angular/common';
+import {
+  MlService,
+  PredictRequest,
+  PredictResponse,
+  ModelStatus
+} from '../../../core/services/ml.service';
 
 @Component({
   selector: 'app-predictions',
@@ -17,36 +22,34 @@ import { DecimalPipe } from '@angular/common';
 })
 export class Predictions implements OnInit {
 
-  // Form fields
-  selectedFamille: string = '';
-  selectedYear: number = 2025;
-  selectedWeek: number = 1;
+  // ── Form fields ──────────────────────────────────────────────────────────
+  selectedFamille: string  = '';
+  selectedMagasin: string  = '';
+  selectedYear:    number  = 2026;
+  selectedWeek:    number  = 1;
+  isSoldes:        boolean = false;
 
-  // Prediction result
+  // ── Result ───────────────────────────────────────────────────────────────
   predictionResult: PredictResponse | null = null;
-  isLoading: boolean = false;
-  errorMessage: string = '';
+  modelStatus:      ModelStatus     | null = null;
+  isLoading:    boolean = false;
+  errorMessage: string  = '';
 
-  // Supported families
-  families: { label: string, value: string }[] = [];
+  // ── Dropdown options ─────────────────────────────────────────────────────
+  families: { label: string; value: string }[] = [];
 
-  // Years and weeks
-  years = [
-    { label: '2025', value: 2025 },
-    { label: '2026', value: 2026 }
+  magasins: { label: string; value: string }[] = [
+    { label: 'Mag 001', value: '001' },
+    { label: 'Mag 002', value: '002' },
+    { label: 'Mag 003', value: '003' },
   ];
 
-  weeks: { label: string, value: number }[] = [];
+  years = [
+    { label: '2025', value: 2025 },
+    { label: '2026', value: 2026 },
+  ];
 
-  // Mock lag values (will be auto-calculated later)
-  lagValues = {
-    lag1: 3200,
-    lag2: 3100,
-    lag4: 2900,
-    lag52: 3000,
-    rollingMean4: 3050,
-    rollingMean12: 2950
-  };
+  weeks: { label: string; value: number }[] = [];
 
   constructor(
     private mlService: MlService,
@@ -54,20 +57,20 @@ export class Predictions implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loadModelStatus();
+    this.loadFamilies();
     this.generateWeeks();
   }
 
-  loadModelStatus() {
+  // ── Loaders ───────────────────────────────────────────────────────────────
+
+  loadFamilies() {
     this.mlService.getStatus().subscribe({
       next: (status) => {
-        this.families = status.families_supported.map(f => ({
-          label: f,
-          value: f
-        }));
+        this.modelStatus = status;
+        this.families = status.families_supported.map(f => ({ label: f, value: f }));
         this.cdr.detectChanges();
       },
-      error: (err: any) => console.error('Error loading model status:', err)
+      error: (err: any) => console.error('Error loading families:', err)
     });
   }
 
@@ -77,9 +80,15 @@ export class Predictions implements OnInit {
     }
   }
 
+  // ── Predict ───────────────────────────────────────────────────────────────
+
   predict() {
     if (!this.selectedFamille) {
       this.errorMessage = 'Please select a product family!';
+      return;
+    }
+    if (!this.selectedMagasin) {
+      this.errorMessage = 'Please select a store!';
       return;
     }
 
@@ -88,15 +97,11 @@ export class Predictions implements OnInit {
     this.predictionResult = null;
 
     const request: PredictRequest = {
-      famille: this.selectedFamille,
-      year: this.selectedYear,
+      famille:      this.selectedFamille,
+      code_mag:     this.selectedMagasin,
+      year:         this.selectedYear,
       week_of_year: this.selectedWeek,
-      lag1: this.lagValues.lag1,
-      lag2: this.lagValues.lag2,
-      lag4: this.lagValues.lag4,
-      lag52: this.lagValues.lag52,
-      rollingMean4: this.lagValues.rollingMean4,
-      rollingMean12: this.lagValues.rollingMean12
+      is_soldes:    this.isSoldes ? 1 : 0
     };
 
     this.mlService.predict(request).subscribe({
@@ -105,7 +110,7 @@ export class Predictions implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err: any) => {
+      error: () => {
         this.errorMessage = 'Prediction failed! Check if ML server is running.';
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -113,18 +118,42 @@ export class Predictions implements OnInit {
     });
   }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   getConfidenceLabel(): string {
     if (!this.predictionResult) return '';
-    const wmape = 63.62;
-    if (wmape < 50) return 'HIGH';
-    if (wmape < 75) return 'MEDIUM';
+    const acc = this.predictionResult.accuracy;
+    if (acc >= 60) return 'HIGH';
+    if (acc >= 40) return 'MEDIUM';
     return 'LOW';
   }
 
   getConfidenceSeverity(): 'success' | 'warn' | 'danger' {
-    const label = this.getConfidenceLabel();
-    if (label === 'HIGH') return 'success';
-    if (label === 'MEDIUM') return 'warn';
+    if (!this.predictionResult) return 'warn';
+    return this.getAccuracySeverity(this.predictionResult.accuracy);
+  }
+
+  getAccuracySeverity(val: number): 'success' | 'warn' | 'danger' {
+    if (val >= 60) return 'success';
+    if (val >= 40) return 'warn';
     return 'danger';
+  }
+
+  getWarningIcon(): string {
+    if (!this.predictionResult) return '';
+    switch (this.predictionResult.warning_level) {
+      case 'red':    return 'pi pi-times-circle';
+      case 'yellow': return 'pi pi-exclamation-triangle';
+      default:       return 'pi pi-check-circle';
+    }
+  }
+
+  getWarningClass(): string {
+    if (!this.predictionResult) return '';
+    switch (this.predictionResult.warning_level) {
+      case 'red':    return 'warning-red';
+      case 'yellow': return 'warning-yellow';
+      default:       return 'warning-ok';
+    }
   }
 }

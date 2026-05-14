@@ -1,0 +1,232 @@
+<div class="dashboard">
+
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Staging Review</h1>
+    <p>Approve or reject pending staging rows before they enter the clean dataset</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon pending"><i class="pi pi-clock"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-label">Pending Review</span>
+        <span class="kpi-value pending-value">{{ counts.PENDING | number }}</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon problems"><i class="pi pi-exclamation-triangle"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-label">With Problems</span>
+        <span class="kpi-value problems-value">{{ counts.problems | number }}</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon valid"><i class="pi pi-check"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-label">Auto-Valid</span>
+        <span class="kpi-value valid-value">{{ counts.autoValid | number }}</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon cleaned"><i class="pi pi-check-circle"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-label">Approved</span>
+        <span class="kpi-value cleaned-value">{{ counts.CLEANED | number }}</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon rejected"><i class="pi pi-times-circle"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-label">Rejected</span>
+        <span class="kpi-value rejected-value">{{ counts.REJECTED | number }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Problems Table -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>
+        <i class="pi pi-exclamation-triangle" style="color:#f59e0b; margin-right:6px;"></i>
+        Rows With Problems ({{ problemTotal | number }})
+      </h3>
+    </div>
+
+    <p-table
+      [value]="problemRows"
+      [loading]="loadingProblems"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm p-datatable-striped">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:60px">ID</th>
+          <th style="width:100px">Date Vente</th>
+          <th style="width:90px">CodeMag</th>
+          <th style="width:100px">Famille</th>
+          <th style="width:200px">Désignation</th>
+          <th style="width:70px">Qté</th>
+          <th style="width:90px">Prix</th>
+          <th style="width:200px">Issues</th>
+          <th style="width:160px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="problem-row">
+          <td>{{ row.idStaging }}</td>
+          <td [class.cell-error]="!row.dateVente">{{ row.dateVente || '—' }}</td>
+          <td [class.cell-error]="!row.codeMag">{{ row.codeMag || '—' }}</td>
+          <td [class.cell-error]="!row.famille">{{ row.famille || '—' }}</td>
+          <td>{{ row.designation || '—' }}</td>
+          <td [class.cell-error]="!row.quantite || row.quantite <= 0">{{ row.quantite }}</td>
+          <td [class.cell-error]="!row.prixVente || row.prixVente <= 0">{{ row.prixVente | number:'1.2-2' }}</td>
+          <td>
+            <span *ngFor="let issue of getProblems(row)" class="issue-badge">{{ issue }}</span>
+          </td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-approve" (click)="approve(row.idStaging)">
+                <i class="pi pi-check"></i> Approve
+              </button>
+              <button class="btn-reject" (click)="openReject(row.idStaging)">
+                <i class="pi pi-times"></i> Reject
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" style="text-align:center; padding:2rem; color:var(--text-muted);">
+            <i class="pi pi-check-circle" style="margin-right:6px; color:#22c55e;"></i>
+            No problematic rows found.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <p-paginator
+      [rows]="problemSize"
+      [totalRecords]="problemTotal"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      (onPageChange)="onProblemPageChange($event)">
+    </p-paginator>
+  </div>
+
+  <!-- All Pending Table -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>
+        <i class="pi pi-clock" style="color:#f59e0b; margin-right:6px;"></i>
+        All Pending Rows ({{ pendingTotal | number }})
+      </h3>
+      <button class="btn-bulk" (click)="openBulkApprove()" [disabled]="counts.autoValid === 0">
+        <i class="pi pi-check-circle"></i> Approve All Valid ({{ counts.autoValid }})
+      </button>
+    </div>
+
+    <p-table
+      [value]="pendingRows"
+      [loading]="loadingPending"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm p-datatable-striped">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:60px">ID</th>
+          <th style="width:130px">Imported At</th>
+          <th style="width:100px">Date Vente</th>
+          <th style="width:90px">CodeMag</th>
+          <th style="width:100px">Famille</th>
+          <th style="width:200px">Désignation</th>
+          <th style="width:70px">Qté</th>
+          <th style="width:90px">Prix</th>
+          <th style="width:90px">Type Vente</th>
+          <th style="width:90px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.idStaging }}</td>
+          <td>{{ row.stagingImportedAt | date:'dd/MM/yy HH:mm' }}</td>
+          <td>{{ row.dateVente || '—' }}</td>
+          <td>{{ row.codeMag || '—' }}</td>
+          <td>{{ row.famille || '—' }}</td>
+          <td>{{ row.designation || '—' }}</td>
+          <td>{{ row.quantite }}</td>
+          <td>{{ row.prixVente | number:'1.2-2' }}</td>
+          <td>{{ row.typeVente || '—' }}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-approve-sm" (click)="approve(row.idStaging)" title="Approve">
+                <i class="pi pi-check"></i>
+              </button>
+              <button class="btn-reject-sm" (click)="openReject(row.idStaging)" title="Reject">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10" style="text-align:center; padding:2rem; color:var(--text-muted);">
+            <i class="pi pi-check-circle" style="margin-right:6px; color:#22c55e;"></i>
+            No pending rows to review.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <p-paginator
+      [rows]="pendingSize"
+      [totalRecords]="pendingTotal"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      (onPageChange)="onPendingPageChange($event)">
+    </p-paginator>
+  </div>
+
+  <!-- Reject Dialog -->
+  <p-dialog
+    header="Reject Row"
+    [(visible)]="rejectDialogVisible"
+    [modal]="true"
+    [style]="{width:'420px'}">
+    <div class="reject-form">
+      <label>Reason for rejection</label>
+      <input pInputText class="reject-input" [(ngModel)]="rejectReason"
+             placeholder="e.g. Invalid quantity, duplicate entry..." />
+    </div>
+    <ng-template pTemplate="footer">
+      <button class="btn-cancel" (click)="rejectDialogVisible = false">Cancel</button>
+      <button class="btn-reject-confirm" (click)="confirmReject()" [disabled]="!rejectReason.trim()">
+        <i class="pi pi-times"></i> Reject
+      </button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Bulk Approve Dialog -->
+  <p-dialog
+    header="Bulk Approve"
+    [(visible)]="bulkDialogVisible"
+    [modal]="true"
+    [style]="{width:'400px'}">
+    <p class="bulk-confirm-msg">
+      This will approve <strong>{{ counts.autoValid }}</strong> rows without issues
+      and move them to the clean dataset. Continue?
+    </p>
+    <ng-template pTemplate="footer">
+      <button class="btn-cancel" (click)="bulkDialogVisible = false">Cancel</button>
+      <button class="btn-bulk-confirm" (click)="confirmBulkApprove()" [disabled]="bulkApproving">
+        <i class="pi pi-check-circle"></i> {{ bulkApproving ? 'Processing...' : 'Approve All' }}
+      </button>
+    </ng-template>
+  </p-dialog>
+
+</div>

@@ -2,7 +2,7 @@
 
   <div class="dashboard-header">
     <h1>ML Model Monitoring</h1>
-    <p>Ridge Regression model health and performance metrics</p>
+    <p>Model health, performance metrics and supported families</p>
   </div>
 
   @if (isLoading) {
@@ -72,8 +72,12 @@
         <h3>Model Information</h3>
         <div class="detail-list">
           <div class="detail-item">
-            <span class="detail-label">Model Name</span>
-            <span class="detail-value">{{ modelStatus.model_name }}</span>
+            <span class="detail-label">Best Model</span>
+            <span class="detail-value accent">{{ modelStatus.best_model }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Global Accuracy</span>
+            <span class="detail-value">{{ modelStatus.accuracy }}%</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Accuracy Level</span>
@@ -84,10 +88,6 @@
           <div class="detail-item">
             <span class="detail-label">Families Supported</span>
             <span class="detail-value">{{ modelStatus.families_supported.length }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Algorithm</span>
-            <span class="detail-value">Ridge Regression (α=1.0)</span>
           </div>
         </div>
       </div>

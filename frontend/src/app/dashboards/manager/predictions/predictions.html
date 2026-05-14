@@ -2,32 +2,34 @@
 
   <div class="dashboard-header">
     <h1>Sales Predictions</h1>
-    <p>AI-powered weekly sales forecasting by product family</p>
+    <p>AI-powered weekly sales forecasting by product family and store</p>
   </div>
 
-  <!-- Model Info Card -->
-  <div class="model-info-card">
-    <div class="model-info-item">
-      <i class="pi pi-cpu"></i>
-      <span class="model-info-label">Model</span>
-      <span class="model-info-value">Ridge Regression</span>
+  <!-- Model Info Card — now dynamic from API -->
+  @if (modelStatus) {
+    <div class="model-info-card">
+      <div class="model-info-item">
+        <i class="pi pi-cpu"></i>
+        <span class="model-info-label">Best Model</span>
+        <span class="model-info-value">{{ modelStatus.best_model }}</span>
+      </div>
+      <div class="model-info-item">
+        <i class="pi pi-chart-bar"></i>
+        <span class="model-info-label">WMAPE</span>
+        <span class="model-info-value warn">{{ modelStatus.wmape }}%</span>
+      </div>
+      <div class="model-info-item">
+        <i class="pi pi-chart-line"></i>
+        <span class="model-info-label">R²</span>
+        <span class="model-info-value success">{{ modelStatus.r2 }}</span>
+      </div>
+      <div class="model-info-item">
+        <i class="pi pi-calendar"></i>
+        <span class="model-info-label">Last Trained</span>
+        <span class="model-info-value">{{ modelStatus.last_trained }}</span>
+      </div>
     </div>
-    <div class="model-info-item">
-      <i class="pi pi-chart-bar"></i>
-      <span class="model-info-label">WMAPE</span>
-      <span class="model-info-value warn">63.62%</span>
-    </div>
-    <div class="model-info-item">
-      <i class="pi pi-chart-line"></i>
-      <span class="model-info-label">R²</span>
-      <span class="model-info-value success">0.46</span>
-    </div>
-    <div class="model-info-item">
-      <i class="pi pi-calendar"></i>
-      <span class="model-info-label">Last Trained</span>
-      <span class="model-info-value">2026-04-07</span>
-    </div>
-  </div>
+  }
 
   <div class="prediction-layout">
 
@@ -36,15 +38,27 @@
       <h3>Configure Prediction</h3>
 
       <div class="form-grid">
+
         <div class="field">
-          <label>Product Family <span style="color:red">*</span></label>
+          <label>Product Family <span class="required">*</span></label>
           <p-select
             [(ngModel)]="selectedFamille"
             [options]="families"
             optionLabel="label"
             optionValue="value"
             placeholder="Select family..."
-            appendTo="body"/>
+            appendTo="body" />
+        </div>
+
+        <div class="field">
+          <label>Store <span class="required">*</span></label>
+          <p-select
+            [(ngModel)]="selectedMagasin"
+            [options]="magasins"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select store..."
+            appendTo="body" />
         </div>
 
         <div class="field">
@@ -54,7 +68,7 @@
             [options]="years"
             optionLabel="label"
             optionValue="value"
-            appendTo="body"/>
+            appendTo="body" />
         </div>
 
         <div class="field">
@@ -64,40 +78,18 @@
             [options]="weeks"
             optionLabel="label"
             optionValue="value"
-            appendTo="body"/>
+            appendTo="body" />
         </div>
+
       </div>
 
-      <div class="lag-section">
-        <h4>Historical Sales Values</h4>
-        <p class="lag-hint">Enter recent sales data to improve prediction accuracy</p>
-
-        <div class="lag-grid">
-          <div class="field">
-            <label>Last Week (lag 1)</label>
-            <input pInputText type="number" [(ngModel)]="lagValues.lag1"/>
-          </div>
-          <div class="field">
-            <label>2 Weeks Ago (lag 2)</label>
-            <input pInputText type="number" [(ngModel)]="lagValues.lag2"/>
-          </div>
-          <div class="field">
-            <label>4 Weeks Ago (lag 4)</label>
-            <input pInputText type="number" [(ngModel)]="lagValues.lag4"/>
-          </div>
-          <div class="field">
-            <label>Same Week Last Year (lag 52)</label>
-            <input pInputText type="number" [(ngModel)]="lagValues.lag52"/>
-          </div>
-          <div class="field">
-            <label>Rolling Mean 4 Weeks</label>
-            <input pInputText type="number" [(ngModel)]="lagValues.rollingMean4"/>
-          </div>
-          <div class="field">
-            <label>Rolling Mean 12 Weeks</label>
-            <input pInputText type="number" [(ngModel)]="lagValues.rollingMean12"/>
-          </div>
-        </div>
+      <!-- Soldes toggle -->
+      <div class="soldes-row">
+        <label class="soldes-label">
+          <input type="checkbox" [(ngModel)]="isSoldes" />
+          <span>Sales period (Soldes)</span>
+          <span class="soldes-hint">Check if this week falls during a sales promotion period</span>
+        </label>
       </div>
 
       @if (errorMessage) {
@@ -110,8 +102,8 @@
       <p-button
         [label]="isLoading ? 'Predicting...' : 'Generate Prediction'"
         icon="pi pi-bolt"
-        [disabled]="isLoading"
-        (onClick)="predict()"/>
+        [loading]="isLoading"
+        (onClick)="predict()" />
     </div>
 
     <!-- Prediction Result -->
@@ -150,27 +142,51 @@
               <span class="detail-value">{{ predictionResult.famille }}</span>
             </div>
             <div class="result-detail-item">
+              <span class="detail-label">Store</span>
+              <span class="detail-value">{{ predictionResult.code_mag }}</span>
+            </div>
+            <div class="result-detail-item">
               <span class="detail-label">Period</span>
               <span class="detail-value">
                 Week {{ predictionResult.week_of_year }}, {{ predictionResult.year }}
               </span>
             </div>
             <div class="result-detail-item">
+              <span class="detail-label">Model Used</span>
+              <span class="detail-value accent">{{ predictionResult.model_used }}</span>
+            </div>
+            <div class="result-detail-item">
+              <span class="detail-label">Accuracy</span>
+              <p-tag
+                [value]="predictionResult.accuracy + '%'"
+                [severity]="getAccuracySeverity(predictionResult.accuracy)" />
+            </div>
+            <div class="result-detail-item">
               <span class="detail-label">Confidence</span>
               <p-tag
                 [value]="getConfidenceLabel()"
-                [severity]="getConfidenceSeverity()"/>
+                [severity]="getConfidenceSeverity()" />
             </div>
           </div>
 
+          <!-- Warning banner -->
+          @if (predictionResult.warning_level !== 'none') {
+            <div class="warning-banner" [class]="getWarningClass()">
+              <i [class]="getWarningIcon()"></i>
+              <span>{{ predictionResult.warning_message }}</span>
+            </div>
+          }
+
           <div class="model-note">
             <i class="pi pi-info-circle"></i>
-            <span>Based on Ridge Regression model trained on 2022-2023 data</span>
+            <span>Prediction computed by <strong>{{ predictionResult.model_used }}</strong>
+              — accuracy {{ predictionResult.accuracy }}%</span>
           </div>
 
         </div>
       }
     </div>
+
   </div>
 
   <!-- Supported Families -->
@@ -178,7 +194,11 @@
     <h3>Supported Product Families ({{ families.length }})</h3>
     <div class="families-grid">
       @for (family of families; track family.value) {
-        <span class="family-badge">{{ family.label }}</span>
+        <span class="family-badge"
+              [class.selected]="family.value === selectedFamille"
+              (click)="selectedFamille = family.value">
+          {{ family.label }}
+        </span>
       }
     </div>
   </div>
