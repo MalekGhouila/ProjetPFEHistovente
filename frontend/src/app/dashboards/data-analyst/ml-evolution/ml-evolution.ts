@@ -58,6 +58,7 @@ export class MlEvolution implements OnInit, OnDestroy {
   editableConfig: { famille: string; model: string }[] = [];
   isLoadingConfig = true;
   isSaving = false;
+  deploySuccessMessage = '';
 
   readonly modelOptions = [
     { label: 'XGBoost',           value: 'xgboost' },
@@ -177,7 +178,7 @@ export class MlEvolution implements OnInit, OnDestroy {
           summary: 'Cleaning Started',
           detail: 'feature_engineering_v3.py is running...'
         });
-        // Poll pipeline/status every 3s until clean is no longer running
+
         const cleanPoll = interval(3000).pipe(
           switchMap(() => this.mlService.getPipelineStatus()),
           takeWhile(s => s.clean.status === 'running', true)
@@ -269,7 +270,6 @@ export class MlEvolution implements OnInit, OnDestroy {
             summary: 'Training Complete',
             detail: 'All models trained. Reload results to see updated metrics.'
           });
-          // Reload all data with fresh results
           this.loadStatus();
           this.loadGlobalComparison();
           this.loadFamilleResults();
@@ -337,6 +337,8 @@ export class MlEvolution implements OnInit, OnDestroy {
 
   saveConfig() {
     this.isSaving = true;
+    this.deploySuccessMessage = '';
+
     const config: FamilyModelConfig = {};
     this.editableConfig.forEach(row => config[row.famille] = row.model);
 
@@ -344,11 +346,9 @@ export class MlEvolution implements OnInit, OnDestroy {
       next: () => {
         this.isSaving = false;
         this.activeConfig = { ...config };
-        // Update deploy state timestamp
-        if (this.pipelineStatus) {
-          this.pipelineStatus.deploy.last_deployed = new Date().toISOString();
-          this.pipelineStatus.deploy.families      = this.editableConfig.length;
-        }
+        this.deploySuccessMessage = `Configuration deployed successfully for ${this.editableConfig.length} families.`;
+        this.loadPipelineStatus();
+
         this.messageService.add({
           severity: 'success',
           summary: 'Config Deployed',
@@ -370,6 +370,16 @@ export class MlEvolution implements OnInit, OnDestroy {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
+  hasConfigChanges(): boolean {
+    return this.getChangedCount() > 0;
+  }
+
+  getChangedCount(): number {
+    return this.editableConfig.filter(
+      row => (this.activeConfig[row.famille] ?? '') !== row.model
+    ).length;
+  }
+
   getAccuracyClass(val: number | undefined): string {
     if (val === undefined || val === null) return '';
     if (val >= 60) return 'accuracy-good';
@@ -384,7 +394,7 @@ export class MlEvolution implements OnInit, OnDestroy {
   }
 
   getBestModelForFamille(row: FamilleAccuracyRow): string {
-    const models = ['XGBoost','LightGBM','CatBoost','RandomForest','LinearRegression'];
+    const models = ['XGBoost', 'LightGBM', 'CatBoost', 'RandomForest', 'LinearRegression'];
     let best = '', bestVal = -Infinity;
     models.forEach(m => {
       const v = (row as any)[m];
@@ -397,9 +407,11 @@ export class MlEvolution implements OnInit, OnDestroy {
     const row = this.familleResults.find(r => r.famille === famille);
     if (!row) return 0;
     const map: any = {
-      'xgboost': 'XGBoost', 'lightgbm': 'LightGBM',
-      'catboost': 'CatBoost', 'randomforest': 'RandomForest',
-      'linearregression': 'LinearRegression'
+      xgboost: 'XGBoost',
+      lightgbm: 'LightGBM',
+      catboost: 'CatBoost',
+      randomforest: 'RandomForest',
+      linearregression: 'LinearRegression'
     };
     return (row as any)[map[model]] ?? 0;
   }

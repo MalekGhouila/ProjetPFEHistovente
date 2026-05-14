@@ -131,6 +131,29 @@
   margin-bottom: 16px;
 }
 
+/* ===== META NOTE ===== */
+.meta-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: -10px;
+  margin-bottom: 12px;
+}
+
+/* ===== DEPLOY SUCCESS BANNER ===== */
+.deploy-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #15803d;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
 /* ===== ACCURACY COLORS ===== */
 .accuracy-good {
   color: #22c55e;
@@ -393,7 +416,7 @@
 /* ── Subtle pulsing border animation for live messages ────────────── */
 @keyframes pulse-border {
   0%, 100% { border-left-color: var(--brand-primary); }
-  50%       { border-left-color: var(--brand-secondary); }
+  50%      { border-left-color: var(--brand-secondary); }
 }
 
 /* ── Action button ────────────────────────────────────────────────── */

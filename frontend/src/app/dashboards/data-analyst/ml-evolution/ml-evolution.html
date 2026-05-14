@@ -90,15 +90,12 @@
             </div>
           </div>
 
-          <!-- ── Live message while running ──────────────────────────── -->
           @if (pipelineStatus?.clean?.status === 'running') {
             <div class="step-message live-msg">
-              <i class="pi pi-spin pi-spinner" style="margin-right: 6px; font-size: 0.85rem;"></i>
               {{ pipelineStatus!.clean.message }}
             </div>
           }
 
-          <!-- ── Error message ────────────────────────────────────────── -->
           @if (pipelineStatus?.clean?.status === 'error') {
             <div class="step-message error-msg">
               <i class="pi pi-exclamation-triangle" style="margin-right: 6px;"></i>
@@ -106,7 +103,6 @@
             </div>
           }
 
-          <!-- ── Done summary ─────────────────────────────────────────── -->
           @if (pipelineStatus?.clean?.status === 'done') {
             <div class="step-message done-msg">
               <i class="pi pi-check" style="margin-right: 6px;"></i>
@@ -117,13 +113,11 @@
           <p-button
             label="Run Cleaning"
             icon="pi pi-play"
-            [loading]="isCleanRunning"
             [disabled]="isCleanRunning || isTrainRunning"
             (onClick)="runClean()"
             styleClass="step-btn" />
         </div>
 
-        <!-- Step connector -->
         <div class="step-connector">
           <i class="pi pi-arrow-down"></i>
         </div>
@@ -151,7 +145,6 @@
             </div>
           </div>
 
-          <!-- ── Progress bar + live message while running ────────────── -->
           @if (isTrainRunning) {
             <div class="train-progress-wrap">
               <div class="train-progress-header">
@@ -162,13 +155,11 @@
                 [value]="trainProgress"
                 styleClass="train-progress-bar" />
               <div class="step-message live-msg" style="margin-top: 8px;">
-                <i class="pi pi-spin pi-spinner" style="margin-right: 6px; font-size: 0.85rem;"></i>
                 {{ trainMessage }}
               </div>
             </div>
           }
 
-          <!-- ── Done message (after training finishes) ───────────────── -->
           @if (!isTrainRunning && pipelineStatus?.train?.status === 'done') {
             <div class="step-message done-msg">
               <i class="pi pi-check" style="margin-right: 6px;"></i>
@@ -176,7 +167,6 @@
             </div>
           }
 
-          <!-- ── Error message ────────────────────────────────────────── -->
           @if (!isTrainRunning && pipelineStatus?.train?.status === 'error') {
             <div class="step-message error-msg">
               <i class="pi pi-exclamation-triangle" style="margin-right: 6px;"></i>
@@ -188,13 +178,11 @@
             label="Run Training"
             icon="pi pi-play"
             severity="warn"
-            [loading]="isTrainRunning"
             [disabled]="isTrainRunning || isCleanRunning"
             (onClick)="runTrain()"
             styleClass="step-btn" />
         </div>
 
-        <!-- Step connector -->
         <div class="step-connector">
           <i class="pi pi-arrow-down"></i>
         </div>
@@ -235,7 +223,6 @@
         </div>
 
       </div>
-      <!-- end pipeline-steps -->
     </div>
   }
 
@@ -244,9 +231,11 @@
        ════════════════════════════════════════════════════════════════ -->
   @if (activeTab === 'comparison') {
 
-    <!-- Global chart -->
     <div class="section-card">
       <h3 class="section-title">Global Accuracy — All Models</h3>
+      @if (modelStatus?.last_trained) {
+        <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+      }
       @if (!isLoadingGlobal && comparisonChartData) {
         <p-chart type="bar"
                  [data]="comparisonChartData"
@@ -258,9 +247,11 @@
       }
     </div>
 
-    <!-- Global table -->
     <div class="section-card">
       <h3 class="section-title">Detailed Metrics</h3>
+      @if (modelStatus?.last_trained) {
+        <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+      }
       <p-table [value]="globalResults" [loading]="isLoadingGlobal"
                styleClass="p-datatable-sm p-datatable-striped">
         <ng-template pTemplate="header">
@@ -289,9 +280,11 @@
       </p-table>
     </div>
 
-    <!-- Per-famille table -->
     <div class="section-card">
       <h3 class="section-title">Accuracy per Family</h3>
+      @if (modelStatus?.last_trained) {
+        <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+      }
       <p-table [value]="familleResults" [loading]="isLoadingFamille"
                styleClass="p-datatable-sm p-datatable-striped"
                [scrollable]="true" scrollHeight="420px">
@@ -319,7 +312,6 @@
         </ng-template>
       </p-table>
     </div>
-
   }
 
   <!-- ════════════════════════════════════════════════════════════════════
@@ -329,15 +321,30 @@
     <div class="section-card">
       <div class="config-header">
         <h3 class="section-title">Per-Family Model Configuration</h3>
-        <p-button label="Deploy Config" icon="pi pi-check"
-                  severity="success"
-                  [loading]="isSaving"
-                  (onClick)="saveConfig()" />
+        <p-button
+          [label]="hasConfigChanges() ? ('Deploy Config (' + getChangedCount() + ')') : 'Deploy Config'"
+          icon="pi pi-check"
+          severity="success"
+          [loading]="isSaving"
+          [disabled]="isSaving"
+          (onClick)="saveConfig()" />
       </div>
+
       <p class="config-hint">
         For each family, click the model you want to deploy — accuracy is shown before you choose.
         Then click <strong>Deploy Config</strong> to apply.
       </p>
+
+      @if (modelStatus?.last_trained) {
+        <p class="meta-note">Accuracy values below are from training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+      }
+
+      @if (deploySuccessMessage) {
+        <div class="deploy-success-banner">
+          <i class="pi pi-check-circle"></i>
+          <span>{{ deploySuccessMessage }}</span>
+        </div>
+      }
 
       <p-table [value]="editableConfig" [loading]="isLoadingConfig"
                styleClass="p-datatable-sm p-datatable-striped">
