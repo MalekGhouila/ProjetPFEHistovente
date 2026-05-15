@@ -5,7 +5,6 @@
     <p>AI-powered weekly sales forecasting by product family and store</p>
   </div>
 
-  <!-- Model Info Card — now dynamic from API -->
   @if (modelStatus) {
     <div class="model-info-card">
       <div class="model-info-item">
@@ -33,12 +32,16 @@
 
   <div class="prediction-layout">
 
-    <!-- Prediction Form -->
     <div class="form-card">
       <h3>Configure Prediction</h3>
 
-      <div class="form-grid">
+      <div class="tier-legend">
+        <span class="legend-high"><i class="dot dot-high"></i>High reliability (≥60%)</span>
+        <span class="legend-medium"><i class="dot dot-medium"></i>Medium (40–59%)</span>
+        <span class="legend-low"><i class="dot dot-low"></i>Low (&lt;40%)</span>
+      </div>
 
+      <div class="form-grid">
         <div class="field">
           <label>Product Family <span class="required">*</span></label>
           <p-select
@@ -47,6 +50,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Select family..."
+            panelStyleClass="pred-select-panel"
             appendTo="body" />
         </div>
 
@@ -58,6 +62,8 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Select store..."
+            [emptyMessage]="'No stores available'"
+            panelStyleClass="pred-select-panel"
             appendTo="body" />
         </div>
 
@@ -68,6 +74,7 @@
             [options]="years"
             optionLabel="label"
             optionValue="value"
+            panelStyleClass="pred-select-panel"
             appendTo="body" />
         </div>
 
@@ -78,15 +85,14 @@
             [options]="weeks"
             optionLabel="label"
             optionValue="value"
+            panelStyleClass="pred-select-panel"
             appendTo="body" />
         </div>
-
       </div>
 
-      <!-- Soldes toggle -->
       <div class="soldes-row">
-        <label class="soldes-label">
-          <input type="checkbox" [(ngModel)]="isSoldes" />
+        <label class="soldes-label" for="soldesToggle">
+          <input id="soldesToggle" type="checkbox" [(ngModel)]="isSoldes" />
           <span>Sales period (Soldes)</span>
           <span class="soldes-hint">Check if this week falls during a sales promotion period</span>
         </label>
@@ -103,10 +109,10 @@
         [label]="isLoading ? 'Predicting...' : 'Generate Prediction'"
         icon="pi pi-bolt"
         [loading]="isLoading"
+        [disabled]="isLoading || !selectedFamille || !selectedMagasin"
         (onClick)="predict()" />
     </div>
 
-    <!-- Prediction Result -->
     <div class="result-card">
       <h3>Prediction Result</h3>
 
@@ -127,7 +133,6 @@
 
       @if (predictionResult && !isLoading) {
         <div class="result-content">
-
           <div class="result-main">
             <span class="result-label">Predicted Sales Quantity</span>
             <span class="result-value">
@@ -147,9 +152,7 @@
             </div>
             <div class="result-detail-item">
               <span class="detail-label">Period</span>
-              <span class="detail-value">
-                Week {{ predictionResult.week_of_year }}, {{ predictionResult.year }}
-              </span>
+              <span class="detail-value">Week {{ predictionResult.week_of_year }}, {{ predictionResult.year }}</span>
             </div>
             <div class="result-detail-item">
               <span class="detail-label">Model Used</span>
@@ -169,7 +172,6 @@
             </div>
           </div>
 
-          <!-- Warning banner -->
           @if (predictionResult.warning_level !== 'none') {
             <div class="warning-banner" [class]="getWarningClass()">
               <i [class]="getWarningIcon()"></i>
@@ -179,25 +181,25 @@
 
           <div class="model-note">
             <i class="pi pi-info-circle"></i>
-            <span>Prediction computed by <strong>{{ predictionResult.model_used }}</strong>
-              — accuracy {{ predictionResult.accuracy }}%</span>
+            <span>Prediction computed by <strong>{{ predictionResult.model_used }}</strong> — accuracy {{ predictionResult.accuracy }}%</span>
           </div>
-
         </div>
       }
     </div>
-
   </div>
 
-  <!-- Supported Families -->
   <div class="families-card">
     <h3>Supported Product Families ({{ families.length }})</h3>
     <div class="families-grid">
       @for (family of families; track family.value) {
-        <span class="family-badge"
-              [class.selected]="family.value === selectedFamille"
-              (click)="selectedFamille = family.value">
-          {{ family.label }}
+        <span
+          class="family-badge"
+          [class.selected]="family.value === selectedFamille"
+          [class.tier-high]="family.tier === 'high'"
+          [class.tier-medium]="family.tier === 'medium'"
+          [class.tier-low]="family.tier === 'low'"
+          (click)="selectedFamille = family.value">
+          {{ family.value }}
         </span>
       }
     </div>

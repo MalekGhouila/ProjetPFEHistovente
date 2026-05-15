@@ -55,8 +55,13 @@
   color: var(--text-primary);
 }
 
-.model-info-value.warn { color: #f1c40f; }
-.model-info-value.success { color: #2ecc71; }
+.model-info-value.warn {
+  color: #f1c40f;
+}
+
+.model-info-value.success {
+  color: #2ecc71;
+}
 
 /* Layout */
 .prediction-layout {
@@ -101,47 +106,138 @@
   color: var(--text-secondary);
 }
 
-.field input {
+/* ===== PrimeNG Select (fixed black panel issue) ===== */
+:host ::ng-deep .p-select {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-family: var(--font-family), sans-serif;
-  font-size: 0.9rem;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:host ::ng-deep .p-select .p-select-label {
+  color: var(--text-primary) !important;
+}
+
+:host ::ng-deep .p-select .p-select-dropdown {
+  color: var(--text-secondary) !important;
+}
+
+/* PrimeNG v19+ panel */
+:host ::ng-deep .p-select-overlay {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* PrimeNG older panel class fallback */
+:host ::ng-deep .p-select-panel {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+:host ::ng-deep .p-select-option {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+:host ::ng-deep .p-select-option:hover {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+:host ::ng-deep .p-select-option.p-select-option-selected {
+  background: rgba(108, 52, 131, 0.12) !important;
+  color: var(--brand-primary) !important;
+}
+
+:host ::ng-deep .p-select-empty-message {
+  color: var(--text-muted) !important;
+  background: var(--bg-card) !important;
+}
+
+/* Soldes / checkbox */
+.soldes-row {
   background: var(--bg-primary);
-  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
-.field input:focus {
-  outline: none;
-  border-color: var(--brand-primary);
-}
-
-/* Lag Section */
-.lag-section {
+.soldes-label {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.lag-section h4 {
-  font-size: 0.9rem;
-  font-weight: 600;
+  gap: 4px;
+  cursor: pointer;
   color: var(--text-primary);
 }
 
-.lag-hint {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-style: italic;
-  margin: 0;
+.soldes-label input[type='checkbox'] {
+  accent-color: var(--brand-primary);
+  width: 16px;
+  height: 16px;
+  margin-bottom: 4px;
 }
 
-.lag-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.soldes-label > span:first-of-type {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
 }
+
+.soldes-hint {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* Reliability legend */
+.tier-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  margin-top: -8px;
+  margin-bottom: 6px;
+}
+
+.legend-high {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.legend-medium {
+  color: #ca8a04;
+  font-weight: 600;
+}
+
+.legend-low {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.dot-high { background: #16a34a; }
+.dot-medium { background: #ca8a04; }
+.dot-low { background: #dc2626; }
+
+.selected-tier {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.tier-high { color: #16a34a !important; }
+.tier-medium { color: #ca8a04 !important; }
+.tier-low { color: #dc2626 !important; }
 
 /* Error */
 .error-msg {
@@ -220,7 +316,7 @@
 
 .result-label {
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.85);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -274,6 +370,31 @@
   border-radius: 8px;
 }
 
+/* Warning banner */
+.warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.84rem;
+}
+
+.warning-red {
+  background: rgba(231, 76, 60, 0.12);
+  color: #e74c3c;
+}
+
+.warning-yellow {
+  background: rgba(241, 196, 15, 0.14);
+  color: #b8860b;
+}
+
+.warning-ok {
+  background: rgba(46, 204, 113, 0.12);
+  color: #2ecc71;
+}
+
 /* Families */
 .families-card {
   background: var(--bg-card);
@@ -297,10 +418,65 @@
 }
 
 .family-badge {
-  background: rgba(108, 52, 131, 0.12);
-  color: var(--brand-primary);
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.family-badge.tier-high {
+  background: rgba(22, 163, 74, 0.12);
+  border-color: rgba(22, 163, 74, 0.4);
+  color: #15803d;
+}
+
+.family-badge.tier-medium {
+  background: rgba(202, 138, 4, 0.14);
+  border-color: rgba(202, 138, 4, 0.4);
+  color: #a16207;
+}
+
+.family-badge.tier-low {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #b91c1c;
+}
+
+.family-badge.selected {
+  background: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  color: #fff !important;
+}
+
+/* Button disabled feel */
+:host ::ng-deep .p-button:disabled {
+  opacity: 0.6 !important;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .prediction-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .model-info-card {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .model-info-item {
+    min-width: 140px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }

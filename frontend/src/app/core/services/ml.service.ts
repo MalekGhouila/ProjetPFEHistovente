@@ -56,7 +56,17 @@ export interface FamilyModelConfig {
   [famille: string]: string;
 }
 
-// ─── NEW: Pipeline interfaces ─────────────────────────────────────────────────
+// Stores now include both code and display name
+export interface StoreItem {
+  code: string;
+  name: string;
+}
+
+export interface StoresResponse {
+  stores: StoreItem[];
+}
+
+// ─── Pipeline interfaces ──────────────────────────────────────────────────────
 
 export interface CleanState {
   status:       'idle' | 'running' | 'done' | 'error';
@@ -94,12 +104,11 @@ export interface TrainStatusResponse {
 
 @Injectable({ providedIn: 'root' })
 export class MlService {
-
   private mlApi = 'http://localhost:8000';
 
   constructor(private http: HttpClient) {}
 
-  // ─── Existing methods ──────────────────────────────────────────────────────
+  // ─── Core prediction & metadata ────────────────────────────────────────────
 
   getStatus(): Observable<ModelStatus> {
     return this.http.get<ModelStatus>(`${this.mlApi}/model/status`);
@@ -108,6 +117,16 @@ export class MlService {
   predict(request: PredictRequest): Observable<PredictResponse> {
     return this.http.post<PredictResponse>(`${this.mlApi}/predict`, request);
   }
+
+  getFamilies(): Observable<{ families: string[] }> {
+    return this.http.get<{ families: string[] }>(`${this.mlApi}/families`);
+  }
+
+  getStores(): Observable<StoresResponse> {
+    return this.http.get<StoresResponse>(`${this.mlApi}/stores`);
+  }
+
+  // ─── Model comparison / deploy config ─────────────────────────────────────
 
   getGlobalComparison(): Observable<GlobalComparisonResult[]> {
     return this.http.get<GlobalComparisonResult[]>(`${this.mlApi}/train/results/global`);
@@ -128,28 +147,24 @@ export class MlService {
     return this.http.post(`${this.mlApi}/models/deploy`, payload);
   }
 
-  getFamilies(): Observable<{ families: string[] }> {
-    return this.http.get<{ families: string[] }>(`${this.mlApi}/families`);
-  }
-
-  // ─── NEW: Pipeline methods ─────────────────────────────────────────────────
+  // ─── Pipeline control/status ───────────────────────────────────────────────
 
   /** GET /pipeline/status — full clean + train + deploy state */
   getPipelineStatus(): Observable<PipelineStatus> {
     return this.http.get<PipelineStatus>(`${this.mlApi}/pipeline/status`);
   }
 
-  /** POST /data/clean — trigger feature_engineering_v3.py */
+  /** POST /data/clean — trigger feature engineering */
   runClean(): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.mlApi}/data/clean`, {});
   }
 
-  /** POST /train — trigger model_comparison.py (all 5 models) */
+  /** POST /train — trigger model_comparison.py (all models) */
   runTrain(): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.mlApi}/train`, {});
   }
 
-  /** GET /train/status — poll this during training for progress_pct + message */
+  /** GET /train/status — poll during training for progress + message */
   getTrainStatus(): Observable<TrainStatusResponse> {
     return this.http.get<TrainStatusResponse>(`${this.mlApi}/train/status`);
   }
