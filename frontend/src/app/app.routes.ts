@@ -56,6 +56,7 @@ export const routes: Routes = [
       { path: 'admin/predictions', component: Predictions },
       { path: 'admin/alerts', component: Alerts },
       { path: 'admin/custom-analysis', component: CustomAnalysis },
+      { path: 'admin/data-quality', component: DataQuality },
 
       // Manager routes
       { path: 'manager', component: Manager },
