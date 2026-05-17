@@ -191,3 +191,7 @@
 .status-warning {
   color: #f1c40f !important;
 }
+
+.status-loading { color: #95a5a6; font-weight: 500; }
+
+.status-error   { color: #e74c3c; font-weight: 600; }

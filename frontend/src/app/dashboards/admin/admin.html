@@ -76,26 +76,87 @@
     <div class="info-card">
       <h3>System Status</h3>
       <ul class="status-list">
+
+        <!-- Database -->
         <li>
-          <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          @if (statusDatabase === 'loading') {
+            <i class="pi pi-spin pi-spinner" style="color: #95a5a6"></i>
+          } @else if (statusDatabase === 'ok') {
+            <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          } @else {
+            <i class="pi pi-times-circle" style="color: #e74c3c"></i>
+          }
           <span>Database Connected</span>
-          <span class="status-ok">OK</span>
+          @if (statusDatabase === 'loading') {
+            <span class="status-loading">Checking...</span>
+          } @else if (statusDatabase === 'ok') {
+            <span class="status-ok">OK</span>
+          } @else {
+            <span class="status-error">ERROR</span>
+          }
         </li>
+
+        <!-- API Server -->
         <li>
-          <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          @if (statusApiServer === 'loading') {
+            <i class="pi pi-spin pi-spinner" style="color: #95a5a6"></i>
+          } @else if (statusApiServer === 'ok') {
+            <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          } @else {
+            <i class="pi pi-times-circle" style="color: #e74c3c"></i>
+          }
           <span>API Server Running</span>
-          <span class="status-ok">OK</span>
+          @if (statusApiServer === 'loading') {
+            <span class="status-loading">Checking...</span>
+          } @else if (statusApiServer === 'ok') {
+            <span class="status-ok">OK</span>
+          } @else {
+            <span class="status-error">ERROR</span>
+          }
         </li>
+
+        <!-- Auth Service -->
         <li>
-          <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          @if (statusAuthService === 'loading') {
+            <i class="pi pi-spin pi-spinner" style="color: #95a5a6"></i>
+          } @else if (statusAuthService === 'ok') {
+            <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          } @else {
+            <i class="pi pi-times-circle" style="color: #e74c3c"></i>
+          }
           <span>Authentication Service</span>
-          <span class="status-ok">OK</span>
+          @if (statusAuthService === 'loading') {
+            <span class="status-loading">Checking...</span>
+          } @else if (statusAuthService === 'ok') {
+            <span class="status-ok">OK</span>
+          } @else {
+            <span class="status-error">ERROR</span>
+          }
         </li>
+
+        <!-- ML Model -->
         <li>
-          <i class="pi pi-exclamation-circle" style="color: #f1c40f"></i>
+          @if (statusMlModel === 'loading') {
+            <i class="pi pi-spin pi-spinner" style="color: #95a5a6"></i>
+          } @else if (statusMlModel === 'ok') {
+            <i class="pi pi-check-circle" style="color: #2ecc71"></i>
+          } @else if (statusMlModel === 'pending') {
+            <i class="pi pi-exclamation-circle" style="color: #f1c40f"></i>
+          } @else {
+            <i class="pi pi-times-circle" style="color: #e74c3c"></i>
+          }
           <span>ML Model</span>
-          <span class="status-warning">Pending</span>
+          @if (statusMlModel === 'loading') {
+            <span class="status-loading">Checking...</span>
+          } @else if (statusMlModel === 'ok') {
+            <span class="status-ok">OK</span>
+          } @else if (statusMlModel === 'pending') {
+            <span class="status-warning">Pending</span>
+          } @else {
+            <span class="status-error">ERROR</span>
+          }
         </li>
+
       </ul>
     </div>
   </div>
