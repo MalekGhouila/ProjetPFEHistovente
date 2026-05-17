@@ -13,6 +13,17 @@
   margin: 0;
 }
 
+.sidebar-group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  padding: 16px 24px 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
 .sidebar-item a {
   display: flex;
   align-items: center;
