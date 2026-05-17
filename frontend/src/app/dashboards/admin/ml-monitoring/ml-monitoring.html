@@ -1,18 +1,18 @@
 <div class="dashboard">
 
   <div class="dashboard-header">
-    <h1>ML Model Monitoring</h1>
-    <p>Model health, performance metrics and supported families</p>
+    <h1>ML Performance Monitoring</h1>
+    <p>Model health, accuracy metrics, per-family breakdown and pipeline state</p>
   </div>
 
   @if (isLoading) {
     <div class="loading-container">
       <i class="pi pi-spin pi-spinner"></i>
-      <p>Loading model status...</p>
+      <p>Loading ML data...</p>
     </div>
   }
 
-  @if (error) {
+  @if (error && !isLoading) {
     <div class="error-container">
       <i class="pi pi-exclamation-triangle"></i>
       <h3>ML Server Unavailable</h3>
@@ -20,88 +20,174 @@
     </div>
   }
 
-  @if (modelStatus && !isLoading) {
+  @if (!isLoading && modelStatus) {
 
+    <!-- KPI ROW -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-icon status">
-          <i class="pi pi-heart"></i>
-        </div>
+        <div class="kpi-icon status"><i class="pi pi-heart"></i></div>
         <div class="kpi-info">
           <span class="kpi-label">Model Status</span>
-          <p-tag
-            [value]="modelStatus.status.toUpperCase()"
-            [severity]="getStatusSeverity()"/>
+          <p-tag [value]="modelStatus.status.toUpperCase()" [severity]="getStatusSeverity()" />
         </div>
       </div>
-
       <div class="kpi-card">
-        <div class="kpi-icon accuracy">
-          <i class="pi pi-chart-bar"></i>
+        <div class="kpi-icon accuracy"><i class="pi pi-chart-bar"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Best Model</span>
+          <span class="kpi-value accent">{{ modelStatus.best_model }}</span>
         </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon wmape"><i class="pi pi-percentage"></i></div>
         <div class="kpi-info">
           <span class="kpi-label">WMAPE</span>
           <span class="kpi-value">{{ modelStatus.wmape }}%</span>
         </div>
       </div>
-
       <div class="kpi-card">
-        <div class="kpi-icon r2">
-          <i class="pi pi-chart-line"></i>
-        </div>
+        <div class="kpi-icon r2"><i class="pi pi-chart-line"></i></div>
         <div class="kpi-info">
           <span class="kpi-label">R² Score</span>
           <span class="kpi-value">{{ modelStatus.r2 }}</span>
         </div>
       </div>
-
       <div class="kpi-card">
-        <div class="kpi-icon trained">
-          <i class="pi pi-calendar"></i>
+        <div class="kpi-icon families"><i class="pi pi-tag"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Families Supported</span>
+          <span class="kpi-value">{{ modelStatus.families_supported.length }}</span>
         </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon trained"><i class="pi pi-calendar"></i></div>
         <div class="kpi-info">
           <span class="kpi-label">Last Trained</span>
-          <span class="kpi-value">{{ modelStatus.last_trained }}</span>
+          <span class="kpi-value small">{{ formatDate(modelStatus.last_trained) }}</span>
         </div>
       </div>
     </div>
 
-    <div class="details-grid">
+    <!-- GLOBAL MODEL COMPARISON TABLE -->
+    @if (globalResults.length > 0) {
+      <div class="section-card">
+        <h3>Global Model Comparison</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+            <tr>
+              <th>Model</th>
+              <th>Accuracy %</th>
+              <th>WMAPE %</th>
+              <th>R²</th>
+              <th>RMSE</th>
+              <th>Train Time (s)</th>
+              <th>Level</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (row of globalResults; track row.model) {
+                <tr [class.best-row]="row.model === modelStatus!.best_model">
+                  <td class="model-name">
+                    {{ row.model }}
+                    @if (row.model === modelStatus!.best_model) {
+                      <span class="best-badge">★ Best</span>
+                    }
+                  </td>
+                  <td>{{ row.accuracy | number:'1.1-1' }}%</td>
+                  <td>{{ row.wmape | number:'1.1-1' }}%</td>
+                  <td>{{ row.r2 | number:'1.3-3' }}</td>
+                  <td>{{ row.rmse | number:'1.1-1' }}</td>
+                  <td>{{ row.train_time_s | number:'1.1-1' }}s</td>
+                  <td>
+                    <p-tag
+                      [value]="row.accuracy >= 80 ? 'HIGH' : row.accuracy >= 60 ? 'MEDIUM' : 'LOW'"
+                      [severity]="getAccuracySeverity(row.accuracy)" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
 
-      <div class="detail-card">
-        <h3>Model Information</h3>
-        <div class="detail-list">
-          <div class="detail-item">
-            <span class="detail-label">Best Model</span>
-            <span class="detail-value accent">{{ modelStatus.best_model }}</span>
+    <!-- PER-FAMILLE ACCURACY TABLE -->
+    @if (perFamilleResults.length > 0) {
+      <div class="section-card">
+        <h3>Accuracy per Family</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+            <tr>
+              <th>Family</th>
+              @for (m of modelNames; track m) {
+                <th>{{ m }}</th>
+              }
+              <th>Active Model</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (row of perFamilleResults; track row.famille) {
+                <tr>
+                  <td class="famille-name">{{ row.famille }}</td>
+                  @for (m of modelNames; track m) {
+                    <td [class.best-cell]="getFamilleValue(row, m) === Math.max(getFamilleValue(row,'XGBoost'), getFamilleValue(row,'LightGBM'), getFamilleValue(row,'CatBoost'), getFamilleValue(row,'RandomForest'), getFamilleValue(row,'LinearRegression'))">
+                      {{ getFamilleValue(row, m) | number:'1.1-1' }}%
+                    </td>
+                  }
+                  <td class="active-model">{{ getBestModelForFamille(row.famille) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- PIPELINE STATE -->
+    @if (pipelineStatus) {
+      <div class="section-card">
+        <h3>Pipeline State</h3>
+        <div class="pipeline-grid">
+          <div class="pipeline-step">
+            <div class="step-header">
+              <i class="pi pi-database"></i>
+              <span>Data Cleaning</span>
+              <p-tag [value]="pipelineStatus.clean.status.toUpperCase()" [severity]="getPipelineBadge(pipelineStatus.clean.status)" />
+            </div>
+            <p class="step-detail">{{ pipelineStatus.clean.message }}</p>
+            <p class="step-meta">Last run: {{ formatDate(pipelineStatus.clean.last_run) }}</p>
+            @if (pipelineStatus.clean.rows_cleaned) {
+              <p class="step-meta">Rows: {{ pipelineStatus.clean.rows_cleaned | number }}</p>
+            }
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Global Accuracy</span>
-            <span class="detail-value">{{ modelStatus.accuracy }}%</span>
+          <div class="pipeline-step">
+            <div class="step-header">
+              <i class="pi pi-cog"></i>
+              <span>Model Training</span>
+              <p-tag [value]="pipelineStatus.train.status.toUpperCase()" [severity]="getPipelineBadge(pipelineStatus.train.status)" />
+            </div>
+            <p class="step-detail">{{ pipelineStatus.train.message }}</p>
+            <p class="step-meta">Last run: {{ formatDate(pipelineStatus.train.last_run) }}</p>
+            @if (pipelineStatus.train.progress_pct > 0 && pipelineStatus.train.progress_pct < 100) {
+              <div class="progress-bar-wrap">
+                <div class="progress-bar" [style.width.%]="pipelineStatus.train.progress_pct"></div>
+              </div>
+            }
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Accuracy Level</span>
-            <p-tag
-              [value]="modelStatus.wmape < 50 ? 'HIGH' : modelStatus.wmape < 75 ? 'MEDIUM' : 'LOW'"
-              [severity]="getAccuracySeverity()"/>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Families Supported</span>
-            <span class="detail-value">{{ modelStatus.families_supported.length }}</span>
+          <div class="pipeline-step">
+            <div class="step-header">
+              <i class="pi pi-send"></i>
+              <span>Config Deployed</span>
+              <p-tag [value]="pipelineStatus.deploy.last_deployed ? 'DEPLOYED' : 'PENDING'" [severity]="pipelineStatus.deploy.last_deployed ? 'success' : 'secondary'" />
+            </div>
+            <p class="step-meta">Last deploy: {{ formatDate(pipelineStatus.deploy.last_deployed) }}</p>
+            <p class="step-meta">Families configured: {{ pipelineStatus.deploy.families }}</p>
           </div>
         </div>
       </div>
-
-      <div class="detail-card">
-        <h3>Supported Families</h3>
-        <div class="families-grid">
-          @for (family of modelStatus.families_supported; track family) {
-            <span class="family-badge">{{ family }}</span>
-          }
-        </div>
-      </div>
-
-    </div>
+    }
 
   }
 
