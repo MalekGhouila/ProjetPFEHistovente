@@ -267,3 +267,51 @@
   color: #e74c3c;
   border-color: #e74c3c;
 }
+
+/* Backdrop for click-outside */
+.notification-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+/* Dropdown above backdrop */
+.notification-dropdown {
+  z-index: 1000;
+}
+
+/* Dropdown open animation */
+@keyframes dropdownOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notification-dropdown {
+  animation: dropdownOpen 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scrollable list */
+.notification-list {
+  max-height: 40vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.notification-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}

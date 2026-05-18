@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { AuthService } from './auth.service';
 
 export interface Task {
   id: string;
@@ -18,33 +19,35 @@ export interface Task {
 })
 export class TaskNotificationService {
 
-  private storageKey = 'analysisNotifications';
-  private tasksSubject = new BehaviorSubject<Task[]>(this.loadFromStorage());
-
+  private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
-  // Load from localStorage on startup
+  constructor(private authService: AuthService) {
+    this.tasksSubject.next(this.loadFromStorage());
+  }
+
+  private get storageKey(): string {
+    const username = this.authService.getUsername() || 'unknown';
+    return `analysisNotifications_${username}`;
+  }
+
   private loadFromStorage(): Task[] {
     const saved = localStorage.getItem(this.storageKey);
     return saved ? JSON.parse(saved) : [];
   }
 
-  // Save to localStorage
   private saveToStorage(tasks: Task[]) {
     localStorage.setItem(this.storageKey, JSON.stringify(tasks));
   }
 
-  // Add new task
   addTask(task: Task) {
     const current = this.tasksSubject.value;
-    // Remove old task with same filterKey if exists
     const filtered = current.filter(t => t.filterKey !== task.filterKey);
     const updated = [task, ...filtered];
     this.tasksSubject.next(updated);
     this.saveToStorage(updated);
   }
 
-  // Set task as ready
   setReady(filterKey: string) {
     const updated = this.tasksSubject.value.map(t =>
       t.filterKey === filterKey
@@ -55,20 +58,17 @@ export class TaskNotificationService {
     this.saveToStorage(updated);
   }
 
-  // Delete one notification
   deleteTask(id: string) {
     const updated = this.tasksSubject.value.filter(t => t.id !== id);
     this.tasksSubject.next(updated);
     this.saveToStorage(updated);
   }
 
-  // Clear all notifications
   clearAll() {
     this.tasksSubject.next([]);
     localStorage.removeItem(this.storageKey);
   }
 
-  // Getters
   getTasks(): Task[] {
     return this.tasksSubject.value;
   }
