@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { Login } from './auth/login/login';
 import { Layout } from './shared/layout/layout';
 import { authGuard } from './core/guards/auth-guard';
+import { roleGuard } from './core/guards/role-guard';
 import { storeGuard } from './core/guards/store-guard';
 import { NoStore } from './shared/no-store/no-store';
 
@@ -35,50 +36,80 @@ import { DataMonitoring } from './dashboards/admin/data-monitoring/data-monitori
 import { MlMonitoring } from './dashboards/admin/ml-monitoring/ml-monitoring';
 import { Settings } from './dashboards/admin/settings/settings';
 
+import { Unauthorized } from './shared/unauthorized/unauthorized';
+
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'no-store', component: NoStore },
+  { path: 'unauthorized', component: Unauthorized },
 
   {
     path: '',
     component: Layout,
     canActivate: [authGuard],
     children: [
-      // Admin routes
-      { path: 'admin', component: Admin },
-      { path: 'admin/users', component: Users },
-      { path: 'admin/data-monitoring', component: DataMonitoring },
-      { path: 'admin/ml-monitoring', component: MlMonitoring },
-      { path: 'admin/settings', component: Settings },
-      { path: 'admin/stores', component: Stores },
-      { path: 'admin/families', component: Families },
-      { path: 'admin/predictions', component: Predictions },
-      { path: 'admin/alerts', component: Alerts },
-      { path: 'admin/custom-analysis', component: CustomAnalysis },
-      { path: 'admin/data-quality', component: DataQuality },
 
-      // Manager routes
-      { path: 'manager', component: Manager },
-      { path: 'manager/stores', component: Stores },
-      { path: 'manager/families', component: Families },
-      { path: 'manager/predictions', component: Predictions },
-      { path: 'manager/alerts', component: Alerts },
-      { path: 'manager/custom-analysis', component: CustomAnalysis },
+      // ── ADMIN ──────────────────────────────────────────
+      {
+        path: 'admin',
+        canActivateChild: [roleGuard('ADMIN')],
+        children: [
+          { path: '', component: Admin },
+          { path: 'users', component: Users },
+          { path: 'data-monitoring', component: DataMonitoring },
+          { path: 'ml-monitoring', component: MlMonitoring },
+          { path: 'settings', component: Settings },
+          { path: 'stores', component: Stores },
+          { path: 'families', component: Families },
+          { path: 'predictions', component: Predictions },
+          { path: 'alerts', component: Alerts },
+          { path: 'custom-analysis', component: CustomAnalysis },
+          { path: 'data-quality', component: DataQuality },
+        ]
+      },
 
-      // Responsable Magasin routes
-      { path: 'responsable-magasin', component: ResponsableMagasin, canActivate: [storeGuard] },
-      { path: 'responsable-magasin/stock', component: Stock, canActivate: [storeGuard] },
-      { path: 'responsable-magasin/at-risk', component: AtRisk, canActivate: [storeGuard] },
-      { path: 'responsable-magasin/dormant', component: Dormant, canActivate: [storeGuard] },
+      // ── MANAGER ────────────────────────────────────────
+      {
+        path: 'manager',
+        canActivateChild: [roleGuard('MANAGER', 'ADMIN')],
+        children: [
+          { path: '', component: Manager },
+          { path: 'stores', component: Stores },
+          { path: 'families', component: Families },
+          { path: 'predictions', component: Predictions },
+          { path: 'alerts', component: Alerts },
+          { path: 'custom-analysis', component: CustomAnalysis },
+        ]
+      },
 
-      // Data Analyst routes
-      { path: 'data-analyst', component: DataAnalyst },
-      { path: 'data-analyst/data-quality', component: DataQuality },
-      { path: 'data-analyst/ml-evolution', component: MlEvolution },
-      { path: 'data-analyst/staging-viewer', component: StagingViewer },
-      { path: 'data-analyst/staging-review', component: StagingReview },
+      // ── RESPONSABLE MAGASIN ────────────────────────────
+      {
+        path: 'responsable-magasin',
+        canActivateChild: [roleGuard('RESPONSABLE_MAGASIN', 'ADMIN')],
+        children: [
+          { path: '', component: ResponsableMagasin, canActivate: [storeGuard] },
+          { path: 'stock', component: Stock, canActivate: [storeGuard] },
+          { path: 'at-risk', component: AtRisk, canActivate: [storeGuard] },
+          { path: 'dormant', component: Dormant, canActivate: [storeGuard] },
+        ]
+      },
+
+      // ── DATA ANALYST ───────────────────────────────────
+      {
+        path: 'data-analyst',
+        canActivateChild: [roleGuard('DATA_ANALYST', 'ADMIN')],
+        children: [
+          { path: '', component: DataAnalyst },
+          { path: 'data-quality', component: DataQuality },
+          { path: 'ml-evolution', component: MlEvolution },
+          { path: 'staging-viewer', component: StagingViewer },
+          { path: 'staging-review', component: StagingReview },
+        ]
+      },
+
     ]
   },
-  { path: '**', redirectTo: 'login' }
+
+  { path: '**', redirectTo: 'unauthorized' }
 ];
