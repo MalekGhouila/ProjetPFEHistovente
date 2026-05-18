@@ -40,6 +40,11 @@ export class TaskNotificationService {
     localStorage.setItem(this.storageKey, JSON.stringify(tasks));
   }
 
+  // Call this on navbar init to reload the correct user's notifications
+  reloadForCurrentUser() {
+    this.tasksSubject.next(this.loadFromStorage());
+  }
+
   addTask(task: Task) {
     const current = this.tasksSubject.value;
     const filtered = current.filter(t => t.filterKey !== task.filterKey);

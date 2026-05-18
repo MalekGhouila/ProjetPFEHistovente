@@ -16,6 +16,7 @@ export class Navbar implements OnInit, OnDestroy {
   username: string = '';
   role: string = '';
   showNotifications: boolean = false;
+  showLogoutTooltip: boolean = false;
   tasks: Task[] = [];
 
   private blinkInterval: any = null;
@@ -29,11 +30,12 @@ export class Navbar implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private taskService: TaskNotificationService,
+    public taskService: TaskNotificationService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    this.taskService.reloadForCurrentUser();
     this.username = this.authService.getUsername() || '';
     this.role = this.authService.getRole() || '';
 
@@ -49,7 +51,6 @@ export class Navbar implements OnInit, OnDestroy {
       this.updatePageTitle();
     });
 
-    // When user comes back to this tab
     document.addEventListener('visibilitychange', () => {
       this.updatePageTitle();
     });
@@ -150,19 +151,12 @@ export class Navbar implements OnInit, OnDestroy {
     this.stopAll();
 
     if (tabVisible && calculating) {
-      // Inside the app tab → run loop animation
       this.startCalcLoop();
-
     } else if (!tabVisible && calculating) {
-      // Outside the tab → static
       document.title = '⏳ Calculating Analysis';
-
     } else if (!tabVisible && readyCount > 0) {
-      // Outside the tab + ready → show notification
       document.title = `🔔 ${readyCount} Analysis Ready! - NAF NAF`;
-
     } else {
-      // Inside tab + done, or nothing happening → normal
       document.title = this.NORMAL_TITLE;
     }
   }
@@ -179,6 +173,16 @@ export class Navbar implements OnInit, OnDestroy {
 
   toggleNotifications() {
     this.showNotifications = !this.showNotifications;
+  }
+
+  onLogoutMouseEnter() {
+    if (this.taskService.isCalculating()) {
+      this.showLogoutTooltip = true;
+    }
+  }
+
+  onLogoutMouseLeave() {
+    this.showLogoutTooltip = false;
   }
 
   goToResults(task: Task) {
@@ -221,6 +225,8 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   logout() {
+    if (this.taskService.isCalculating()) return;
+
     if (confirm('Are you sure you want to logout?')) {
       this.stopAll();
       document.title = this.NORMAL_TITLE;
