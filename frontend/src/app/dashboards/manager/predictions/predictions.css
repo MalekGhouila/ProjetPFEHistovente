@@ -480,3 +480,100 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Top server-down banner ────────────────────────────────────── */
+.server-down-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  margin-bottom: 4px;
+  animation: slide-down 0.25s ease;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.server-down-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ef4444;
+  font-size: 1rem;
+}
+
+.server-down-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.server-down-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.server-down-detail {
+  font-size: 0.8rem;
+  color: #ef4444;
+  line-height: 1.5;
+}
+
+/* ── Disabled overlay for the layout + families grid ───────────── */
+.layout-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  filter: grayscale(0.25);
+  user-select: none;
+}
+
+/* ── Result panel offline placeholder ──────────────────────────── */
+.result-server-down {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 20px;
+  border-radius: 12px;
+  border: 1.5px dashed rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.03);
+  text-align: center;
+}
+
+.result-server-down-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1.5px solid rgba(239, 68, 68, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  font-size: 1.25rem;
+}
+
+.result-server-down-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.result-server-down-detail {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  max-width: 260px;
+  line-height: 1.6;
+}

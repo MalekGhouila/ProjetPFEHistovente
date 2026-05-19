@@ -5,7 +5,24 @@
     <p>AI-powered weekly sales forecasting by product family and store</p>
   </div>
 
-  @if (modelStatus) {
+  <!-- ── ML Server Down Banner ────────────────────────────────────── -->
+  @if (mlServerDown) {
+    <div class="server-down-banner">
+      <div class="server-down-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="server-down-content">
+        <span class="server-down-title">ML Server Unavailable</span>
+        <span class="server-down-detail">
+          The ML server is stopped or not responding. Predictions are disabled.
+          Please contact your administrator to restart the service.
+        </span>
+      </div>
+    </div>
+  }
+
+  <!-- ── Model Info Card (only when server is up) ─────────────────── -->
+  @if (modelStatus && !mlServerDown) {
     <div class="model-info-card">
       <div class="model-info-item">
         <i class="pi pi-cpu"></i>
@@ -30,7 +47,8 @@
     </div>
   }
 
-  <div class="prediction-layout">
+  <!-- ── Main prediction layout — disabled overlay when server down ── -->
+  <div class="prediction-layout" [class.layout-disabled]="mlServerDown">
 
     <div class="form-card">
       <h3>Configure Prediction</h3>
@@ -51,6 +69,7 @@
             optionValue="value"
             placeholder="Select family..."
             panelStyleClass="pred-select-panel"
+            [disabled]="mlServerDown"
             appendTo="body" />
         </div>
 
@@ -64,6 +83,7 @@
             placeholder="Select store..."
             [emptyMessage]="'No stores available'"
             panelStyleClass="pred-select-panel"
+            [disabled]="mlServerDown"
             appendTo="body" />
         </div>
 
@@ -75,6 +95,7 @@
             optionLabel="label"
             optionValue="value"
             panelStyleClass="pred-select-panel"
+            [disabled]="mlServerDown"
             appendTo="body" />
         </div>
 
@@ -86,13 +107,16 @@
             optionLabel="label"
             optionValue="value"
             panelStyleClass="pred-select-panel"
+            [disabled]="mlServerDown"
             appendTo="body" />
         </div>
       </div>
 
       <div class="soldes-row">
         <label class="soldes-label" for="soldesToggle">
-          <input id="soldesToggle" type="checkbox" [(ngModel)]="isSoldes" />
+          <input id="soldesToggle" type="checkbox"
+                 [(ngModel)]="isSoldes"
+                 [disabled]="mlServerDown" />
           <span>Sales period (Soldes)</span>
           <span class="soldes-hint">Check if this week falls during a sales promotion period</span>
         </label>
@@ -109,29 +133,40 @@
         [label]="isLoading ? 'Predicting...' : 'Generate Prediction'"
         icon="pi pi-bolt"
         [loading]="isLoading"
-        [disabled]="isLoading || !selectedFamille || !selectedMagasin"
+        [disabled]="mlServerDown || isLoading || !selectedFamille || !selectedMagasin"
         (onClick)="predict()" />
     </div>
 
     <div class="result-card">
       <h3>Prediction Result</h3>
 
-      @if (!predictionResult && !isLoading) {
+      @if (mlServerDown) {
+        <!-- ── Server offline placeholder in result panel ─────────── -->
+        <div class="result-server-down">
+          <div class="result-server-down-icon">
+            <i class="pi pi-server"></i>
+          </div>
+          <span class="result-server-down-title">ML Server Offline</span>
+          <span class="result-server-down-detail">
+            Predictions are unavailable while the ML server is offline.
+            Contact your administrator to restore the service.
+          </span>
+        </div>
+
+      } @else if (!predictionResult && !isLoading) {
         <div class="no-result">
           <i class="pi pi-chart-line"></i>
           <p>Configure parameters and click</p>
           <p><strong>"Generate Prediction"</strong></p>
         </div>
-      }
 
-      @if (isLoading) {
+      } @else if (isLoading) {
         <div class="loading-result">
           <i class="pi pi-spin pi-spinner"></i>
           <p>AI model is calculating...</p>
         </div>
-      }
 
-      @if (predictionResult && !isLoading) {
+      } @else if (predictionResult) {
         <div class="result-content">
           <div class="result-main">
             <span class="result-label">Predicted Sales Quantity</span>
@@ -188,7 +223,8 @@
     </div>
   </div>
 
-  <div class="families-card">
+  <!-- ── Families grid — disabled overlay when server down ─────────── -->
+  <div class="families-card" [class.layout-disabled]="mlServerDown">
     <h3>Supported Product Families ({{ families.length }})</h3>
     <div class="families-grid">
       @for (family of families; track family.value) {
@@ -198,7 +234,7 @@
           [class.tier-high]="family.tier === 'high'"
           [class.tier-medium]="family.tier === 'medium'"
           [class.tier-low]="family.tier === 'low'"
-          (click)="selectedFamille = family.value">
+          (click)="!mlServerDown && (selectedFamille = family.value)">
           {{ family.value }}
         </span>
       }

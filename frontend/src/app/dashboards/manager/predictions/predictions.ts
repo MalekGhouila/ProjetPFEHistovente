@@ -64,6 +64,9 @@ export class Predictions implements OnInit {
   isLoading = false;
   errorMessage = '';
 
+  // ML server health
+  mlServerDown = false;
+
   families: FamilyOption[] = [];
   magasins: { label: string; value: string }[] = [];
 
@@ -93,6 +96,7 @@ export class Predictions implements OnInit {
   loadFamiliesAndAccuracies() {
     this.mlService.getStatus().subscribe({
       next: (status) => {
+        this.mlServerDown = false;
         this.modelStatus = status;
 
         this.mlService.getPerFamilleResults().subscribe({
@@ -111,9 +115,12 @@ export class Predictions implements OnInit {
           }
         });
       },
-      error: (err: any) => {
-        console.error('Error loading families:', err);
-        this.errorMessage = 'Could not load families from ML API.';
+      error: () => {
+        // ML server unreachable
+        this.mlServerDown = true;
+        this.modelStatus = null;
+        this.families = [];
+        this.errorMessage = '';
         this.cdr.detectChanges();
       }
     });
@@ -161,19 +168,13 @@ export class Predictions implements OnInit {
     return 'low';
   }
 
-  // ---------- Stores: FULL Spring pagination ∩ ML codes ----------
+  // ---------- Stores ----------
 
   private emptySpringPage(): MagasinPageResponse {
     return {
-      content: [],
-      empty: true,
-      first: true,
-      last: true,
-      number: 0,
-      numberOfElements: 0,
-      size: 0,
-      totalElements: 0,
-      totalPages: 0
+      content: [], empty: true, first: true, last: true,
+      number: 0, numberOfElements: 0, size: 0,
+      totalElements: 0, totalPages: 0
     };
   }
 
@@ -191,9 +192,7 @@ export class Predictions implements OnInit {
         const firstContent = firstPage.content ?? [];
         const totalPages = Math.max(firstPage.totalPages ?? 0, 1);
 
-        if (totalPages <= 1) {
-          return of(firstContent);
-        }
+        if (totalPages <= 1) return of(firstContent);
 
         const requests: Observable<MagasinPageResponse>[] = [];
         for (let p = 1; p < totalPages; p++) {
@@ -203,9 +202,7 @@ export class Predictions implements OnInit {
         return forkJoin(requests).pipe(
           map((otherPages) => {
             const all = [...firstContent];
-            for (const pg of otherPages) {
-              all.push(...(pg.content ?? []));
-            }
+            for (const pg of otherPages) all.push(...(pg.content ?? []));
             return all;
           })
         );
@@ -222,14 +219,14 @@ export class Predictions implements OnInit {
         const mlStores = mlRes.stores ?? [];
 
         const mlCodeSet = new Set(
-          mlStores
-            .map(s => (s.code ?? '').trim())
-            .filter(Boolean)
+          mlStores.map(s => (s.code ?? '').trim()).filter(Boolean)
         );
 
         if (mlCodeSet.size === 0) {
           this.magasins = [];
-          this.errorMessage = 'No ML stores available (ML /stores returned empty).';
+          if (!this.mlServerDown) {
+            this.errorMessage = 'No ML stores available (ML /stores returned empty).';
+          }
           this.cdr.detectChanges();
           return;
         }
@@ -237,12 +234,9 @@ export class Predictions implements OnInit {
         const springByCode = new Map<string, MagasinDto>();
         for (const s of springStores) {
           const code = (s.code ?? '').trim();
-          if (code && !springByCode.has(code)) {
-            springByCode.set(code, s);
-          }
+          if (code && !springByCode.has(code)) springByCode.set(code, s);
         }
 
-        // Keep only ML-valid stores; enrich label with Spring name when available
         this.magasins = Array.from(mlCodeSet)
           .map(code => {
             const spring = springByCode.get(code);
@@ -256,19 +250,17 @@ export class Predictions implements OnInit {
           this.selectedMagasin = '';
         }
 
-        // Optional informative message
         const namedCount = this.magasins.filter(m => m.label.includes('(')).length;
-        if (namedCount < this.magasins.length) {
+        if (namedCount < this.magasins.length && !this.mlServerDown) {
           this.errorMessage = `Loaded ${this.magasins.length} ML-valid stores. ${namedCount} have Spring names, ${this.magasins.length - namedCount} are code-only.`;
-        } else {
+        } else if (!this.mlServerDown) {
           this.errorMessage = '';
         }
 
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error loading stores:', err);
-        this.errorMessage = 'Could not load stores.';
+      error: () => {
+        this.errorMessage = this.mlServerDown ? '' : 'Could not load stores.';
         this.cdr.detectChanges();
       }
     });
@@ -286,6 +278,8 @@ export class Predictions implements OnInit {
   // ---------- Predict ----------
 
   predict() {
+    if (this.mlServerDown) return;
+
     if (!this.selectedFamille) {
       this.errorMessage = 'Please select a product family!';
       return;
