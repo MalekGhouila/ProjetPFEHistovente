@@ -5,20 +5,20 @@
     <div class="header-row">
       <div>
         <h1>Data Analyst Dashboard</h1>
-        <p>{{ welcomeMessage }} - Data Quality & Analytics Overview</p>
+        <p>{{ welcomeMessage }} — Data Quality & ML Overview</p>
       </div>
       <div class="header-actions">
         @if (isCalculating) {
           <span class="calculating-msg">
-      <i class="pi pi-spin pi-spinner"></i>
-      Recalculating data quality...
-    </span>
+            <i class="pi pi-spin pi-spinner"></i>
+            Recalculating data quality...
+          </span>
         } @else {
           <div class="data-info">
             @if (lastUpdated) {
               <span class="last-updated-msg">
-          Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
-        </span>
+                Data calculated at: <strong>{{ lastUpdated | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </span>
               <span class="refresh-hint">For up-to-date data, click Refresh.</span>
             }
           </div>
@@ -69,40 +69,99 @@
         <i class="pi pi-times-circle"></i>
       </div>
       <div class="kpi-info">
-        <span class="kpi-label">Outliers Detected</span>
+        <span class="kpi-label">Anomalies Detected</span>
         <span class="kpi-value outliers-score">{{ outliersDetected }}</span>
       </div>
     </div>
   </div>
 
-  <!-- Charts Row 1 -->
-  <div class="charts-grid">
-    <div class="chart-card">
-      <h3>Missing Values by Column</h3>
-      <p-chart type="bar"
-               [data]="missingValuesChartData"
-               [options]="missingValuesChartOptions"
-               height="300px"/>
+  <!-- Charts: 3 columns, all visible without scrolling -->
+  <div class="charts-grid-three">
+
+    <!-- ML Pipeline History Card -->
+    <div class="chart-card pipeline-dates-card" (click)="goToMlEvolution()">
+      <div class="pipeline-dates-header">
+        <h3><i class="pi pi-history"></i> ML Pipeline History</h3>
+        <span class="pipeline-dates-hint">
+          <i class="pi pi-arrow-right"></i> View & run pipeline
+        </span>
+      </div>
+
+      @if (isPipelineLoading) {
+        <div class="pipeline-dates-loading">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading pipeline history...</span>
+        </div>
+      } @else {
+        <div class="pipeline-dates-list">
+
+          <div class="pipeline-date-item clean">
+            <div class="pipeline-date-icon">
+              <i class="pi pi-filter"></i>
+            </div>
+            <div class="pipeline-date-info">
+              <span class="pipeline-date-label">Last Data Cleaning</span>
+              <span class="pipeline-date-value">{{ pipelineDates.lastClean ?? 'Never run' }}</span>
+            </div>
+            <div class="pipeline-date-status" [class.done]="!!pipelineDates.lastClean">
+              <i class="pi"
+                 [class.pi-check-circle]="!!pipelineDates.lastClean"
+                 [class.pi-minus-circle]="!pipelineDates.lastClean"></i>
+            </div>
+          </div>
+
+          <div class="pipeline-date-item train">
+            <div class="pipeline-date-icon">
+              <i class="pi pi-chart-bar"></i>
+            </div>
+            <div class="pipeline-date-info">
+              <span class="pipeline-date-label">Last Model Training</span>
+              <span class="pipeline-date-value">{{ pipelineDates.lastTrain ?? 'Never run' }}</span>
+            </div>
+            <div class="pipeline-date-status" [class.done]="!!pipelineDates.lastTrain">
+              <i class="pi"
+                 [class.pi-check-circle]="!!pipelineDates.lastTrain"
+                 [class.pi-minus-circle]="!pipelineDates.lastTrain"></i>
+            </div>
+          </div>
+
+          <div class="pipeline-date-item deploy">
+            <div class="pipeline-date-icon">
+              <i class="pi pi-cloud-upload"></i>
+            </div>
+            <div class="pipeline-date-info">
+              <span class="pipeline-date-label">Last Deployment</span>
+              <span class="pipeline-date-value">{{ pipelineDates.lastDeploy ?? 'Never deployed' }}</span>
+            </div>
+            <div class="pipeline-date-status" [class.done]="!!pipelineDates.lastDeploy">
+              <i class="pi"
+                 [class.pi-check-circle]="!!pipelineDates.lastDeploy"
+                 [class.pi-minus-circle]="!pipelineDates.lastDeploy"></i>
+            </div>
+          </div>
+
+        </div>
+      }
     </div>
 
+    <!-- Records per Month -->
     <div class="chart-card">
-      <h3>Records per Month (2024)</h3>
+      <h3>Records per Month{{ recordsYear }}</h3>
       <p-chart type="line"
                [data]="outliersData"
                [options]="outliersOptions"
-               height="300px"/>
+               height="220px"/>
     </div>
-  </div>
 
-  <!-- Charts Row 2 -->
-  <div class="charts-grid-full">
+    <!-- Records per Year -->
     <div class="chart-card">
-      <h3>Data Completeness by Year (%)</h3>
+      <h3>Records per Year</h3>
       <p-chart type="bar"
                [data]="completenessData"
                [options]="completenessOptions"
-               height="300px"/>
+               height="220px"/>
     </div>
+
   </div>
 
 </div>

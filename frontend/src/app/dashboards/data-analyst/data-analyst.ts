@@ -3,7 +3,9 @@ import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { MlService } from '../../core/services/ml.service';
 
 @Component({
   selector: 'app-data-analyst',
@@ -23,12 +25,21 @@ export class DataAnalyst implements OnInit, OnDestroy {
   missingValues = '...';
   outliersDetected = '...';
 
-  missingValuesChartData: any;
-  missingValuesChartOptions: any;
   completenessData: any;
   completenessOptions: any;
   outliersData: any;
   outliersOptions: any;
+
+  // Pipeline history card
+  isPipelineLoading = true;
+  pipelineDates: {
+    lastClean: string | null;
+    lastTrain: string | null;
+    lastDeploy: string | null;
+  } = { lastClean: null, lastTrain: null, lastDeploy: null };
+
+  // Derived from actual data — shown in chart label
+  recordsYear = '';
 
   private apiUrl = 'http://localhost:8080/api/analytics';
   private qualityStorageKey = 'qualityCalculating';
@@ -37,6 +48,8 @@ export class DataAnalyst implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
+    private mlService: MlService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -50,8 +63,8 @@ export class DataAnalyst implements OnInit, OnDestroy {
     this.loadQualityStatus();
     this.loadKpis();
     this.loadRecordsPerMonth();
-    this.loadMissingByColumn();
     this.loadRecordsPerYear();
+    this.loadPipelineDates();
   }
 
   ngOnDestroy() {
@@ -62,20 +75,6 @@ export class DataAnalyst implements OnInit, OnDestroy {
   }
 
   initChartOptions() {
-    this.missingValuesChartOptions = {
-      responsive: true,
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          beginAtZero: true,
-          max: 100,
-          ticks: { callback: (value: number) => value + '%' }
-        }
-      }
-    };
-
-    // Updated: simple bar, no stacking, Y axis in millions
     this.completenessOptions = {
       responsive: true,
       plugins: { legend: { display: false } },
@@ -91,34 +90,17 @@ export class DataAnalyst implements OnInit, OnDestroy {
 
     this.outliersOptions = {
       responsive: true,
-      plugins: { legend: { position: 'top' } },
+      plugins: { legend: { display: false } },
       scales: { y: { beginAtZero: true } }
     };
 
-    // Placeholder until real data loads
-    this.missingValuesChartData = {
-      labels: ['IDArCouleur', 'IDVille', 'IDRegion', 'Saison', 'CodeArticle', 'Famille'],
-      datasets: [{
-        label: 'Missing Values %',
-        data: [0, 0, 0, 0, 0, 0],
-        backgroundColor: [
-          'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.7)',
-          'rgba(241, 196, 15, 0.8)', 'rgba(241, 196, 15, 0.7)',
-          'rgba(46, 204, 113, 0.8)', 'rgba(46, 204, 113, 0.7)'
-        ],
-        borderWidth: 1
-      }]
-    };
-
-    // Empty placeholder — replaced by loadRecordsPerYear()
     this.completenessData = { labels: [], datasets: [] };
 
-    // Placeholder until real data loads
     this.outliersData = {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       datasets: [{
-        label: 'Records per Month (2024)',
+        label: 'Records per Month',
         data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -132,10 +114,13 @@ export class DataAnalyst implements OnInit, OnDestroy {
     this.http.get<any[]>(`${this.apiUrl}/records-per-month`).subscribe({
       next: (data) => {
         if (!data || data.length === 0) return;
+        // Derive year from first record if available
+        const year = data[0]['year'] ?? '';
+        this.recordsYear = year ? ` (${year})` : '';
         this.outliersData = {
           labels: data.map(d => d['month']),
           datasets: [{
-            label: 'Records per Month (2024)',
+            label: `Records per Month${this.recordsYear}`,
             data: data.map(d => d['recordCount']),
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -158,12 +143,9 @@ export class DataAnalyst implements OnInit, OnDestroy {
           datasets: [{
             label: 'Records per Year',
             data: data.map(d => d['recordCount']),
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.75)',
-              'rgba(46, 204, 113, 0.75)',
-              'rgba(241, 196, 15, 0.75)',
-              'rgba(231, 76, 60, 0.75)'
-            ],
+            // Single consistent color — same metric doesn't need rainbow
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            hoverBackgroundColor: 'rgba(59, 130, 246, 0.9)',
             borderRadius: 6,
             borderWidth: 0
           }]
@@ -174,29 +156,29 @@ export class DataAnalyst implements OnInit, OnDestroy {
     });
   }
 
-  loadMissingByColumn() {
-    this.http.get<any>(`${this.apiUrl}/missing-by-column`).subscribe({
-      next: (data) => {
-        if (!data) return;
-        const labels = Object.keys(data);
-        const values = Object.values(data) as number[];
-        this.missingValuesChartData = {
-          labels,
-          datasets: [{
-            label: 'Missing Values %',
-            data: values.map(v => parseFloat(v.toFixed(2))),
-            backgroundColor: [
-              'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.7)',
-              'rgba(241, 196, 15, 0.8)', 'rgba(241, 196, 15, 0.7)',
-              'rgba(46, 204, 113, 0.8)', 'rgba(46, 204, 113, 0.7)'
-            ],
-            borderWidth: 1
-          }]
+  loadPipelineDates() {
+    this.isPipelineLoading = true;
+    this.mlService.getPipelineStatus().subscribe({
+      next: (status) => {
+        this.pipelineDates = {
+          lastClean:  status.clean?.last_run       ? this.formatDate(status.clean.last_run)        : null,
+          lastTrain:  status.train?.last_run       ? this.formatDate(status.train.last_run)        : null,
+          lastDeploy: status.deploy?.last_deployed ? this.formatDate(status.deploy.last_deployed)  : null
         };
+        this.isPipelineLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err: any) => console.error('Error loading missing by column:', err)
+      error: () => {
+        // ML server unreachable — degrade gracefully, no console spam
+        this.pipelineDates = { lastClean: null, lastTrain: null, lastDeploy: null };
+        this.isPipelineLoading = false;
+        this.cdr.detectChanges();
+      }
     });
+  }
+
+  goToMlEvolution() {
+    this.router.navigate(['/data-analyst/ml-evolution']);
   }
 
   loadQualityStatus() {
@@ -261,7 +243,6 @@ export class DataAnalyst implements OnInit, OnDestroy {
             this.lastUpdated = status.lastUpdated;
             this.loadKpis();
             this.loadRecordsPerMonth();
-            this.loadMissingByColumn();
             this.loadRecordsPerYear();
             this.cdr.detectChanges();
           }
@@ -272,5 +253,12 @@ export class DataAnalyst implements OnInit, OnDestroy {
 
   pollQualityStatus() {
     this.startPolling();
+  }
+
+  private formatDate(isoString: string): string {
+    return new Date(isoString).toLocaleString('fr-FR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
   }
 }

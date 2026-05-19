@@ -52,25 +52,10 @@
   flex-shrink: 0;
 }
 
-.kpi-icon.records {
-  background: rgba(52, 152, 219, 0.12);
-  color: #3498db;
-}
-
-.kpi-icon.quality {
-  background: rgba(46, 204, 113, 0.12);
-  color: #2ecc71;
-}
-
-.kpi-icon.missing {
-  background: rgba(241, 196, 15, 0.12);
-  color: #f1c40f;
-}
-
-.kpi-icon.outliers {
-  background: rgba(231, 76, 60, 0.12);
-  color: #e74c3c;
-}
+.kpi-icon.records  { background: rgba(52, 152, 219, 0.12); color: #3498db; }
+.kpi-icon.quality  { background: rgba(46, 204, 113, 0.12);  color: #2ecc71; }
+.kpi-icon.missing  { background: rgba(241, 196, 15, 0.12);  color: #f1c40f; }
+.kpi-icon.outliers { background: rgba(231, 76, 60, 0.12);   color: #e74c3c; }
 
 .kpi-info {
   display: flex;
@@ -92,8 +77,8 @@
   color: var(--text-primary);
 }
 
-.quality-score { color: #2ecc71 !important; }
-.missing-score { color: #f1c40f !important; }
+.quality-score  { color: #2ecc71 !important; }
+.missing-score  { color: #f1c40f !important; }
 .outliers-score { color: #e74c3c !important; }
 
 /* ===== CHARTS ===== */
@@ -103,10 +88,11 @@
   gap: 16px;
 }
 
-.charts-grid-full {
+.charts-grid-three {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
+  align-items: stretch;
 }
 
 .chart-card {
@@ -115,6 +101,9 @@
   padding: 24px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
+  /* Prevent card from growing taller than its content */
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-card h3 {
@@ -122,8 +111,26 @@
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
+/* ===== FIX: white space below p-chart ===== */
+.chart-card p-chart {
+  display: block;
+  flex: 1;
+  min-height: 0;
+}
+
+.chart-card p-chart > div {
+  height: auto !important;
+}
+
+.chart-card p-chart canvas {
+  display: block;
+  max-height: 220px;
+}
+
+/* ===== HEADER ===== */
 .header-row {
   display: flex;
   justify-content: space-between;
@@ -161,3 +168,123 @@
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ===== PIPELINE HISTORY CARD ===== */
+.pipeline-dates-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pipeline-dates-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.pipeline-dates-header {
+  display: flex;
+  align-items: center;        /* back to center, not flex-start */
+  justify-content: space-between;
+  gap: 8px;                   /* smaller gap */
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.pipeline-dates-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+  flex-shrink: 1;             /* allow shrink if needed */
+  min-width: 0;               /* allow text to truncate rather than push */
+}
+
+.pipeline-dates-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pipeline-dates-card:hover .pipeline-dates-hint {
+  opacity: 1;
+  color: var(--brand-primary);
+}
+
+.pipeline-dates-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 220px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.pipeline-dates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pipeline-date-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-card) 85%, transparent);
+  border: 1px solid var(--border-color);
+  transition: background 0.2s ease;
+}
+
+.pipeline-date-item:hover {
+  background: color-mix(in srgb, var(--bg-card) 70%, var(--border-color) 30%);
+}
+
+.pipeline-date-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.pipeline-date-item.clean  .pipeline-date-icon { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.pipeline-date-item.train  .pipeline-date-icon { background: rgba(241, 196, 15, 0.12);  color: #f1c40f; }
+.pipeline-date-item.deploy .pipeline-date-icon { background: rgba(46, 204, 113, 0.12); color: #2ecc71; }
+
+.pipeline-date-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pipeline-date-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.pipeline-date-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pipeline-date-status i {
+  font-size: 1.1rem;
+}
+
+.pipeline-date-status.done i       { color: #2ecc71; }
+.pipeline-date-status:not(.done) i { color: var(--text-muted); opacity: 0.5; }
