@@ -8,6 +8,25 @@
 
   <p-toast />
 
+  <!-- ── ML Server Down Banner ─────────────────────────────────────────── -->
+  @if (mlServerDown) {
+    <div class="server-down-banner">
+      <div class="server-down-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="server-down-content">
+        <span class="server-down-title">ML Server Unavailable</span>
+        <span class="server-down-detail">
+          The ML server is stopped or not responding. Pipeline actions are disabled.
+          Please contact your administrator to restart the service.
+        </span>
+      </div>
+      <button class="server-down-retry" (click)="loadPipelineStatus()">
+        <i class="pi pi-refresh"></i> Retry
+      </button>
+    </div>
+  }
+
   <!-- ── KPI Cards ─────────────────────────────────────────────────────── -->
   @if (modelStatus) {
     <div class="kpi-row">
@@ -61,14 +80,14 @@
         then deploy your configuration.
       </p>
 
-      <!-- ── Step cards ───────────────────────────────────────────────── -->
       <div class="pipeline-steps">
 
         <!-- STEP 1 — Clean -->
         <div class="pipeline-step"
              [class.step-done]="pipelineStatus?.clean?.status === 'done'"
              [class.step-running]="pipelineStatus?.clean?.status === 'running'"
-             [class.step-error]="pipelineStatus?.clean?.status === 'error'">
+             [class.step-error]="pipelineStatus?.clean?.status === 'error'"
+             [class.step-disabled]="mlServerDown">
           <div class="step-header">
             <div class="step-icon">
               @if (pipelineStatus?.clean?.status === 'done')    { <i class="pi pi-check-circle"></i> }
@@ -91,18 +110,14 @@
           </div>
 
           @if (pipelineStatus?.clean?.status === 'running') {
-            <div class="step-message live-msg">
-              {{ pipelineStatus!.clean.message }}
-            </div>
+            <div class="step-message live-msg">{{ pipelineStatus!.clean.message }}</div>
           }
-
           @if (pipelineStatus?.clean?.status === 'error') {
             <div class="step-message error-msg">
               <i class="pi pi-exclamation-triangle" style="margin-right: 6px;"></i>
               {{ pipelineStatus!.clean.message }}
             </div>
           }
-
           @if (pipelineStatus?.clean?.status === 'done') {
             <div class="step-message done-msg">
               <i class="pi pi-check" style="margin-right: 6px;"></i>
@@ -113,20 +128,19 @@
           <p-button
             label="Run Cleaning"
             icon="pi pi-play"
-            [disabled]="isCleanRunning || isTrainRunning"
+            [disabled]="mlServerDown || isCleanRunning || isTrainRunning"
             (onClick)="runClean()"
             styleClass="step-btn" />
         </div>
 
-        <div class="step-connector">
-          <i class="pi pi-arrow-down"></i>
-        </div>
+        <div class="step-connector"><i class="pi pi-arrow-down"></i></div>
 
         <!-- STEP 2 — Train -->
         <div class="pipeline-step"
              [class.step-done]="pipelineStatus?.train?.status === 'done'"
              [class.step-running]="pipelineStatus?.train?.status === 'running'"
-             [class.step-error]="pipelineStatus?.train?.status === 'error'">
+             [class.step-error]="pipelineStatus?.train?.status === 'error'"
+             [class.step-disabled]="mlServerDown">
           <div class="step-header">
             <div class="step-icon">
               @if (pipelineStatus?.train?.status === 'done')    { <i class="pi pi-check-circle"></i> }
@@ -151,22 +165,16 @@
                 <span class="train-progress-pct">{{ trainProgress }}%</span>
                 <span class="train-progress-label">Training in progress...</span>
               </div>
-              <p-progressBar
-                [value]="trainProgress"
-                styleClass="train-progress-bar" />
-              <div class="step-message live-msg" style="margin-top: 8px;">
-                {{ trainMessage }}
-              </div>
+              <p-progressBar [value]="trainProgress" styleClass="train-progress-bar" />
+              <div class="step-message live-msg" style="margin-top: 8px;">{{ trainMessage }}</div>
             </div>
           }
-
           @if (!isTrainRunning && pipelineStatus?.train?.status === 'done') {
             <div class="step-message done-msg">
               <i class="pi pi-check" style="margin-right: 6px;"></i>
               {{ pipelineStatus!.train.message }}
             </div>
           }
-
           @if (!isTrainRunning && pipelineStatus?.train?.status === 'error') {
             <div class="step-message error-msg">
               <i class="pi pi-exclamation-triangle" style="margin-right: 6px;"></i>
@@ -178,22 +186,21 @@
             label="Run Training"
             icon="pi pi-play"
             severity="warn"
-            [disabled]="isTrainRunning || isCleanRunning"
+            [disabled]="mlServerDown || isTrainRunning || isCleanRunning"
             (onClick)="runTrain()"
             styleClass="step-btn" />
         </div>
 
-        <div class="step-connector">
-          <i class="pi pi-arrow-down"></i>
-        </div>
+        <div class="step-connector"><i class="pi pi-arrow-down"></i></div>
 
         <!-- STEP 3 — Deploy -->
         <div class="pipeline-step"
-             [class.step-done]="!!pipelineStatus?.deploy?.last_deployed">
+             [class.step-done]="!!pipelineStatus?.deploy?.last_deployed"
+             [class.step-disabled]="mlServerDown">
           <div class="step-header">
             <div class="step-icon">
               @if (pipelineStatus?.deploy?.last_deployed) { <i class="pi pi-check-circle"></i> }
-              @else                                        { <i class="pi pi-cloud-upload"></i> }
+              @else { <i class="pi pi-cloud-upload"></i> }
             </div>
             <div class="step-info">
               <span class="step-title">Step 3 — Deploy Configuration</span>
@@ -218,6 +225,7 @@
             label="Go to Deploy Config"
             icon="pi pi-arrow-right"
             severity="success"
+            [disabled]="mlServerDown"
             (onClick)="activeTab = 'config'"
             styleClass="step-btn" />
         </div>
@@ -230,152 +238,165 @@
        TAB 2 — MODEL COMPARISON
        ════════════════════════════════════════════════════════════════ -->
   @if (activeTab === 'comparison') {
+    @if (mlServerDown) {
+      <div class="section-card server-down-placeholder">
+        <i class="pi pi-server"></i>
+        <span>Model comparison data is unavailable while the ML server is offline.</span>
+      </div>
+    } @else {
+      <div class="section-card">
+        <h3 class="section-title">Global Accuracy — All Models</h3>
+        @if (modelStatus?.last_trained) {
+          <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+        }
+        @if (!isLoadingGlobal && comparisonChartData) {
+          <p-chart type="bar"
+                   [data]="comparisonChartData"
+                   [options]="comparisonChartOptions"
+                   height="260px" />
+        }
+        @if (isLoadingGlobal) {
+          <div class="loading-placeholder">Loading chart...</div>
+        }
+      </div>
 
-    <div class="section-card">
-      <h3 class="section-title">Global Accuracy — All Models</h3>
-      @if (modelStatus?.last_trained) {
-        <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
-      }
-      @if (!isLoadingGlobal && comparisonChartData) {
-        <p-chart type="bar"
-                 [data]="comparisonChartData"
-                 [options]="comparisonChartOptions"
-                 height="260px" />
-      }
-      @if (isLoadingGlobal) {
-        <div class="loading-placeholder">Loading chart...</div>
-      }
-    </div>
+      <div class="section-card">
+        <h3 class="section-title">Detailed Metrics</h3>
+        @if (modelStatus?.last_trained) {
+          <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+        }
+        <p-table [value]="globalResults" [loading]="isLoadingGlobal"
+                 styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Model</th>
+              <th>Accuracy %</th>
+              <th>WMAPE %</th>
+              <th>R²</th>
+              <th>RMSE</th>
+              <th>Train Time (s)</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td><strong>{{ row.model }}</strong></td>
+              <td>
+                <p-tag [value]="row.accuracy + '%'"
+                       [severity]="getAccuracySeverity(row.accuracy)" />
+              </td>
+              <td>{{ row.wmape }}%</td>
+              <td>{{ row.r2 }}</td>
+              <td>{{ row.rmse }}</td>
+              <td>{{ row.train_time_s }}s</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
 
-    <div class="section-card">
-      <h3 class="section-title">Detailed Metrics</h3>
-      @if (modelStatus?.last_trained) {
-        <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
-      }
-      <p-table [value]="globalResults" [loading]="isLoadingGlobal"
-               styleClass="p-datatable-sm p-datatable-striped">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Model</th>
-            <th>Accuracy %</th>
-            <th>WMAPE %</th>
-            <th>R²</th>
-            <th>RMSE</th>
-            <th>Train Time (s)</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            <td><strong>{{ row.model }}</strong></td>
-            <td>
-              <p-tag [value]="row.accuracy + '%'"
-                     [severity]="getAccuracySeverity(row.accuracy)" />
-            </td>
-            <td>{{ row.wmape }}%</td>
-            <td>{{ row.r2 }}</td>
-            <td>{{ row.rmse }}</td>
-            <td>{{ row.train_time_s }}s</td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-
-    <div class="section-card">
-      <h3 class="section-title">Accuracy per Family</h3>
-      @if (modelStatus?.last_trained) {
-        <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
-      }
-      <p-table [value]="familleResults" [loading]="isLoadingFamille"
-               styleClass="p-datatable-sm p-datatable-striped"
-               [scrollable]="true" scrollHeight="420px">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Family</th>
-            <th>XGBoost</th>
-            <th>LightGBM</th>
-            <th>CatBoost</th>
-            <th>RandomForest</th>
-            <th>LinearRegression</th>
-            <th>Best Model</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            <td><strong>{{ row.famille }}</strong></td>
-            <td [class]="getAccuracyClass(row.XGBoost)">{{ row.XGBoost | number:'1.1-1' }}%</td>
-            <td [class]="getAccuracyClass(row.LightGBM)">{{ row.LightGBM | number:'1.1-1' }}%</td>
-            <td [class]="getAccuracyClass(row.CatBoost)">{{ row.CatBoost | number:'1.1-1' }}%</td>
-            <td [class]="getAccuracyClass(row.RandomForest)">{{ row.RandomForest | number:'1.1-1' }}%</td>
-            <td [class]="getAccuracyClass(row.LinearRegression)">{{ row.LinearRegression | number:'1.1-1' }}%</td>
-            <td><p-tag [value]="getBestModelForFamille(row)" severity="success" /></td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
+      <div class="section-card">
+        <h3 class="section-title">Accuracy per Family</h3>
+        @if (modelStatus?.last_trained) {
+          <p class="meta-note">Based on training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+        }
+        <p-table [value]="familleResults" [loading]="isLoadingFamille"
+                 styleClass="p-datatable-sm p-datatable-striped"
+                 [scrollable]="true" scrollHeight="420px">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Family</th>
+              <th>XGBoost</th>
+              <th>LightGBM</th>
+              <th>CatBoost</th>
+              <th>RandomForest</th>
+              <th>LinearRegression</th>
+              <th>Best Model</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td><strong>{{ row.famille }}</strong></td>
+              <td [class]="getAccuracyClass(row.XGBoost)">{{ row.XGBoost | number:'1.1-1' }}%</td>
+              <td [class]="getAccuracyClass(row.LightGBM)">{{ row.LightGBM | number:'1.1-1' }}%</td>
+              <td [class]="getAccuracyClass(row.CatBoost)">{{ row.CatBoost | number:'1.1-1' }}%</td>
+              <td [class]="getAccuracyClass(row.RandomForest)">{{ row.RandomForest | number:'1.1-1' }}%</td>
+              <td [class]="getAccuracyClass(row.LinearRegression)">{{ row.LinearRegression | number:'1.1-1' }}%</td>
+              <td><p-tag [value]="getBestModelForFamille(row)" severity="success" /></td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
   }
 
   <!-- ════════════════════════════════════════════════════════════════════
        TAB 3 — DEPLOY CONFIG
        ════════════════════════════════════════════════════════════════ -->
   @if (activeTab === 'config') {
-    <div class="section-card">
-      <div class="config-header">
-        <h3 class="section-title">Per-Family Model Configuration</h3>
-        <p-button
-          [label]="hasConfigChanges() ? ('Deploy Config (' + getChangedCount() + ')') : 'Deploy Config'"
-          icon="pi pi-check"
-          severity="success"
-          [loading]="isSaving"
-          [disabled]="isSaving"
-          (onClick)="saveConfig()" />
+    @if (mlServerDown) {
+      <div class="section-card server-down-placeholder">
+        <i class="pi pi-server"></i>
+        <span>Deploy configuration is unavailable while the ML server is offline.</span>
       </div>
-
-      <p class="config-hint">
-        For each family, click the model you want to deploy — accuracy is shown before you choose.
-        Then click <strong>Deploy Config</strong> to apply.
-      </p>
-
-      @if (modelStatus?.last_trained) {
-        <p class="meta-note">Accuracy values below are from training run: {{ formatDate(modelStatus!.last_trained) }}</p>
-      }
-
-      @if (deploySuccessMessage) {
-        <div class="deploy-success-banner">
-          <i class="pi pi-check-circle"></i>
-          <span>{{ deploySuccessMessage }}</span>
+    } @else {
+      <div class="section-card">
+        <div class="config-header">
+          <h3 class="section-title">Per-Family Model Configuration</h3>
+          <p-button
+            [label]="hasConfigChanges() ? ('Deploy Config (' + getChangedCount() + ')') : 'Deploy Config'"
+            icon="pi pi-check"
+            severity="success"
+            [loading]="isSaving"
+            [disabled]="isSaving || mlServerDown"
+            (onClick)="saveConfig()" />
         </div>
-      }
 
-      <p-table [value]="editableConfig" [loading]="isLoadingConfig"
-               styleClass="p-datatable-sm p-datatable-striped">
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width:160px">Family</th>
-            <th>Select Model (click to choose)</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            <td><strong>{{ row.famille }}</strong></td>
-            <td>
-              <div class="model-options">
-                @for (opt of modelOptions; track opt.value) {
-                  <div class="model-option"
-                       [class.selected]="row.model === opt.value"
-                       (click)="row.model = opt.value">
-                    <span class="model-opt-name">{{ opt.label }}</span>
-                    <span class="model-opt-acc"
-                          [class]="getAccuracyClass(getAccuracyForConfig(row.famille, opt.value))">
-                      {{ getAccuracyForConfig(row.famille, opt.value) | number:'1.1-1' }}%
-                    </span>
-                  </div>
-                }
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
+        <p class="config-hint">
+          For each family, click the model you want to deploy — accuracy is shown before you choose.
+          Then click <strong>Deploy Config</strong> to apply.
+        </p>
+
+        @if (modelStatus?.last_trained) {
+          <p class="meta-note">Accuracy values below are from training run: {{ formatDate(modelStatus!.last_trained) }}</p>
+        }
+
+        @if (deploySuccessMessage) {
+          <div class="deploy-success-banner">
+            <i class="pi pi-check-circle"></i>
+            <span>{{ deploySuccessMessage }}</span>
+          </div>
+        }
+
+        <p-table [value]="editableConfig" [loading]="isLoadingConfig"
+                 styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width:160px">Family</th>
+              <th>Select Model (click to choose)</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td><strong>{{ row.famille }}</strong></td>
+              <td>
+                <div class="model-options">
+                  @for (opt of modelOptions; track opt.value) {
+                    <div class="model-option"
+                         [class.selected]="row.model === opt.value"
+                         (click)="row.model = opt.value">
+                      <span class="model-opt-name">{{ opt.label }}</span>
+                      <span class="model-opt-acc"
+                            [class]="getAccuracyClass(getAccuracyForConfig(row.famille, opt.value))">
+                        {{ getAccuracyForConfig(row.famille, opt.value) | number:'1.1-1' }}%
+                      </span>
+                    </div>
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
   }
 
 </div>

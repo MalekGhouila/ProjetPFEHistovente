@@ -32,6 +32,7 @@ export class DataAnalyst implements OnInit, OnDestroy {
 
   // Pipeline history card
   isPipelineLoading = true;
+  mlServerDown = false;
   pipelineDates: {
     lastClean: string | null;
     lastTrain: string | null;
@@ -114,7 +115,6 @@ export class DataAnalyst implements OnInit, OnDestroy {
     this.http.get<any[]>(`${this.apiUrl}/records-per-month`).subscribe({
       next: (data) => {
         if (!data || data.length === 0) return;
-        // Derive year from first record if available
         const year = data[0]['year'] ?? '';
         this.recordsYear = year ? ` (${year})` : '';
         this.outliersData = {
@@ -143,7 +143,6 @@ export class DataAnalyst implements OnInit, OnDestroy {
           datasets: [{
             label: 'Records per Year',
             data: data.map(d => d['recordCount']),
-            // Single consistent color — same metric doesn't need rainbow
             backgroundColor: 'rgba(59, 130, 246, 0.7)',
             hoverBackgroundColor: 'rgba(59, 130, 246, 0.9)',
             borderRadius: 6,
@@ -158,18 +157,20 @@ export class DataAnalyst implements OnInit, OnDestroy {
 
   loadPipelineDates() {
     this.isPipelineLoading = true;
+    this.mlServerDown = false;
     this.mlService.getPipelineStatus().subscribe({
       next: (status) => {
+        this.mlServerDown = false;
         this.pipelineDates = {
-          lastClean:  status.clean?.last_run       ? this.formatDate(status.clean.last_run)        : null,
-          lastTrain:  status.train?.last_run       ? this.formatDate(status.train.last_run)        : null,
-          lastDeploy: status.deploy?.last_deployed ? this.formatDate(status.deploy.last_deployed)  : null
+          lastClean:  status.clean?.last_run       ? this.formatDate(status.clean.last_run)       : null,
+          lastTrain:  status.train?.last_run       ? this.formatDate(status.train.last_run)       : null,
+          lastDeploy: status.deploy?.last_deployed ? this.formatDate(status.deploy.last_deployed) : null
         };
         this.isPipelineLoading = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        // ML server unreachable — degrade gracefully, no console spam
+        this.mlServerDown = true;
         this.pipelineDates = { lastClean: null, lastTrain: null, lastDeploy: null };
         this.isPipelineLoading = false;
         this.cdr.detectChanges();
@@ -178,6 +179,7 @@ export class DataAnalyst implements OnInit, OnDestroy {
   }
 
   goToMlEvolution() {
+    if (this.mlServerDown) return;
     this.router.navigate(['/data-analyst/ml-evolution']);
   }
 

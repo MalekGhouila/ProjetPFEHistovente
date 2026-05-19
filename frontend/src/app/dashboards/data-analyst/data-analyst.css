@@ -288,3 +288,99 @@
 
 .pipeline-date-status.done i       { color: #2ecc71; }
 .pipeline-date-status:not(.done) i { color: var(--text-muted); opacity: 0.5; }
+
+/* ── Server offline badge in the card header ───────────────────── */
+.pipeline-server-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: slide-down 0.2s ease;
+}
+
+/* ── Server offline body block ─────────────────────────────────── */
+.pipeline-server-down {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border-radius: 12px;
+  border: 1.5px dashed rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.03);
+  text-align: center;
+  animation: slide-down 0.25s ease;
+  /* prevent the card's (click) from feeling broken */
+  pointer-events: none;
+}
+
+.pipeline-server-down-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1.5px solid rgba(239, 68, 68, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+.pipeline-server-down-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.pipeline-server-down-detail {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  max-width: 220px;
+  line-height: 1.55;
+}
+
+/* ── Last-known meta row ───────────────────────────────────────── */
+.pipeline-server-down-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(239, 68, 68, 0.12);
+}
+
+.pipeline-down-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.pipeline-down-meta-item i {
+  font-size: 0.78rem;
+  color: rgba(239, 68, 68, 0.45);
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.pipeline-down-meta-label {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.pipeline-down-meta-value {
+  font-weight: 600;
+  color: var(--text-secondary);
+}

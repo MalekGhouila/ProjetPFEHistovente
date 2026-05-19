@@ -39,6 +39,9 @@ export class MlEvolution implements OnInit, OnDestroy {
   // ── Tab state ──────────────────────────────────────────────────────────────
   activeTab: 'pipeline' | 'comparison' | 'config' = 'pipeline';
 
+  // ── ML Server state ────────────────────────────────────────────────────────
+  mlServerDown = false;
+
   // ── Model status KPIs ──────────────────────────────────────────────────────
   modelStatus: ModelStatus | null = null;
   isLoadingStatus = true;
@@ -86,11 +89,11 @@ export class MlEvolution implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.loadPipelineStatus();
     this.loadStatus();
     this.loadGlobalComparison();
     this.loadFamilleResults();
     this.loadConfig();
-    this.loadPipelineStatus();
   }
 
   ngOnDestroy() {
@@ -101,8 +104,15 @@ export class MlEvolution implements OnInit, OnDestroy {
 
   loadStatus() {
     this.mlService.getStatus().subscribe({
-      next: (s) => { this.modelStatus = s; this.isLoadingStatus = false; this.cdr.detectChanges(); },
-      error: ()  => { this.isLoadingStatus = false; this.cdr.detectChanges(); }
+      next: (s) => {
+        this.modelStatus = s;
+        this.isLoadingStatus = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoadingStatus = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -114,7 +124,10 @@ export class MlEvolution implements OnInit, OnDestroy {
         this.isLoadingGlobal = false;
         this.cdr.detectChanges();
       },
-      error: () => { this.isLoadingGlobal = false; this.cdr.detectChanges(); }
+      error: () => {
+        this.isLoadingGlobal = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -125,7 +138,10 @@ export class MlEvolution implements OnInit, OnDestroy {
         this.isLoadingFamille = false;
         this.cdr.detectChanges();
       },
-      error: () => { this.isLoadingFamille = false; this.cdr.detectChanges(); }
+      error: () => {
+        this.isLoadingFamille = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -137,7 +153,10 @@ export class MlEvolution implements OnInit, OnDestroy {
         this.isLoadingConfig = false;
         this.cdr.detectChanges();
       },
-      error: () => { this.isLoadingConfig = false; this.cdr.detectChanges(); }
+      error: () => {
+        this.isLoadingConfig = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -145,10 +164,10 @@ export class MlEvolution implements OnInit, OnDestroy {
     this.isLoadingPipeline = true;
     this.mlService.getPipelineStatus().subscribe({
       next: (status) => {
+        this.mlServerDown = false;
         this.pipelineStatus = status;
         this.isLoadingPipeline = false;
 
-        // If server restarted mid-train, resume polling
         if (status.train.status === 'running') {
           this.isTrainRunning = true;
           this.trainProgress  = status.train.progress_pct;
@@ -156,14 +175,21 @@ export class MlEvolution implements OnInit, OnDestroy {
           this.startTrainPolling();
         }
 
-        // If server restarted mid-clean, reflect state
         if (status.clean.status === 'running') {
           this.isCleanRunning = true;
         }
 
         this.cdr.detectChanges();
       },
-      error: () => { this.isLoadingPipeline = false; this.cdr.detectChanges(); }
+      error: () => {
+        this.mlServerDown = true;
+        this.isLoadingPipeline = false;
+        this.isLoadingStatus = false;
+        this.isLoadingGlobal = false;
+        this.isLoadingFamille = false;
+        this.isLoadingConfig = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -206,15 +232,20 @@ export class MlEvolution implements OnInit, OnDestroy {
             }
             this.cdr.detectChanges();
           },
-          error: () => { this.isCleanRunning = false; this.cdr.detectChanges(); }
+          error: () => {
+            this.isCleanRunning = false;
+            this.mlServerDown = true;
+            this.cdr.detectChanges();
+          }
         });
       },
       error: () => {
         this.isCleanRunning = false;
+        this.mlServerDown = true;
         this.messageService.add({
           severity: 'error',
-          summary: 'Clean Failed',
-          detail: 'Could not start cleaning. Is the ML API running?'
+          summary: 'ML Server Unreachable',
+          detail: 'Could not start cleaning. Please contact your administrator.'
         });
         this.cdr.detectChanges();
       }
@@ -239,10 +270,11 @@ export class MlEvolution implements OnInit, OnDestroy {
         this.isTrainRunning = false;
         this.trainProgress  = 0;
         this.trainMessage   = '';
+        this.mlServerDown = true;
         this.messageService.add({
           severity: 'error',
-          summary: 'Train Failed',
-          detail: 'Could not start training. Is the ML API running?'
+          summary: 'ML Server Unreachable',
+          detail: 'Could not start training. Please contact your administrator.'
         });
         this.cdr.detectChanges();
       }
@@ -291,6 +323,7 @@ export class MlEvolution implements OnInit, OnDestroy {
       },
       error: () => {
         this.isTrainRunning = false;
+        this.mlServerDown = true;
         this.stopTrainPolling();
         this.cdr.detectChanges();
       }
@@ -348,7 +381,6 @@ export class MlEvolution implements OnInit, OnDestroy {
         this.activeConfig = { ...config };
         this.deploySuccessMessage = `Configuration deployed successfully for ${this.editableConfig.length} families.`;
         this.loadPipelineStatus();
-
         this.messageService.add({
           severity: 'success',
           summary: 'Config Deployed',
@@ -358,10 +390,11 @@ export class MlEvolution implements OnInit, OnDestroy {
       },
       error: () => {
         this.isSaving = false;
+        this.mlServerDown = true;
         this.messageService.add({
           severity: 'error',
-          summary: 'Deploy Failed',
-          detail: 'Could not save configuration. Is the ML API running?'
+          summary: 'ML Server Unreachable',
+          detail: 'Could not save configuration. Please contact your administrator.'
         });
         this.cdr.detectChanges();
       }
