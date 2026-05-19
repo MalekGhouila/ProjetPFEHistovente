@@ -51,6 +51,7 @@ export class DataAnalyst implements OnInit, OnDestroy {
     this.loadKpis();
     this.loadRecordsPerMonth();
     this.loadMissingByColumn();
+    this.loadRecordsPerYear();
   }
 
   ngOnDestroy() {
@@ -74,16 +75,16 @@ export class DataAnalyst implements OnInit, OnDestroy {
       }
     };
 
+    // Updated: simple bar, no stacking, Y axis in millions
     this.completenessOptions = {
       responsive: true,
-      plugins: { legend: { position: 'top' } },
+      plugins: { legend: { display: false } },
       scales: {
-        x: { stacked: true },
         y: {
-          stacked: true,
           beginAtZero: true,
-          max: 100,
-          ticks: { callback: (value: number) => value + '%' }
+          ticks: {
+            callback: (value: number) => (value / 1_000_000).toFixed(1) + 'M'
+          }
         }
       }
     };
@@ -109,25 +110,8 @@ export class DataAnalyst implements OnInit, OnDestroy {
       }]
     };
 
-    this.completenessData = {
-      labels: ['2021', '2022', '2023', '2024', '2025'],
-      datasets: [
-        {
-          label: 'Complete Records %',
-          data: [85, 78, 72, 74, 76],
-          backgroundColor: 'rgba(46, 204, 113, 0.7)',
-          borderColor: '#2ecc71',
-          borderWidth: 1
-        },
-        {
-          label: 'Incomplete Records %',
-          data: [15, 22, 28, 26, 24],
-          backgroundColor: 'rgba(231, 76, 60, 0.7)',
-          borderColor: '#e74c3c',
-          borderWidth: 1
-        }
-      ]
-    };
+    // Empty placeholder — replaced by loadRecordsPerYear()
+    this.completenessData = { labels: [], datasets: [] };
 
     // Placeholder until real data loads
     this.outliersData = {
@@ -162,6 +146,31 @@ export class DataAnalyst implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Error loading records per month:', err)
+    });
+  }
+
+  loadRecordsPerYear() {
+    this.http.get<any[]>(`${this.apiUrl}/records-per-year`).subscribe({
+      next: (data) => {
+        if (!data || data.length === 0) return;
+        this.completenessData = {
+          labels: data.map(d => d['year'].toString()),
+          datasets: [{
+            label: 'Records per Year',
+            data: data.map(d => d['recordCount']),
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.75)',
+              'rgba(46, 204, 113, 0.75)',
+              'rgba(241, 196, 15, 0.75)',
+              'rgba(231, 76, 60, 0.75)'
+            ],
+            borderRadius: 6,
+            borderWidth: 0
+          }]
+        };
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => console.error('Error loading records per year:', err)
     });
   }
 
@@ -253,6 +262,7 @@ export class DataAnalyst implements OnInit, OnDestroy {
             this.loadKpis();
             this.loadRecordsPerMonth();
             this.loadMissingByColumn();
+            this.loadRecordsPerYear();
             this.cdr.detectChanges();
           }
         }

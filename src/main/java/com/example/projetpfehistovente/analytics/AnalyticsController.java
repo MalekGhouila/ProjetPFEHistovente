@@ -100,4 +100,9 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getMissingValuesByColumn());
     }
 
+    @GetMapping("/records-per-year")
+    public ResponseEntity<List<Map<String, Object>>> getRecordsPerYear() {
+        return ResponseEntity.ok(analyticsService.getRecordsPerYear());
+    }
+
 }

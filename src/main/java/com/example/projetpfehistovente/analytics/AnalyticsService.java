@@ -155,6 +155,18 @@ public class AnalyticsService {
         }
     }
 
+    // ===== RECORDS PER YEAR (data completeness by year) =====
+    public List<Map<String, Object>> getRecordsPerYear() {
+        String json = getText("records_per_year");
+        if (json == null) return List.of();
+        try {
+            return objectMapper.readValue(json,
+                    new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
     // ===== STORE KPIs =====
     public KpiResponse getStoreKpis(Long storeId) {
         Double transactions = getValue("store_transactions_" + storeId);
@@ -203,7 +215,6 @@ public class AnalyticsService {
             Long outliers = histoVenteCleanRepository.countOutliers();
             recalculateMetric("outliers_count", outliers != null ? outliers.doubleValue() : 0.0);
 
-            // FIX: getMissingValuesStats() returns List<Object[]>, get first row
             List<Object[]> statsList = histoVenteCleanRepository.getMissingValuesStats();
             if (statsList != null && !statsList.isEmpty()) {
                 Object[] stats = statsList.get(0);
@@ -227,6 +238,7 @@ public class AnalyticsService {
             }
 
             recalculateRecordsPerMonth();
+            recalculateRecordsPerYear(); // ← NEW
 
         } finally {
             calculatingQuality = false;
@@ -245,6 +257,23 @@ public class AnalyticsService {
                     )).collect(Collectors.toList())
             );
             recalculateText("records_per_month_2024", json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ===== RECALCULATE RECORDS PER YEAR =====
+    private void recalculateRecordsPerYear() {
+        try {
+            List<Object[]> results = histoVenteCleanRepository.getDistributionByYear();
+            String json = objectMapper.writeValueAsString(
+                    results.stream().map(row -> Map.of(
+                            "year",        ((Number) row[0]).intValue(),
+                            "recordCount", ((Number) row[1]).longValue(),
+                            "percentage",  row[2] != null ? ((Number) row[2]).doubleValue() : 0.0
+                    )).collect(Collectors.toList())
+            );
+            recalculateText("records_per_year", json);
         } catch (Exception e) {
             e.printStackTrace();
         }
