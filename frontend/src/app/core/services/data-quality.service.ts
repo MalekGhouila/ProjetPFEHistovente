@@ -19,6 +19,10 @@ export class DataQualityService {
     return this.http.post<any>(`${this.apiUrl}/refresh`, {});
   }
 
+  stopRefresh(): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/stop-refresh`, {});
+  }
+
   getStatus(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/status`);
   }

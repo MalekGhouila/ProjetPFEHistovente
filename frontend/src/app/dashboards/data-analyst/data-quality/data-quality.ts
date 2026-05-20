@@ -21,19 +21,14 @@ export class DataQuality implements OnInit, OnDestroy {
 
   private pollInterval: any = null;
 
-  // KPI cards
   qualityScore = 0;
   totalRecords = 0;
   cleanRecords = 0;
   removedRecords = 0;
 
-  // Filter stats table
   filterStatsData: { filter: string; removed: number }[] = [];
-
-  // Dropped columns table
   droppedColumns: { name: string; reason: string; nullPct: number }[] = [];
 
-  // Charts
   typeVenteChartData: any;
   typeVenteChartOptions: any;
   yearDistChartData: any;
@@ -49,13 +44,20 @@ export class DataQuality implements OnInit, OnDestroy {
       next: (s) => {
         this.lastUpdated = s.lastUpdated;
         this.isCalculating = s.isCalculating;
-        if (s.isCalculating) {
-          this.pollStatus(); // keep polling for when it finishes
+
+        if (this.isCalculating) {
+          localStorage.setItem('dataQualityCalculationRunning', 'true');
+          this.pollStatus();
+        } else {
+          localStorage.removeItem('dataQualityCalculationRunning');
         }
-        this.loadStats(); // always load current data regardless
+
+        this.loadStats();
         this.cdr.detectChanges();
       },
-      error: () => { this.loadStats(); }
+      error: () => {
+        this.loadStats();
+      }
     });
   }
 
@@ -69,17 +71,17 @@ export class DataQuality implements OnInit, OnDestroy {
   loadStats() {
     this.dataQualityService.getRawStats().subscribe({
       next: (data) => {
-        this.qualityScore   = data.qualityScore;
-        this.totalRecords   = data.totalRecords;
-        this.cleanRecords   = data.cleanRecords;
+        this.qualityScore = data.qualityScore;
+        this.totalRecords = data.totalRecords;
+        this.cleanRecords = data.cleanRecords;
         this.removedRecords = data.removedRecords;
 
         this.filterStatsData = [
           { filter: 'Type de vente non valide', removed: data.filterStats.typeVente },
-          { filter: 'Date nulle',               removed: data.filterStats.dateNull },
-          { filter: 'Date < 2020',              removed: data.filterStats.dateOld },
-          { filter: 'Quantité invalide',        removed: data.filterStats.quantite },
-          { filter: 'Prix invalide',            removed: data.filterStats.prix },
+          { filter: 'Date nulle', removed: data.filterStats.dateNull },
+          { filter: 'Date < 2020', removed: data.filterStats.dateOld },
+          { filter: 'Quantité invalide', removed: data.filterStats.quantite },
+          { filter: 'Prix invalide', removed: data.filterStats.prix },
         ];
 
         this.droppedColumns = data.droppedColumns;
@@ -98,35 +100,66 @@ export class DataQuality implements OnInit, OnDestroy {
 
   onRefresh() {
     if (this.isCalculating) return;
+
     this.isCalculating = true;
+    localStorage.setItem('dataQualityCalculationRunning', 'true');
     this.cdr.detectChanges();
 
     this.dataQualityService.refresh().subscribe({
-      next: () => { this.pollStatus(); },
+      next: () => {
+        this.pollStatus();
+      },
       error: (err) => {
         console.error('Error triggering refresh:', err);
         this.isCalculating = false;
+        localStorage.removeItem('dataQualityCalculationRunning');
         this.cdr.detectChanges();
       }
     });
   }
 
+  stopCalculation() {
+    this.dataQualityService.stopRefresh().subscribe({
+      next: () => {
+        if (this.pollInterval) {
+          clearInterval(this.pollInterval);
+          this.pollInterval = null;
+        }
+
+        this.isCalculating = false;
+        localStorage.removeItem('dataQualityCalculationRunning');
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error stopping data quality calculation:', err);
+      }
+    });
+  }
+
   pollStatus() {
-    if (this.pollInterval) clearInterval(this.pollInterval);
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+    }
 
     this.pollInterval = setInterval(() => {
       this.dataQualityService.getStatus().subscribe({
         next: (status) => {
-          if (!status.isCalculating) {
+          this.lastUpdated = status.lastUpdated;
+          this.isCalculating = status.isCalculating;
+
+          if (status.isCalculating) {
+            localStorage.setItem('dataQualityCalculationRunning', 'true');
+          } else {
+            localStorage.removeItem('dataQualityCalculationRunning');
             clearInterval(this.pollInterval);
             this.pollInterval = null;
-            this.lastUpdated = status.lastUpdated;
             this.loadStats();
-            setTimeout(() => {
-              this.isCalculating = false;
-              this.cdr.detectChanges();
-            }, 1500);
           }
+
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error polling data quality status:', err);
         }
       });
     }, 5000);
@@ -134,9 +167,10 @@ export class DataQuality implements OnInit, OnDestroy {
 
   initTypeVenteChart(distribution: { type: string; count: number }[]) {
     const colors = [
-      '#3b82f6','#10b981','#f59e0b','#ef4444',
-      '#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899','#6b7280'
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+      '#8b5cf6', '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6b7280'
     ];
+
     this.typeVenteChartData = {
       labels: distribution.map(d => d.type),
       datasets: [{
@@ -146,6 +180,7 @@ export class DataQuality implements OnInit, OnDestroy {
         borderColor: '#ffffff'
       }]
     };
+
     this.typeVenteChartOptions = {
       responsive: true,
       plugins: {
@@ -169,11 +204,12 @@ export class DataQuality implements OnInit, OnDestroy {
       datasets: [{
         label: 'Clean Records',
         data: distribution.map(d => d.count),
-        backgroundColor: ['#3b82f6','#10b981','#f59e0b','#8b5cf6'],
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
         borderRadius: 6,
         borderWidth: 0
       }]
     };
+
     this.yearDistChartOptions = {
       responsive: true,
       plugins: {

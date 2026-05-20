@@ -27,7 +27,9 @@ export class Navbar implements OnInit, OnDestroy {
 
   private readonly NORMAL_TITLE = 'NAF NAF - Sales Intelligence Platform';
   private readonly CALC_TITLE = 'Calculating Analysis...';
-  private readonly QUALITY_STORAGE_KEY = 'qualityCalculating';
+  private readonly QUALITY_STORAGE_KEY = 'dataQualityCalculationRunning';
+  private readonly DASHBOARD_STORAGE_KEY = 'dashboardCalculationRunning';
+  private readonly CUSTOM_ANALYSIS_STORAGE_KEY = 'customAnalysisCalculating';
 
   constructor(
     private authService: AuthService,
@@ -60,6 +62,7 @@ export class Navbar implements OnInit, OnDestroy {
 
     this.calcStateInterval = setInterval(() => {
       this.cdr.detectChanges();
+      this.updatePageTitle();
     }, 500);
   }
 
@@ -77,11 +80,22 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   private isQualityCalculating(): boolean {
-    return !!localStorage.getItem(this.QUALITY_STORAGE_KEY);
+    return localStorage.getItem(this.QUALITY_STORAGE_KEY) === 'true';
+  }
+
+  private isDashboardCalculating(): boolean {
+    return localStorage.getItem(this.DASHBOARD_STORAGE_KEY) === 'true';
+  }
+
+  private isCustomAnalysisCalculating(): boolean {
+    return localStorage.getItem(this.CUSTOM_ANALYSIS_STORAGE_KEY) === 'true';
   }
 
   isAnyCalculationRunning(): boolean {
-    return this.taskService.isCalculating() || this.isQualityCalculating();
+    return this.taskService.isCalculating()
+      || this.isQualityCalculating()
+      || this.isDashboardCalculating()
+      || this.isCustomAnalysisCalculating();
   }
 
   private stopAll() {
@@ -170,7 +184,12 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   private updatePageTitle() {
-    const calculating = this.tasks.some(t => t.status === 'calculating') || this.isQualityCalculating();
+    const calculating =
+      this.tasks.some(t => t.status === 'calculating') ||
+      this.isQualityCalculating() ||
+      this.isDashboardCalculating() ||
+      this.isCustomAnalysisCalculating();
+
     const readyCount = this.tasks.filter(t => t.status === 'ready').length;
     const tabVisible = this.isTabVisible();
 
@@ -259,6 +278,8 @@ export class Navbar implements OnInit, OnDestroy {
       localStorage.removeItem('redirectedFromNotification');
       localStorage.removeItem('lastCustomFilter');
       localStorage.removeItem('customAnalysisCalculating');
+      localStorage.removeItem('dashboardCalculationRunning');
+      localStorage.removeItem('dataQualityCalculationRunning');
       this.authService.logout();
       this.router.navigate(['/login']);
     }

@@ -31,11 +31,12 @@
 }
 
 .calculating-msg {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   color: var(--brand-primary);
   font-weight: 500;
+  animation: slide-down 0.2s ease;
 }
 
 .data-info {
@@ -54,6 +55,27 @@
   font-size: 0.75rem;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* ===== STOP BUTTON STYLE ===== */
+:host ::ng-deep .stop-calc-btn.p-button {
+  border-radius: 10px !important;
+  padding: 0.55rem 0.95rem !important;
+  font-weight: 600 !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+
+:host ::ng-deep .stop-calc-btn.p-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12) !important;
+}
+
+:host ::ng-deep .stop-calc-btn.p-button .p-button-icon {
+  font-size: 0.9rem;
+}
+
+:host ::ng-deep .stop-calc-btn.p-button .p-button-label {
+  font-weight: 600;
 }
 
 /* ===== KPI CARDS ===== */
@@ -151,8 +173,13 @@
   color: var(--text-primary);
 }
 
-.clean-value { color: #2ecc71 !important; }
-.problematic-value { color: #e74c3c !important; }
+.clean-value {
+  color: #2ecc71 !important;
+}
+
+.problematic-value {
+  color: #e74c3c !important;
+}
 
 /* ===== CHARTS ===== */
 .charts-grid {
@@ -225,4 +252,10 @@
   background: var(--brand-primary) !important;
   color: white !important;
   border-radius: 8px !important;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

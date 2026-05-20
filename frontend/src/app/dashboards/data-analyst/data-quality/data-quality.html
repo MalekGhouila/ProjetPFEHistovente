@@ -6,12 +6,21 @@
         <h1>Data Quality Report</h1>
         <p>Analyse de qualité des données historiques NAF NAF — {{ totalRecords | number }} enregistrements bruts</p>
       </div>
+
       <div class="header-actions">
         @if (isCalculating) {
           <span class="calculating-msg">
             <i class="pi pi-spin pi-spinner"></i>
-            Calculating new data... please wait
+            Recalculating data quality...
           </span>
+
+          <p-button
+            label="Stop Calculation"
+            icon="pi pi-stop-circle"
+            severity="danger"
+            [outlined]="true"
+            styleClass="stop-calc-btn"
+            (onClick)="stopCalculation()" />
         } @else {
           <div class="data-info">
             @if (lastUpdated) {
@@ -23,11 +32,12 @@
               </span>
             }
           </div>
+
           <p-button
             label="Refresh Data"
             icon="pi pi-refresh"
             severity="secondary"
-            (onClick)="onRefresh()"/>
+            (onClick)="onRefresh()" />
         }
       </div>
     </div>
@@ -73,19 +83,21 @@
   <div class="charts-grid">
 
     <div class="chart-card">
-      <h3>Distribution par Type de Vente</h3>
-      <p-chart type="doughnut"
-               [data]="typeVenteChartData"
-               [options]="typeVenteChartOptions"
-               height="300px"/>
+      <h3>Distribution par type de lignes de la table HistoVente</h3>
+      <p-chart
+        type="doughnut"
+        [data]="typeVenteChartData"
+        [options]="typeVenteChartOptions"
+        height="300px" />
     </div>
 
     <div class="chart-card">
       <h3>Répartition des enregistrements par Année</h3>
-      <p-chart type="bar"
-               [data]="yearDistChartData"
-               [options]="yearDistChartOptions"
-               height="300px"/>
+      <p-chart
+        type="bar"
+        [data]="yearDistChartData"
+        [options]="yearDistChartOptions"
+        height="300px" />
     </div>
 
   </div>
@@ -124,7 +136,7 @@
         <tr>
           <td><strong>{{ col.name }}</strong></td>
           <td>
-            <p-tag [value]="col.reason" [severity]="getReasonSeverity(col.reason)"/>
+            <p-tag [value]="col.reason" [severity]="getReasonSeverity(col.reason)" />
           </td>
           <td>{{ col.nullPct > 0 ? (col.nullPct + '%') : '—' }}</td>
         </tr>

@@ -30,14 +30,34 @@ public class DataQualityService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static boolean calculating = false;
+    private static volatile boolean calculating = false;
+    private static volatile boolean cancelRequested = false;
 
-    public static boolean isCalculating() { return calculating; }
+    public static boolean isCalculating() {
+        return calculating;
+    }
+
+    public static boolean isCancelRequested() {
+        return cancelRequested;
+    }
+
+    public static void requestStopCalculation() {
+        cancelRequested = true;
+    }
+
+    private void checkCancelled() {
+        if (cancelRequested) {
+            throw new DataQualityCalculationCancelledException();
+        }
+    }
+
+    private static class DataQualityCalculationCancelledException extends RuntimeException {
+    }
 
     // ===== GET (reads from cache — instant) =====
     public DataQualityRawStatsDto getRawStats() {
-        long totalRecords   = getLong("dq_total_records");
-        long cleanRecords   = getLong("dq_clean_records");
+        long totalRecords = getLong("dq_total_records");
+        long cleanRecords = getLong("dq_clean_records");
         long removedRecords = totalRecords - cleanRecords;
         double qualityScore = totalRecords > 0
                 ? Math.round((cleanRecords * 100.0 / totalRecords) * 100.0) / 100.0
@@ -45,34 +65,34 @@ public class DataQualityService {
 
         Map<String, Long> filterStats = Map.of(
                 "typeVente", getLong("dq_non_vente"),
-                "dateNull",  getLong("dq_date_null"),
-                "dateOld",   getLong("dq_date_old"),
-                "prix",      getLong("dq_prix"),
-                "quantite",  getLong("dq_quantite")
+                "dateNull", getLong("dq_date_null"),
+                "dateOld", getLong("dq_date_old"),
+                "prix", getLong("dq_prix"),
+                "quantite", getLong("dq_quantite")
         );
 
-        List<Map<String, Object>> distributionByYear   = readJson("dq_distribution_year");
+        List<Map<String, Object>> distributionByYear = readJson("dq_distribution_year");
         List<Map<String, Object>> typeVenteDistribution = readJson("dq_typevente_dist");
 
         List<Map<String, Object>> droppedColumns = List.of(
-                Map.of("name", "Observation",        "reason", ">60% NULL",  "nullPct", 98.2),
-                Map.of("name", "LigneTicket",         "reason", ">60% NULL",  "nullPct", 91.5),
-                Map.of("name", "CodeSaison",          "reason", ">60% NULL",  "nullPct", 88.3),
-                Map.of("name", "ArSaison",            "reason", ">60% NULL",  "nullPct", 88.3),
-                Map.of("name", "DiscountPercentage",  "reason", ">60% NULL",  "nullPct", 85.7),
-                Map.of("name", "DiscountAmount",      "reason", ">60% NULL",  "nullPct", 85.7),
-                Map.of("name", "TotalHT",             "reason", ">60% NULL",  "nullPct", 82.1),
-                Map.of("name", "ArCode",              "reason", ">60% NULL",  "nullPct", 79.4),
-                Map.of("name", "Article",             "reason", ">60% NULL",  "nullPct", 79.4),
-                Map.of("name", "VATAmount",           "reason", ">60% NULL",  "nullPct", 76.8),
-                Map.of("name", "StoreCategory",       "reason", ">60% NULL",  "nullPct", 71.2),
-                Map.of("name", "idArSaison",          "reason", ">60% NULL",  "nullPct", 68.9),
-                Map.of("name", "isSynchronised",      "reason", "Technique",  "nullPct", 0.0),
-                Map.of("name", "IDFactureDiva",       "reason", "Technique",  "nullPct", 0.0),
-                Map.of("name", "isFacture",           "reason", "Technique",  "nullPct", 0.0),
-                Map.of("name", "ligne",               "reason", "Technique",  "nullPct", 0.0),
-                Map.of("name", "Defecttrt",           "reason", "100% zéros", "nullPct", 0.0),
-                Map.of("name", "IDLigneTicketClient", "reason", "Technique",  "nullPct", 0.0)
+                Map.of("name", "Observation", "reason", ">60% NULL", "nullPct", 98.2),
+                Map.of("name", "LigneTicket", "reason", ">60% NULL", "nullPct", 91.5),
+                Map.of("name", "CodeSaison", "reason", ">60% NULL", "nullPct", 88.3),
+                Map.of("name", "ArSaison", "reason", ">60% NULL", "nullPct", 88.3),
+                Map.of("name", "DiscountPercentage", "reason", ">60% NULL", "nullPct", 85.7),
+                Map.of("name", "DiscountAmount", "reason", ">60% NULL", "nullPct", 85.7),
+                Map.of("name", "TotalHT", "reason", ">60% NULL", "nullPct", 82.1),
+                Map.of("name", "ArCode", "reason", ">60% NULL", "nullPct", 79.4),
+                Map.of("name", "Article", "reason", ">60% NULL", "nullPct", 79.4),
+                Map.of("name", "VATAmount", "reason", ">60% NULL", "nullPct", 76.8),
+                Map.of("name", "StoreCategory", "reason", ">60% NULL", "nullPct", 71.2),
+                Map.of("name", "idArSaison", "reason", ">60% NULL", "nullPct", 68.9),
+                Map.of("name", "isSynchronised", "reason", "Technique", "nullPct", 0.0),
+                Map.of("name", "IDFactureDiva", "reason", "Technique", "nullPct", 0.0),
+                Map.of("name", "isFacture", "reason", "Technique", "nullPct", 0.0),
+                Map.of("name", "ligne", "reason", "Technique", "nullPct", 0.0),
+                Map.of("name", "Defecttrt", "reason", "100% zéros", "nullPct", 0.0),
+                Map.of("name", "IDLigneTicketClient", "reason", "Technique", "nullPct", 0.0)
         );
 
         return new DataQualityRawStatsDto(
@@ -84,38 +104,56 @@ public class DataQualityService {
     // ===== REFRESH (runs heavy queries once, stores in analytics_summary) =====
     public void refreshDataQuality() {
         calculating = true;
-        try {
-            saveMetric("dq_total_records", 16_277_213.0);
-            saveMetric("dq_clean_records", histoVenteCleanRepository.countTotalTransactions().doubleValue());
-            saveMetric("dq_non_vente",     histoVenteRawRepository.countNonVente().doubleValue());
-            saveMetric("dq_date_null",     histoVenteRawRepository.countDateNull().doubleValue());
-            saveMetric("dq_date_old",      histoVenteRawRepository.countDateBefore2022().doubleValue());
-            saveMetric("dq_prix",          histoVenteRawRepository.countPrixOutliers().doubleValue());
-            saveMetric("dq_quantite",      histoVenteRawRepository.countQuantiteOutliers().doubleValue());
+        cancelRequested = false;
 
-            // distribution by year → JSON
+        try {
+            checkCancelled();
+            saveMetric("dq_total_records", 16_277_213.0);
+
+            checkCancelled();
+            saveMetric("dq_clean_records", histoVenteCleanRepository.countTotalTransactions().doubleValue());
+
+            checkCancelled();
+            saveMetric("dq_non_vente", histoVenteRawRepository.countNonVente().doubleValue());
+
+            checkCancelled();
+            saveMetric("dq_date_null", histoVenteRawRepository.countDateNull().doubleValue());
+
+            checkCancelled();
+            saveMetric("dq_date_old", histoVenteRawRepository.countDateBefore2022().doubleValue());
+
+            checkCancelled();
+            saveMetric("dq_prix", histoVenteRawRepository.countPrixOutliers().doubleValue());
+
+            checkCancelled();
+            saveMetric("dq_quantite", histoVenteRawRepository.countQuantiteOutliers().doubleValue());
+
+            checkCancelled();
             List<Object[]> yearResults = histoVenteCleanRepository.getDistributionByYear();
             saveText("dq_distribution_year", objectMapper.writeValueAsString(
                     yearResults.stream().map(row -> Map.<String, Object>of(
-                            "year",  ((Number) row[0]).intValue(),
+                            "year", ((Number) row[0]).intValue(),
                             "count", ((Number) row[1]).longValue(),
-                            "pct",   row[2] != null ? ((Number) row[2]).doubleValue() : 0.0
+                            "pct", row[2] != null ? ((Number) row[2]).doubleValue() : 0.0
                     )).collect(Collectors.toList())
             ));
 
-            // typeVente distribution → JSON
+            checkCancelled();
             List<Object[]> typeResults = histoVenteRawRepository.getTypeVenteDistribution();
             saveText("dq_typevente_dist", objectMapper.writeValueAsString(
                     typeResults.stream().map(row -> Map.<String, Object>of(
-                            "type",  row[0] != null ? row[0].toString() : "NULL",
+                            "type", row[0] != null ? row[0].toString() : "NULL",
                             "count", ((Number) row[1]).longValue()
                     )).collect(Collectors.toList())
             ));
 
+        } catch (DataQualityCalculationCancelledException ignored) {
+            System.out.println("Data quality calculation cancelled by user.");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             calculating = false;
+            cancelRequested = false;
         }
     }
 
