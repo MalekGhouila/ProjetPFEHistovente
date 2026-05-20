@@ -144,8 +144,18 @@ public class AnalyticsService {
     }
 
     // ===== RECORDS PER MONTH =====
-    public List<Map<String, Object>> getRecordsPerMonth() {
-        String json = getText("records_per_month_2024");
+    // Returns cached JSON for the requested year (defaults to most recent available)
+    public List<Map<String, Object>> getRecordsPerMonth(Integer year) {
+        String key;
+        if (year != null) {
+            key = "records_per_month_" + year;
+        } else {
+            // Fall back to the most recent cached year
+            List<Integer> years = histoVenteCleanRepository.getDistinctYears();
+            if (years.isEmpty()) return List.of();
+            key = "records_per_month_" + years.get(0);
+        }
+        String json = getText(key);
         if (json == null) return List.of();
         try {
             return objectMapper.readValue(json,
@@ -153,6 +163,11 @@ public class AnalyticsService {
         } catch (Exception e) {
             return List.of();
         }
+    }
+
+    // ===== AVAILABLE YEARS =====
+    public List<Integer> getAvailableYears() {
+        return histoVenteCleanRepository.getDistinctYears();
     }
 
     // ===== RECORDS PER YEAR (data completeness by year) =====
@@ -237,26 +252,31 @@ public class AnalyticsService {
                 recalculateMetric("quality_score",      100.0 - overallMissing);
             }
 
-            recalculateRecordsPerMonth();
-            recalculateRecordsPerYear(); // ← NEW
+            recalculateRecordsPerMonth();  // now stores one entry per year
+            recalculateRecordsPerYear();
 
         } finally {
             calculatingQuality = false;
         }
     }
 
+    // ===== RECALCULATE RECORDS PER MONTH (all years) =====
     private void recalculateRecordsPerMonth() {
         try {
-            List<Object[]> results = histoVenteCleanRepository.getRecordsPerMonth2024();
+            List<Integer> years = histoVenteCleanRepository.getDistinctYears();
             String[] monthNames = {"Jan","Feb","Mar","Apr","May","Jun",
                     "Jul","Aug","Sep","Oct","Nov","Dec"};
-            String json = objectMapper.writeValueAsString(
-                    results.stream().map(row -> Map.of(
-                            "month", monthNames[((Number) row[0]).intValue() - 1],
-                            "recordCount", ((Number) row[1]).longValue()
-                    )).collect(Collectors.toList())
-            );
-            recalculateText("records_per_month_2024", json);
+            for (int year : years) {
+                List<Object[]> results = histoVenteCleanRepository.getRecordsPerMonthByYear(year);
+                String json = objectMapper.writeValueAsString(
+                        results.stream().map(row -> Map.of(
+                                "month",       monthNames[((Number) row[0]).intValue() - 1],
+                                "year",        year,
+                                "recordCount", ((Number) row[1]).longValue()
+                        )).collect(Collectors.toList())
+                );
+                recalculateText("records_per_month_" + year, json);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

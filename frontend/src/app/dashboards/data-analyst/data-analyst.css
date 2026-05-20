@@ -53,9 +53,9 @@
 }
 
 .kpi-icon.records  { background: rgba(52, 152, 219, 0.12); color: #3498db; }
-.kpi-icon.quality  { background: rgba(46, 204, 113, 0.12);  color: #2ecc71; }
-.kpi-icon.missing  { background: rgba(241, 196, 15, 0.12);  color: #f1c40f; }
-.kpi-icon.outliers { background: rgba(231, 76, 60, 0.12);   color: #e74c3c; }
+.kpi-icon.quality  { background: rgba(46, 204, 113, 0.12); color: #2ecc71; }
+.kpi-icon.missing  { background: rgba(241, 196, 15, 0.12); color: #f1c40f; }
+.kpi-icon.outliers { background: rgba(231, 76, 60, 0.12); color: #e74c3c; }
 
 .kpi-info {
   display: flex;
@@ -113,7 +113,6 @@
   flex-shrink: 0;
 }
 
-/* ===== FIX: white space below p-chart ===== */
 .chart-card p-chart {
   display: block;
   flex: 1;
@@ -168,7 +167,7 @@
   font-style: italic;
 }
 
-/* ===== CHART CARD HEADER (title + year dropdown) ===== */
+/* ===== CHART CARD HEADER ===== */
 .chart-card-header {
   display: flex;
   align-items: center;
@@ -178,7 +177,7 @@
 }
 
 .chart-card-header h3 {
-  margin-bottom: 0;   /* override default h3 bottom margin */
+  margin-bottom: 0;
 }
 
 :host ::ng-deep .year-select {
@@ -198,7 +197,70 @@
   background: var(--bg-primary) !important;
 }
 
-/* ===== RECORDS PER MONTH chart wrapper ===== */
+/* ===== YEAR SELECT WRAPPER ===== */
+.year-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  padding: 5px 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.year-select-wrap:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(108, 52, 131, 0.12);
+}
+
+.year-select-icon {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.year-select-wrap ::ng-deep .p-select {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  min-width: 90px;
+}
+
+.year-select-wrap ::ng-deep .p-select .p-select-label {
+  color: var(--text-primary) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  font-family: var(--font-family) !important;
+  padding: 2px 4px !important;
+  background: transparent !important;
+}
+
+.year-select-wrap ::ng-deep .p-select .p-select-dropdown {
+  color: var(--text-muted) !important;
+  background: transparent !important;
+  width: 1.6rem !important;
+}
+
+.year-select-wrap ::ng-deep .p-select:not(.p-disabled):hover {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== YEAR LOADING ===== */
+.year-select-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  background: var(--bg-secondary);
+}
+
+/* ===== RECORDS PER MONTH ===== */
 .records-month-chart {
   position: relative;
   height: 220px;
@@ -218,7 +280,7 @@
   max-height: 220px !important;
 }
 
-/* ===== RECORDS PER YEAR chart wrapper ===== */
+/* ===== RECORDS PER YEAR ===== */
 .records-year-chart {
   position: relative;
   height: 220px;
@@ -236,6 +298,17 @@
 
 .records-year-chart p-chart canvas {
   max-height: 220px !important;
+}
+
+/* ===== CHART LOADING ===== */
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 220px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 /* ===== PIPELINE HISTORY CARD ===== */
@@ -327,7 +400,7 @@
 }
 
 .pipeline-date-item.clean  .pipeline-date-icon { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-.pipeline-date-item.train  .pipeline-date-icon { background: rgba(241, 196, 15, 0.12);  color: #f1c40f; }
+.pipeline-date-item.train  .pipeline-date-icon { background: rgba(241, 196, 15, 0.12); color: #f1c40f; }
 .pipeline-date-item.deploy .pipeline-date-icon { background: rgba(46, 204, 113, 0.12); color: #2ecc71; }
 
 .pipeline-date-info {
@@ -358,7 +431,7 @@
 .pipeline-date-status.done i       { color: #2ecc71; }
 .pipeline-date-status:not(.done) i { color: var(--text-muted); opacity: 0.5; }
 
-/* ── Server offline badge in the card header ───────────────────── */
+/* ===== SERVER OFFLINE ===== */
 .pipeline-server-badge {
   display: inline-flex;
   align-items: center;
@@ -374,7 +447,6 @@
   animation: slide-down 0.2s ease;
 }
 
-/* ── Server offline body block ─────────────────────────────────── */
 .pipeline-server-down {
   display: flex;
   flex-direction: column;
@@ -416,7 +488,6 @@
   line-height: 1.55;
 }
 
-/* ── Last-known meta row ───────────────────────────────────────── */
 .pipeline-server-down-meta {
   display: flex;
   flex-direction: column;
@@ -453,7 +524,7 @@
   color: var(--text-secondary);
 }
 
-/* ===== ANIMATION ===== */
+/* ===== ANIMATIONS ===== */
 @keyframes slide-down {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }

@@ -7,12 +7,20 @@
         <h1>Data Analyst Dashboard</h1>
         <p>{{ welcomeMessage }} — Data Quality & ML Overview</p>
       </div>
+
       <div class="header-actions">
         @if (isCalculating) {
           <span class="calculating-msg">
             <i class="pi pi-spin pi-spinner"></i>
             Recalculating dashboard data...
           </span>
+
+          <p-button
+            label="Stop Calculation"
+            icon="pi pi-stop-circle"
+            severity="danger"
+            [outlined]="true"
+            (onClick)="stopCalculation()" />
         } @else {
           <div class="data-info">
             @if (lastUpdated) {
@@ -22,11 +30,12 @@
               <span class="refresh-hint">For up-to-date data, click Refresh.</span>
             }
           </div>
+
           <p-button
             label="Refresh Data"
             icon="pi pi-refresh"
             severity="secondary"
-            (onClick)="refreshData()"/>
+            (onClick)="refreshData()" />
         }
       </div>
     </div>
@@ -75,10 +84,10 @@
     </div>
   </div>
 
-  <!-- Charts: 3 columns -->
+  <!-- Charts -->
   <div class="charts-grid-three">
 
-    <!-- ── ML Pipeline History Card ──────────────────────────────── -->
+    <!-- ML Pipeline History -->
     <div class="chart-card pipeline-dates-card" (click)="goToMlEvolution()">
       <div class="pipeline-dates-header">
         <h3><i class="pi pi-history"></i> ML Pipeline History</h3>
@@ -109,6 +118,7 @@
           <span class="pipeline-server-down-detail">
             Pipeline history cannot be loaded while the ML server is offline.
           </span>
+
           <div class="pipeline-server-down-meta">
             <div class="pipeline-down-meta-item">
               <i class="pi pi-filter"></i>
@@ -180,28 +190,47 @@
       }
     </div>
 
-    <!-- ── Records per Month ──────────────────────────────────────── -->
+    <!-- Records per Month -->
     <div class="chart-card">
       <div class="chart-card-header">
         <h3>Records per Month</h3>
-        <p-select
-          [(ngModel)]="selectedMonthYear"
-          [options]="availableYears"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Year..."
-          (onChange)="onMonthYearChange()"
-          styleClass="year-select"
-          appendTo="body" />
+
+        @if (yearsLoading) {
+          <div class="year-select-loading">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Loading...</span>
+          </div>
+        } @else {
+          <div class="year-select-wrap">
+            <i class="pi pi-calendar year-select-icon"></i>
+            <p-select
+              [(ngModel)]="selectedMonthYear"
+              [options]="availableYears"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Year..."
+              (onChange)="onMonthYearChange()"
+              styleClass="year-select"
+              appendTo="body" />
+          </div>
+        }
       </div>
+
       <div class="records-month-chart">
-        <p-chart type="line"
-                 [data]="outliersData"
-                 [options]="outliersOptions" />
+        @if (yearsLoading || monthChartLoading) {
+          <div class="chart-loading">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Loading...</span>
+          </div>
+        } @else {
+          <p-chart type="line"
+                   [data]="outliersData"
+                   [options]="outliersOptions" />
+        }
       </div>
     </div>
 
-    <!-- ── Records per Year ───────────────────────────────────────── -->
+    <!-- Records per Year -->
     <div class="chart-card">
       <h3>Records per Year</h3>
       <div class="records-year-chart">

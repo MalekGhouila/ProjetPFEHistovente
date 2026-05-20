@@ -44,6 +44,8 @@ export class DataAnalyst implements OnInit, OnDestroy {
   // Year selector for records-per-month chart
   availableYears: { label: string; value: number }[] = [];
   selectedMonthYear: number | null = null;
+  yearsLoading = true;
+  monthChartLoading = true;
 
   private apiUrl = 'http://localhost:8080/api/analytics';
   private qualityStorageKey = 'qualityCalculating';
@@ -60,13 +62,15 @@ export class DataAnalyst implements OnInit, OnDestroy {
   ngOnInit() {
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
     this.initChartOptions();
+
     if (localStorage.getItem(this.qualityStorageKey)) {
       this.isCalculating = true;
       this.cdr.detectChanges();
     }
+
     this.loadQualityStatus();
     this.loadKpis();
-    this.loadAvailableYears();   // loads years then triggers loadRecordsPerMonth
+    this.loadAvailableYears();
     this.loadRecordsPerYear();
     this.loadPipelineDates();
   }
@@ -81,14 +85,37 @@ export class DataAnalyst implements OnInit, OnDestroy {
   // ── Chart options ──────────────────────────────────────────────────
 
   initChartOptions() {
+    const textColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--text-primary').trim() || '#e2e8f0';
+    const mutedColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--text-secondary').trim() || '#94a3b8';
+    const gridColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--border-color').trim() || 'rgba(255,255,255,0.08)';
+
+    const axisDefaults = {
+      ticks: { color: mutedColor, font: { size: 11 } },
+      grid: { color: gridColor }
+    };
+
     this.completenessOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) =>
+              ' ' + ctx.parsed.y.toLocaleString() + ' records'
+          }
+        }
+      },
       scales: {
+        x: { ...axisDefaults },
         y: {
+          ...axisDefaults,
           beginAtZero: true,
           ticks: {
+            ...axisDefaults.ticks,
             callback: (value: number) => (value / 1_000_000).toFixed(1) + 'M'
           }
         }
@@ -98,31 +125,42 @@ export class DataAnalyst implements OnInit, OnDestroy {
     this.outliersOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) =>
+              ' ' + ctx.parsed.y.toLocaleString() + ' records'
+          }
+        }
+      },
       scales: {
         x: {
+          ...axisDefaults,
           ticks: {
+            ...axisDefaults.ticks,
             autoSkip: false,
             maxTicksLimit: 12,
             maxRotation: 45,
-            minRotation: 45,
-            font: { size: 11 }
+            minRotation: 45
           }
         },
-        y: { beginAtZero: true }
+        y: {
+          ...axisDefaults,
+          beginAtZero: true
+        }
       }
     };
 
     this.completenessData = { labels: [], datasets: [] };
 
     this.outliersData = {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       datasets: [{
         label: 'Records per Month',
-        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        data: new Array(12).fill(0),
         borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        backgroundColor: 'rgba(59,130,246,0.1)',
         tension: 0.4,
         fill: true
       }]
@@ -132,21 +170,30 @@ export class DataAnalyst implements OnInit, OnDestroy {
   // ── Year selector ──────────────────────────────────────────────────
 
   loadAvailableYears() {
+    this.yearsLoading = true;
+    this.monthChartLoading = true;
+    this.cdr.detectChanges();
+
     this.http.get<number[]>(`${this.apiUrl}/available-years`).subscribe({
       next: (years) => {
         this.availableYears = years.map(y => ({ label: y.toString(), value: y }));
-        // default to the most recent year
+
         if (years.length > 0) {
-          this.selectedMonthYear = years[years.length - 1];
+          this.selectedMonthYear = years[0];
+          this.loadRecordsPerMonth(this.selectedMonthYear);
+        } else {
+          this.selectedMonthYear = null;
+          this.monthChartLoading = false;
         }
-        this.loadRecordsPerMonth(this.selectedMonthYear ?? undefined);
+
+        this.yearsLoading = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        // fallback: static range
-        const fallback = [2022, 2023, 2024, 2025, 2026];
+        const fallback = [2025, 2024, 2023, 2022];
         this.availableYears = fallback.map(y => ({ label: y.toString(), value: y }));
-        this.selectedMonthYear = 2026;
+        this.selectedMonthYear = fallback[0];
+        this.yearsLoading = false;
         this.loadRecordsPerMonth(this.selectedMonthYear);
         this.cdr.detectChanges();
       }
@@ -166,24 +213,54 @@ export class DataAnalyst implements OnInit, OnDestroy {
       ? `${this.apiUrl}/records-per-month?year=${year}`
       : `${this.apiUrl}/records-per-month`;
 
+    this.monthChartLoading = true;
+    this.cdr.detectChanges();
+
     this.http.get<any[]>(url).subscribe({
       next: (data) => {
-        if (!data || data.length === 0) return;
+        if (!data || data.length === 0) {
+          this.outliersData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+              label: `Records${year ? ' — ' + year : ''}`,
+              data: new Array(12).fill(0),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59,130,246,0.1)',
+              tension: 0.4,
+              fill: true,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }]
+          };
+          this.monthChartLoading = false;
+          this.cdr.detectChanges();
+          return;
+        }
+
         const detectedYear = data[0]['year'] ?? year ?? '';
+
         this.outliersData = {
           labels: data.map(d => d['month']),
           datasets: [{
-            label: `Records per Month${detectedYear ? ' (' + detectedYear + ')' : ''}`,
+            label: `Records${detectedYear ? ' — ' + detectedYear : ''}`,
             data: data.map(d => d['recordCount']),
             borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            backgroundColor: 'rgba(59,130,246,0.1)',
             tension: 0.4,
-            fill: true
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
           }]
         };
+
+        this.monthChartLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err: any) => console.error('Error loading records per month:', err)
+      error: (err: any) => {
+        console.error('Error loading records per month:', err);
+        this.monthChartLoading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -191,17 +268,19 @@ export class DataAnalyst implements OnInit, OnDestroy {
     this.http.get<any[]>(`${this.apiUrl}/records-per-year`).subscribe({
       next: (data) => {
         if (!data || data.length === 0) return;
+
         this.completenessData = {
           labels: data.map(d => d['year'].toString()),
           datasets: [{
             label: 'Records per Year',
             data: data.map(d => d['recordCount']),
-            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-            hoverBackgroundColor: 'rgba(59, 130, 246, 0.9)',
+            backgroundColor: 'rgba(59,130,246,0.7)',
+            hoverBackgroundColor: 'rgba(59,130,246,0.9)',
             borderRadius: 6,
             borderWidth: 0
           }]
         };
+
         this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Error loading records per year:', err)
@@ -213,12 +292,13 @@ export class DataAnalyst implements OnInit, OnDestroy {
   loadPipelineDates() {
     this.isPipelineLoading = true;
     this.mlServerDown = false;
+
     this.mlService.getPipelineStatus().subscribe({
       next: (status) => {
         this.mlServerDown = false;
         this.pipelineDates = {
-          lastClean:  status.clean?.last_run       ? this.formatDate(status.clean.last_run)       : null,
-          lastTrain:  status.train?.last_run       ? this.formatDate(status.train.last_run)       : null,
+          lastClean: status.clean?.last_run ? this.formatDate(status.clean.last_run) : null,
+          lastTrain: status.train?.last_run ? this.formatDate(status.train.last_run) : null,
           lastDeploy: status.deploy?.last_deployed ? this.formatDate(status.deploy.last_deployed) : null
         };
         this.isPipelineLoading = false;
@@ -245,12 +325,14 @@ export class DataAnalyst implements OnInit, OnDestroy {
       next: (status) => {
         this.lastUpdated = status.lastUpdated;
         this.isCalculating = status.isCalculating;
+
         if (status.isCalculating) {
           localStorage.setItem(this.qualityStorageKey, 'calculating');
           this.startPolling();
         } else {
           localStorage.removeItem(this.qualityStorageKey);
         }
+
         this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Error loading quality status:', err)
@@ -286,10 +368,26 @@ export class DataAnalyst implements OnInit, OnDestroy {
     });
   }
 
+  // ── Stop calculation ───────────────────────────────────────────────
+
+  stopCalculation() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+
+    this.isCalculating = false;
+    localStorage.removeItem(this.qualityStorageKey);
+    this.cdr.detectChanges();
+  }
+
+  // ── Polling ────────────────────────────────────────────────────────
+
   startPolling() {
     if (this.pollInterval) return;
 
     const startTime = new Date().toISOString();
+
     this.pollInterval = setInterval(() => {
       this.http.get<any>(`${this.apiUrl}/quality-status`).subscribe({
         next: (status) => {
@@ -300,6 +398,7 @@ export class DataAnalyst implements OnInit, OnDestroy {
             localStorage.removeItem(this.qualityStorageKey);
             this.isCalculating = false;
             this.lastUpdated = status.lastUpdated;
+
             this.loadKpis();
             this.loadRecordsPerMonth(this.selectedMonthYear ?? undefined);
             this.loadRecordsPerYear();
@@ -316,8 +415,11 @@ export class DataAnalyst implements OnInit, OnDestroy {
 
   private formatDate(isoString: string): string {
     return new Date(isoString).toLocaleString('fr-FR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 }

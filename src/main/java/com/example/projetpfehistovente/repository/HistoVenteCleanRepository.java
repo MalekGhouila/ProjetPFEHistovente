@@ -218,4 +218,22 @@ public interface HistoVenteCleanRepository extends JpaRepository<HistoVenteClean
     ORDER BY annee
     """, nativeQuery = true)
     List<Object[]> getDistributionByYear();
+
+    // Keep the old one for backward compat OR replace it — your choice
+// ADD this new parameterized version:
+    @Query(value = """
+        SELECT MONTH(Date) as month, COUNT(*) as recordCount
+        FROM histovente_clean_v1
+        WHERE YEAR(Date) = :year
+        GROUP BY MONTH(Date)
+        ORDER BY MONTH(Date)
+        """, nativeQuery = true)
+    List<Object[]> getRecordsPerMonthByYear(@Param("year") int year);
+
+    @Query(value = """
+        SELECT DISTINCT YEAR(Date) as annee
+        FROM histovente_clean_v1
+        ORDER BY annee DESC
+        """, nativeQuery = true)
+    List<Integer> getDistinctYears();
 }
