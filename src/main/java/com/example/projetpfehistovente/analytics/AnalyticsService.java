@@ -30,8 +30,9 @@ public class AnalyticsService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static boolean calculating = false;
-    private static boolean calculatingQuality = false;
+    private static volatile boolean calculating = false;
+    private static volatile boolean calculatingQuality = false;
+    private static volatile boolean cancelQualityRequested = false;
 
     public static boolean isCalculating() {
         return calculating;
@@ -39,6 +40,23 @@ public class AnalyticsService {
 
     public static boolean isCalculatingQuality() {
         return calculatingQuality;
+    }
+
+    public static boolean isCancelQualityRequested() {
+        return cancelQualityRequested;
+    }
+
+    public static void requestStopQualityCalculation() {
+        cancelQualityRequested = true;
+    }
+
+    private void checkQualityCancelled() {
+        if (cancelQualityRequested) {
+            throw new QualityCalculationCancelledException();
+        }
+    }
+
+    private static class QualityCalculationCancelledException extends RuntimeException {
     }
 
     public String getLastUpdated() {
@@ -144,19 +162,19 @@ public class AnalyticsService {
     }
 
     // ===== RECORDS PER MONTH =====
-    // Returns cached JSON for the requested year (defaults to most recent available)
     public List<Map<String, Object>> getRecordsPerMonth(Integer year) {
         String key;
         if (year != null) {
             key = "records_per_month_" + year;
         } else {
-            // Fall back to the most recent cached year
             List<Integer> years = histoVenteCleanRepository.getDistinctYears();
             if (years.isEmpty()) return List.of();
             key = "records_per_month_" + years.get(0);
         }
+
         String json = getText(key);
         if (json == null) return List.of();
+
         try {
             return objectMapper.readValue(json,
                     new TypeReference<List<Map<String, Object>>>() {});
@@ -170,7 +188,7 @@ public class AnalyticsService {
         return histoVenteCleanRepository.getDistinctYears();
     }
 
-    // ===== RECORDS PER YEAR (data completeness by year) =====
+    // ===== RECORDS PER YEAR =====
     public List<Map<String, Object>> getRecordsPerYear() {
         String json = getText("records_per_year");
         if (json == null) return List.of();
@@ -223,13 +241,18 @@ public class AnalyticsService {
     // ===== REFRESH QUALITY METRICS =====
     public void refreshQualityMetrics() {
         calculatingQuality = true;
+        cancelQualityRequested = false;
+
         try {
+            checkQualityCancelled();
             Long total = histoVenteCleanRepository.countTotalRawRecords();
             recalculateMetric("total_raw_records", total != null ? total.doubleValue() : 0.0);
 
+            checkQualityCancelled();
             Long outliers = histoVenteCleanRepository.countOutliers();
             recalculateMetric("outliers_count", outliers != null ? outliers.doubleValue() : 0.0);
 
+            checkQualityCancelled();
             List<Object[]> statsList = histoVenteCleanRepository.getMissingValuesStats();
             if (statsList != null && !statsList.isEmpty()) {
                 Object[] stats = statsList.get(0);
@@ -242,21 +265,27 @@ public class AnalyticsService {
                 double missingFamille = stats[5] != null ? ((Number) stats[5]).doubleValue() : 0.0;
                 double overallMissing = stats[7] != null ? ((Number) stats[7]).doubleValue() : 0.0;
 
-                recalculateMetric("missing_couleur",    missingCouleur);
-                recalculateMetric("missing_ville",      missingVille);
-                recalculateMetric("missing_region",     missingRegion);
-                recalculateMetric("missing_saison",     missingSaison);
-                recalculateMetric("missing_article",    missingArticle);
-                recalculateMetric("missing_famille",    missingFamille);
+                recalculateMetric("missing_couleur", missingCouleur);
+                recalculateMetric("missing_ville", missingVille);
+                recalculateMetric("missing_region", missingRegion);
+                recalculateMetric("missing_saison", missingSaison);
+                recalculateMetric("missing_article", missingArticle);
+                recalculateMetric("missing_famille", missingFamille);
                 recalculateMetric("missing_percentage", overallMissing);
-                recalculateMetric("quality_score",      100.0 - overallMissing);
+                recalculateMetric("quality_score", 100.0 - overallMissing);
             }
 
-            recalculateRecordsPerMonth();  // now stores one entry per year
+            checkQualityCancelled();
+            recalculateRecordsPerMonth();
+
+            checkQualityCancelled();
             recalculateRecordsPerYear();
 
+        } catch (QualityCalculationCancelledException ignored) {
+            System.out.println("Quality recalculation cancelled by user.");
         } finally {
             calculatingQuality = false;
+            cancelQualityRequested = false;
         }
     }
 
@@ -266,17 +295,22 @@ public class AnalyticsService {
             List<Integer> years = histoVenteCleanRepository.getDistinctYears();
             String[] monthNames = {"Jan","Feb","Mar","Apr","May","Jun",
                     "Jul","Aug","Sep","Oct","Nov","Dec"};
+
             for (int year : years) {
+                checkQualityCancelled();
+
                 List<Object[]> results = histoVenteCleanRepository.getRecordsPerMonthByYear(year);
                 String json = objectMapper.writeValueAsString(
                         results.stream().map(row -> Map.of(
-                                "month",       monthNames[((Number) row[0]).intValue() - 1],
-                                "year",        year,
+                                "month", monthNames[((Number) row[0]).intValue() - 1],
+                                "year", year,
                                 "recordCount", ((Number) row[1]).longValue()
                         )).collect(Collectors.toList())
                 );
                 recalculateText("records_per_month_" + year, json);
             }
+        } catch (QualityCalculationCancelledException e) {
+            throw e;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -288,9 +322,9 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getDistributionByYear();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "year",        ((Number) row[0]).intValue(),
+                            "year", ((Number) row[0]).intValue(),
                             "recordCount", ((Number) row[1]).longValue(),
-                            "percentage",  row[2] != null ? ((Number) row[2]).doubleValue() : 0.0
+                            "percentage", row[2] != null ? ((Number) row[2]).doubleValue() : 0.0
                     )).collect(Collectors.toList())
             );
             recalculateText("records_per_year", json);
@@ -319,9 +353,9 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getTopStoresNative();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "storeCode",    row[0].toString(),
-                            "storeName",    row[1].toString(),
-                            "totalSales",   ((Number) row[2]).longValue(),
+                            "storeCode", row[0].toString(),
+                            "storeName", row[1].toString(),
+                            "totalSales", ((Number) row[2]).longValue(),
                             "totalRevenue", row[3] != null ? row[3].toString() : "0"
                     )).collect(Collectors.toList())
             );
@@ -336,7 +370,7 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getSalesByFamilyNative();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "famille",    row[0].toString(),
+                            "famille", row[0].toString(),
                             "totalSales", ((Number) row[1]).longValue()
                     )).collect(Collectors.toList())
             );
@@ -351,8 +385,8 @@ public class AnalyticsService {
             List<Object[]> results = histoVenteCleanRepository.getMonthlySalesNative();
             String json = objectMapper.writeValueAsString(
                     results.stream().map(row -> Map.of(
-                            "month",        row[0].toString(),
-                            "totalSales",   ((Number) row[1]).longValue(),
+                            "month", row[0].toString(),
+                            "totalSales", ((Number) row[1]).longValue(),
                             "totalRevenue", row[2] != null ? row[2].toString() : "0"
                     )).collect(Collectors.toList())
             );
@@ -408,7 +442,7 @@ public class AnalyticsService {
         List<Map<String, Object>> familyData = familyResults.stream().map(row -> {
             long sales = ((Number) row[1]).longValue();
             return Map.<String, Object>of(
-                    "famille",    row[0].toString(),
+                    "famille", row[0].toString(),
                     "totalSales", sales,
                     "percentage", total > 0 ? (sales * 100.0) / total : 0.0
             );
@@ -416,21 +450,21 @@ public class AnalyticsService {
 
         List<Map<String, Object>> monthlyData = monthlyResults.stream().map(row ->
                 Map.<String, Object>of(
-                        "month",        row[0].toString(),
-                        "totalSales",   ((Number) row[1]).longValue(),
+                        "month", row[0].toString(),
+                        "totalSales", ((Number) row[1]).longValue(),
                         "totalRevenue", row[2] != null ? row[2].toString() : "0"
                 )
         ).collect(Collectors.toList());
 
         return Map.of(
                 "totalTransactions", count != null ? count : 0L,
-                "totalRevenue",      revenue != null ? revenue : 0.0,
-                "salesByFamily",     familyData,
-                "monthlySales",      monthlyData,
+                "totalRevenue", revenue != null ? revenue : 0.0,
+                "salesByFamily", familyData,
+                "monthlySales", monthlyData,
                 "filters", Map.of(
-                        "famille",  famille  != null ? famille  : "All",
-                        "saison",   saison   != null ? saison   : "All",
-                        "codeMag",  codeMag  != null ? codeMag  : "All"
+                        "famille", famille != null ? famille : "All",
+                        "saison", saison != null ? saison : "All",
+                        "codeMag", codeMag != null ? codeMag : "All"
                 )
         );
     }

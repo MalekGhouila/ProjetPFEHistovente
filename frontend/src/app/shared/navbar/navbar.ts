@@ -23,9 +23,11 @@ export class Navbar implements OnInit, OnDestroy {
   private blinkState: boolean = false;
   private typeInterval: any = null;
   private loopActive: boolean = false;
+  private calcStateInterval: any = null;
 
   private readonly NORMAL_TITLE = 'NAF NAF - Sales Intelligence Platform';
-  private readonly CALC_TITLE   = 'Calculating Analysis...';
+  private readonly CALC_TITLE = 'Calculating Analysis...';
+  private readonly QUALITY_STORAGE_KEY = 'qualityCalculating';
 
   constructor(
     private authService: AuthService,
@@ -49,29 +51,49 @@ export class Navbar implements OnInit, OnDestroy {
       filter(e => e instanceof NavigationEnd)
     ).subscribe(() => {
       this.updatePageTitle();
+      this.cdr.detectChanges();
     });
 
     document.addEventListener('visibilitychange', () => {
       this.updatePageTitle();
     });
+
+    this.calcStateInterval = setInterval(() => {
+      this.cdr.detectChanges();
+    }, 500);
   }
 
   ngOnDestroy() {
     this.stopAll();
+
+    if (this.calcStateInterval) {
+      clearInterval(this.calcStateInterval);
+      this.calcStateInterval = null;
+    }
   }
 
   private isTabVisible(): boolean {
     return document.visibilityState === 'visible';
   }
 
+  private isQualityCalculating(): boolean {
+    return !!localStorage.getItem(this.QUALITY_STORAGE_KEY);
+  }
+
+  isAnyCalculationRunning(): boolean {
+    return this.taskService.isCalculating() || this.isQualityCalculating();
+  }
+
   private stopAll() {
     this.loopActive = false;
+
     if (this.blinkInterval) {
       clearInterval(this.blinkInterval);
       clearTimeout(this.blinkInterval);
       this.blinkInterval = null;
       this.blinkState = false;
     }
+
     if (this.typeInterval) {
       clearInterval(this.typeInterval);
       this.typeInterval = null;
@@ -81,9 +103,11 @@ export class Navbar implements OnInit, OnDestroy {
   private typeText(text: string, onDone?: () => void) {
     let i = 0;
     document.title = '_';
+
     this.typeInterval = setInterval(() => {
       i++;
       document.title = text.slice(0, i) + '_';
+
       if (i >= text.length) {
         clearInterval(this.typeInterval);
         this.typeInterval = null;
@@ -95,9 +119,11 @@ export class Navbar implements OnInit, OnDestroy {
 
   private eraseText(text: string, onDone?: () => void) {
     let i = text.length;
+
     this.typeInterval = setInterval(() => {
       i--;
       document.title = text.slice(0, i) + (i > 0 ? '_' : '');
+
       if (i <= 0) {
         clearInterval(this.typeInterval);
         this.typeInterval = null;
@@ -144,9 +170,9 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   private updatePageTitle() {
-    const calculating = this.tasks.some(t => t.status === 'calculating');
-    const readyCount  = this.tasks.filter(t => t.status === 'ready').length;
-    const tabVisible  = this.isTabVisible();
+    const calculating = this.tasks.some(t => t.status === 'calculating') || this.isQualityCalculating();
+    const readyCount = this.tasks.filter(t => t.status === 'ready').length;
+    const tabVisible = this.isTabVisible();
 
     this.stopAll();
 
@@ -162,7 +188,7 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   getRoleDisplay(role: string): string {
-    switch(role) {
+    switch (role) {
       case 'ADMIN': return 'Admin';
       case 'MANAGER': return 'Manager';
       case 'RESPONSABLE_MAGASIN': return 'Responsable Magasin';
@@ -176,7 +202,7 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   onLogoutMouseEnter() {
-    if (this.taskService.isCalculating()) {
+    if (this.isAnyCalculationRunning()) {
       this.showLogoutTooltip = true;
     }
   }
@@ -225,7 +251,7 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   logout() {
-    if (this.taskService.isCalculating()) return;
+    if (this.isAnyCalculationRunning()) return;
 
     if (confirm('Are you sure you want to logout?')) {
       this.stopAll();

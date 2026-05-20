@@ -371,14 +371,20 @@ export class DataAnalyst implements OnInit, OnDestroy {
   // ── Stop calculation ───────────────────────────────────────────────
 
   stopCalculation() {
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
-      this.pollInterval = null;
-    }
-
-    this.isCalculating = false;
-    localStorage.removeItem(this.qualityStorageKey);
-    this.cdr.detectChanges();
+    this.http.post<any>(`${this.apiUrl}/stop-quality-refresh`, {}).subscribe({
+      next: () => {
+        if (this.pollInterval) {
+          clearInterval(this.pollInterval);
+          this.pollInterval = null;
+        }
+        this.isCalculating = false;
+        localStorage.removeItem(this.qualityStorageKey);
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error stopping quality calculation:', err);
+      }
+    });
   }
 
   // ── Polling ────────────────────────────────────────────────────────

@@ -86,14 +86,15 @@
     }
 
     <div class="logout-wrapper"
-         (mouseenter)="taskService.isCalculating() && (showLogoutTooltip = true)"
+         (mouseenter)="isAnyCalculationRunning() && (showLogoutTooltip = true)"
          (mouseleave)="showLogoutTooltip = false">
       <button class="logout-btn"
-              (click)="!taskService.isCalculating() && logout()"
-              [class.disabled]="taskService.isCalculating()">
+              (click)="!isAnyCalculationRunning() && logout()"
+              [class.disabled]="isAnyCalculationRunning()">
         <i class="pi pi-sign-out"></i>
         Logout
       </button>
+
       @if (showLogoutTooltip) {
         <div class="logout-tooltip">
           <i class="pi pi-exclamation-triangle"></i>
@@ -101,6 +102,5 @@
         </div>
       }
     </div>
-
   </div>
 </nav>

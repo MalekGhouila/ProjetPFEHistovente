@@ -52,7 +52,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getMissingValuesByColumn());
     }
 
-    // ===== RECORDS PER MONTH (optional ?year=YYYY param) =====
+    // ===== RECORDS PER MONTH =====
     @GetMapping("/records-per-month")
     public ResponseEntity<List<Map<String, Object>>> getRecordsPerMonth(
             @RequestParam(required = false) Integer year) {
@@ -97,7 +97,9 @@ public class AnalyticsController {
                     "status", "already_running"
             ));
         }
+
         new Thread(() -> analyticsService.refreshAnalytics()).start();
+
         return ResponseEntity.ok(Map.of(
                 "message", "Calculation started! This may take a few minutes.",
                 "status", "processing"
@@ -109,7 +111,7 @@ public class AnalyticsController {
     public ResponseEntity<Map<String, Object>> getRefreshStatus() {
         return ResponseEntity.ok(Map.of(
                 "isCalculating", AnalyticsService.isCalculating(),
-                "lastUpdated",   analyticsService.getLastUpdated()
+                "lastUpdated", analyticsService.getLastUpdated()
         ));
     }
 
@@ -122,10 +124,30 @@ public class AnalyticsController {
                     "status", "already_running"
             ));
         }
+
         new Thread(() -> analyticsService.refreshQualityMetrics()).start();
+
         return ResponseEntity.ok(Map.of(
                 "message", "Quality recalculation started!",
                 "status", "processing"
+        ));
+    }
+
+    // ===== STOP QUALITY REFRESH =====
+    @PostMapping("/stop-quality-refresh")
+    public ResponseEntity<Map<String, String>> stopQualityRefresh() {
+        if (!AnalyticsService.isCalculatingQuality()) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "No quality recalculation is currently running.",
+                    "status", "idle"
+            ));
+        }
+
+        AnalyticsService.requestStopQualityCalculation();
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Quality recalculation stop requested.",
+                "status", "stopping"
         ));
     }
 
@@ -133,7 +155,7 @@ public class AnalyticsController {
     @GetMapping("/quality-status")
     public ResponseEntity<Map<String, Object>> getQualityStatus() {
         return ResponseEntity.ok(Map.of(
-                "lastUpdated",   analyticsService.getLastUpdated("total_raw_records"),
+                "lastUpdated", analyticsService.getLastUpdated("total_raw_records"),
                 "isCalculating", AnalyticsService.isCalculatingQuality()
         ));
     }
