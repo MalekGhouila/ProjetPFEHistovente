@@ -11,7 +11,7 @@
         @if (isCalculating) {
           <span class="calculating-msg">
             <i class="pi pi-spin pi-spinner"></i>
-            Recalculating data quality...
+            Recalculating dashboard data...
           </span>
         } @else {
           <div class="data-info">
@@ -101,7 +101,6 @@
         </div>
 
       } @else if (mlServerDown) {
-        <!-- ── Server offline warning state ─────────────────────── -->
         <div class="pipeline-server-down">
           <div class="pipeline-server-down-icon">
             <i class="pi pi-server"></i>
@@ -130,7 +129,6 @@
         </div>
 
       } @else {
-        <!-- ── Normal pipeline dates list ────────────────────────── -->
         <div class="pipeline-dates-list">
 
           <div class="pipeline-date-item clean">
@@ -182,22 +180,35 @@
       }
     </div>
 
-    <!-- Records per Month -->
+    <!-- ── Records per Month ──────────────────────────────────────── -->
     <div class="chart-card">
-      <h3>Records per Month{{ recordsYear }}</h3>
-      <p-chart type="line"
-               [data]="outliersData"
-               [options]="outliersOptions"
-               height="220px"/>
+      <div class="chart-card-header">
+        <h3>Records per Month</h3>
+        <p-select
+          [(ngModel)]="selectedMonthYear"
+          [options]="availableYears"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Year..."
+          (onChange)="onMonthYearChange()"
+          styleClass="year-select"
+          appendTo="body" />
+      </div>
+      <div class="records-month-chart">
+        <p-chart type="line"
+                 [data]="outliersData"
+                 [options]="outliersOptions" />
+      </div>
     </div>
 
-    <!-- Records per Year -->
+    <!-- ── Records per Year ───────────────────────────────────────── -->
     <div class="chart-card">
       <h3>Records per Year</h3>
-      <p-chart type="bar"
-               [data]="completenessData"
-               [options]="completenessOptions"
-               height="220px"/>
+      <div class="records-year-chart">
+        <p-chart type="bar"
+                 [data]="completenessData"
+                 [options]="completenessOptions" />
+      </div>
     </div>
 
   </div>

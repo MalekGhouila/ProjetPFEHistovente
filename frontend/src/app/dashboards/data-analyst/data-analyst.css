@@ -101,7 +101,6 @@
   padding: 24px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
-  /* Prevent card from growing taller than its content */
   display: flex;
   flex-direction: column;
 }
@@ -169,6 +168,76 @@
   font-style: italic;
 }
 
+/* ===== CHART CARD HEADER (title + year dropdown) ===== */
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.chart-card-header h3 {
+  margin-bottom: 0;   /* override default h3 bottom margin */
+}
+
+:host ::ng-deep .year-select {
+  width: 100px !important;
+}
+
+:host ::ng-deep .year-select .p-select-label {
+  font-size: 0.82rem !important;
+  padding: 5px 10px !important;
+  font-family: var(--font-family) !important;
+  color: var(--text-primary) !important;
+}
+
+:host ::ng-deep .year-select .p-select {
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  background: var(--bg-primary) !important;
+}
+
+/* ===== RECORDS PER MONTH chart wrapper ===== */
+.records-month-chart {
+  position: relative;
+  height: 220px;
+  flex: 1;
+}
+
+.records-month-chart p-chart {
+  display: block;
+  height: 100%;
+}
+
+.records-month-chart p-chart > div {
+  height: 100% !important;
+}
+
+.records-month-chart p-chart canvas {
+  max-height: 220px !important;
+}
+
+/* ===== RECORDS PER YEAR chart wrapper ===== */
+.records-year-chart {
+  position: relative;
+  height: 220px;
+  flex: 1;
+}
+
+.records-year-chart p-chart {
+  display: block;
+  height: 100%;
+}
+
+.records-year-chart p-chart > div {
+  height: 100% !important;
+}
+
+.records-year-chart p-chart canvas {
+  max-height: 220px !important;
+}
+
 /* ===== PIPELINE HISTORY CARD ===== */
 .pipeline-dates-card {
   cursor: pointer;
@@ -182,9 +251,9 @@
 
 .pipeline-dates-header {
   display: flex;
-  align-items: center;        /* back to center, not flex-start */
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;                   /* smaller gap */
+  gap: 8px;
   margin-bottom: 24px;
   flex-shrink: 0;
 }
@@ -194,8 +263,8 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 0;
-  flex-shrink: 1;             /* allow shrink if needed */
-  min-width: 0;               /* allow text to truncate rather than push */
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .pipeline-dates-hint {
@@ -317,7 +386,6 @@
   background: rgba(239, 68, 68, 0.03);
   text-align: center;
   animation: slide-down 0.25s ease;
-  /* prevent the card's (click) from feeling broken */
   pointer-events: none;
 }
 
@@ -383,4 +451,10 @@
 .pipeline-down-meta-value {
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+/* ===== ANIMATION ===== */
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

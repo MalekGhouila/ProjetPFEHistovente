@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -10,7 +12,7 @@ import { MlService } from '../../core/services/ml.service';
 @Component({
   selector: 'app-data-analyst',
   standalone: true,
-  imports: [ChartModule, ButtonModule, DatePipe],
+  imports: [ChartModule, ButtonModule, SelectModule, FormsModule, DatePipe],
   templateUrl: './data-analyst.html',
   styleUrl: './data-analyst.css'
 })
@@ -39,8 +41,9 @@ export class DataAnalyst implements OnInit, OnDestroy {
     lastDeploy: string | null;
   } = { lastClean: null, lastTrain: null, lastDeploy: null };
 
-  // Derived from actual data — shown in chart label
-  recordsYear = '';
+  // Year selector for records-per-month chart
+  availableYears: { label: string; value: number }[] = [];
+  selectedMonthYear: number | null = null;
 
   private apiUrl = 'http://localhost:8080/api/analytics';
   private qualityStorageKey = 'qualityCalculating';
@@ -63,7 +66,7 @@ export class DataAnalyst implements OnInit, OnDestroy {
     }
     this.loadQualityStatus();
     this.loadKpis();
-    this.loadRecordsPerMonth();
+    this.loadAvailableYears();   // loads years then triggers loadRecordsPerMonth
     this.loadRecordsPerYear();
     this.loadPipelineDates();
   }
@@ -75,9 +78,12 @@ export class DataAnalyst implements OnInit, OnDestroy {
     }
   }
 
+  // ── Chart options ──────────────────────────────────────────────────
+
   initChartOptions() {
     this.completenessOptions = {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         y: {
@@ -91,8 +97,20 @@ export class DataAnalyst implements OnInit, OnDestroy {
 
     this.outliersOptions = {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
+      scales: {
+        x: {
+          ticks: {
+            autoSkip: false,
+            maxTicksLimit: 12,
+            maxRotation: 45,
+            minRotation: 45,
+            font: { size: 11 }
+          }
+        },
+        y: { beginAtZero: true }
+      }
     };
 
     this.completenessData = { labels: [], datasets: [] };
@@ -111,16 +129,51 @@ export class DataAnalyst implements OnInit, OnDestroy {
     };
   }
 
-  loadRecordsPerMonth() {
-    this.http.get<any[]>(`${this.apiUrl}/records-per-month`).subscribe({
+  // ── Year selector ──────────────────────────────────────────────────
+
+  loadAvailableYears() {
+    this.http.get<number[]>(`${this.apiUrl}/available-years`).subscribe({
+      next: (years) => {
+        this.availableYears = years.map(y => ({ label: y.toString(), value: y }));
+        // default to the most recent year
+        if (years.length > 0) {
+          this.selectedMonthYear = years[years.length - 1];
+        }
+        this.loadRecordsPerMonth(this.selectedMonthYear ?? undefined);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // fallback: static range
+        const fallback = [2022, 2023, 2024, 2025, 2026];
+        this.availableYears = fallback.map(y => ({ label: y.toString(), value: y }));
+        this.selectedMonthYear = 2026;
+        this.loadRecordsPerMonth(this.selectedMonthYear);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  onMonthYearChange() {
+    if (this.selectedMonthYear) {
+      this.loadRecordsPerMonth(this.selectedMonthYear);
+    }
+  }
+
+  // ── Chart data loaders ─────────────────────────────────────────────
+
+  loadRecordsPerMonth(year?: number) {
+    const url = year
+      ? `${this.apiUrl}/records-per-month?year=${year}`
+      : `${this.apiUrl}/records-per-month`;
+
+    this.http.get<any[]>(url).subscribe({
       next: (data) => {
         if (!data || data.length === 0) return;
-        const year = data[0]['year'] ?? '';
-        this.recordsYear = year ? ` (${year})` : '';
+        const detectedYear = data[0]['year'] ?? year ?? '';
         this.outliersData = {
           labels: data.map(d => d['month']),
           datasets: [{
-            label: `Records per Month${this.recordsYear}`,
+            label: `Records per Month${detectedYear ? ' (' + detectedYear + ')' : ''}`,
             data: data.map(d => d['recordCount']),
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -155,6 +208,8 @@ export class DataAnalyst implements OnInit, OnDestroy {
     });
   }
 
+  // ── Pipeline ───────────────────────────────────────────────────────
+
   loadPipelineDates() {
     this.isPipelineLoading = true;
     this.mlServerDown = false;
@@ -182,6 +237,8 @@ export class DataAnalyst implements OnInit, OnDestroy {
     if (this.mlServerDown) return;
     this.router.navigate(['/data-analyst/ml-evolution']);
   }
+
+  // ── Quality / KPIs ─────────────────────────────────────────────────
 
   loadQualityStatus() {
     this.http.get<any>(`${this.apiUrl}/quality-status`).subscribe({
@@ -244,7 +301,7 @@ export class DataAnalyst implements OnInit, OnDestroy {
             this.isCalculating = false;
             this.lastUpdated = status.lastUpdated;
             this.loadKpis();
-            this.loadRecordsPerMonth();
+            this.loadRecordsPerMonth(this.selectedMonthYear ?? undefined);
             this.loadRecordsPerYear();
             this.cdr.detectChanges();
           }
