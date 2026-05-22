@@ -22,7 +22,6 @@
 
       <ng-template pTemplate="header">
         <tr>
-          <th>ID</th>
           <th>Username</th>
           <th>Email</th>
           <th>Role</th>
@@ -34,7 +33,6 @@
 
       <ng-template pTemplate="body" let-user>
         <tr>
-          <td>{{ user.id }}</td>
           <td>
             <i class="pi pi-user"></i>
             {{ user.username }}
@@ -51,102 +49,285 @@
               [value]="user.active ? 'Active' : 'Inactive'"
               [severity]="getActiveSeverity(user.active)"
               style="cursor: pointer"
-              (click)="toggleActive(user)"
+              (click)="confirmToggle(user)"
               [title]="user.active ? 'Click to deactivate' : 'Click to activate'"/>
           </td>
 
           <td class="actions-cell">
-            <button class="delete-btn" (click)="deleteUser(user.id)">
-              <i class="pi pi-trash"></i>
+            <button class="edit-btn" (click)="openEditDialog(user)" title="Edit user">
+              <i class="pi pi-pencil"></i>
             </button>
+
             @if (user.role === 'RESPONSABLE_MAGASIN') {
-              <button class="edit-btn" (click)="openEditStoreDialog(user)">
+              <button class="store-btn" (click)="openEditStoreDialog(user)" title="Change store">
                 <i class="pi pi-building"></i>
               </button>
             }
+
+            <button
+              class="delete-btn"
+              (click)="confirmDelete(user)"
+              [disabled]="!canDelete(user)"
+              [title]="canDelete(user) ? 'Delete user' : 'You cannot delete your own account'">
+              <i class="pi pi-trash"></i>
+            </button>
           </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" style="text-align: center">No users found</td>
+          <td colspan="6" style="text-align: center">No users found</td>
         </tr>
       </ng-template>
 
     </p-table>
   </div>
 
-  <!-- Create User Dialog -->
+  <!-- ── Create User Dialog ──────────────────────────────────────── -->
   <p-dialog
     header="Create New User"
     [(visible)]="showDialog"
     [modal]="true"
     [style]="{width: '450px'}">
 
-    <div class="dialog-form">
+    <form autocomplete="off" (ngSubmit)="createUser()">
+      <div class="dialog-form">
 
-      <div class="field">
-        <label>Username</label>
-        <input pInputText [(ngModel)]="newUser.username" placeholder="Enter username"/>
-      </div>
-
-      <div class="field">
-        <label>Email</label>
-        <input pInputText [(ngModel)]="newUser.email" placeholder="Enter email"/>
-      </div>
-
-      <div class="field">
-        <label>Password</label>
-        <p-password
-          [(ngModel)]="newUser.password"
-          [feedback]="false"
-          [toggleMask]="true"
-          placeholder="Enter password"/>
-      </div>
-
-      <div class="field">
-        <label>Role</label>
-        <p-select
-          [(ngModel)]="newUser.role"
-          [options]="roles"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select role"
-          appendTo="body"/>
-      </div>
-
-      @if (newUser.role === 'RESPONSABLE_MAGASIN') {
         <div class="field">
-          <label>Store <span style="color: red">*</span></label>
-          <p-autoComplete
-            [(ngModel)]="selectedStoreText"
-            [suggestions]="filteredStores"
-            (completeMethod)="searchStores($event)"
-            (onSelect)="onStoreSelect($event)"
-            placeholder="Search store by name or code..."
-            appendTo="body"
-            [forceSelection]="true">
-            <ng-template let-store pTemplate="item">
-              <div>
-                <strong>{{ store.magasin }}</strong>
-                <span style="color: var(--text-muted)"> - {{ store.code }}</span>
-              </div>
-            </ng-template>
-          </p-autoComplete>
+          <label>Username <span class="field-required">*</span></label>
+          <input
+            pInputText
+            [(ngModel)]="newUser.username"
+            name="create-username"
+            placeholder="Enter username"
+            autocomplete="off"
+            readonly
+            (focus)="removeReadonly($event)"
+            (click)="removeReadonly($event)"
+            [class.field-invalid]="createErrors['username']"/>
+          @if (createErrors['username']) {
+            <small class="field-error">
+              <i class="pi pi-exclamation-circle"></i>
+              {{ createErrors['username'] }}
+            </small>
+          }
         </div>
-      }
 
-    </div>
+        <div class="field">
+          <label>Email</label>
+          <input
+            pInputText
+            [(ngModel)]="newUser.email"
+            name="create-email"
+            placeholder="Enter email"
+            autocomplete="off"
+            readonly
+            (focus)="removeReadonly($event)"
+            (click)="removeReadonly($event)"
+            [class.field-invalid]="createErrors['email']"/>
+          @if (createErrors['email']) {
+            <small class="field-error">
+              <i class="pi pi-exclamation-circle"></i>
+              {{ createErrors['email'] }}
+            </small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Password <span class="field-required">*</span></label>
+          <p-password
+            [(ngModel)]="newUser.password"
+            name="create-password"
+            [feedback]="false"
+            [toggleMask]="true"
+            placeholder="Enter password"
+            [styleClass]="createErrors['password'] ? 'field-invalid' : ''"/>
+          @if (createErrors['password']) {
+            <small class="field-error">
+              <i class="pi pi-exclamation-circle"></i>
+              {{ createErrors['password'] }}
+            </small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Role <span class="field-required">*</span></label>
+          <p-select
+            [(ngModel)]="newUser.role"
+            name="create-role"
+            [options]="roles"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select role"
+            appendTo="body"
+            [styleClass]="createErrors['role'] ? 'field-invalid' : ''"/>
+          @if (createErrors['role']) {
+            <small class="field-error">
+              <i class="pi pi-exclamation-circle"></i>
+              {{ createErrors['role'] }}
+            </small>
+          }
+        </div>
+
+        @if (newUser.role === 'RESPONSABLE_MAGASIN') {
+          <div class="field">
+            <label>Store <span class="field-required">*</span></label>
+            <p-autoComplete
+              [(ngModel)]="selectedStoreText"
+              name="create-store"
+              [suggestions]="filteredStores"
+              (completeMethod)="searchStores($event)"
+              (onSelect)="onStoreSelect($event)"
+              placeholder="Search store by name or code..."
+              appendTo="body"
+              [forceSelection]="true"
+              [styleClass]="createErrors['store'] ? 'field-invalid' : ''">
+              <ng-template let-store pTemplate="item">
+                <div>
+                  <strong>{{ store.magasin }}</strong>
+                  <span style="color: var(--text-muted)"> - {{ store.code }}</span>
+                </div>
+              </ng-template>
+            </p-autoComplete>
+            @if (createErrors['store']) {
+              <small class="field-error">
+                <i class="pi pi-exclamation-circle"></i>
+                {{ createErrors['store'] }}
+              </small>
+            }
+          </div>
+        }
+
+      </div>
+    </form>
 
     <ng-template pTemplate="footer">
       <p-button label="Cancel" severity="secondary" (onClick)="showDialog = false"/>
-      <p-button label="Create" (onClick)="createUser()"/>
+      <p-button label="Create" icon="pi pi-plus" (onClick)="createUser()"/>
     </ng-template>
 
   </p-dialog>
 
-  <!-- Edit Store Dialog -->
+  <!-- ── Edit User Dialog ────────────────────────────────────────── -->
+  <p-dialog
+    header="Edit User"
+    [(visible)]="showEditDialog"
+    [modal]="true"
+    [style]="{width: '450px'}">
+
+    <form autocomplete="off" (ngSubmit)="saveEditUser()">
+      <div class="dialog-form">
+
+        <div class="field">
+          <label>Username <span class="field-required">*</span></label>
+          <input
+            pInputText
+            [(ngModel)]="editUser.username"
+            name="edit-username"
+            placeholder="Enter username"
+            autocomplete="off"
+            readonly
+            (focus)="removeReadonly($event)"
+            (click)="removeReadonly($event)"
+            [class.field-invalid]="editErrors['username']"/>
+          @if (editErrors['username']) {
+            <small class="field-error">
+              <i class="pi pi-exclamation-circle"></i>
+              {{ editErrors['username'] }}
+            </small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input
+            pInputText
+            [(ngModel)]="editUser.email"
+            name="edit-email"
+            placeholder="Enter email"
+            autocomplete="off"
+            readonly
+            (focus)="removeReadonly($event)"
+            (click)="removeReadonly($event)"
+            [class.field-invalid]="editErrors['email']"/>
+          @if (editErrors['email']) {
+            <small class="field-error">
+              <i class="pi pi-exclamation-circle"></i>
+              {{ editErrors['email'] }}
+            </small>
+          }
+        </div>
+
+        <div class="field">
+          <label>New Password <span class="field-optional">(leave blank to keep current)</span></label>
+          <p-password
+            [(ngModel)]="editUser.password"
+            name="edit-password"
+            [feedback]="false"
+            [toggleMask]="true"
+            placeholder="Enter new password (optional)"/>
+        </div>
+
+        <div class="field">
+          <label>Role <span class="field-required">*</span></label>
+          <p-select
+            [(ngModel)]="editUser.role"
+            name="edit-role"
+            [options]="roles"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select role"
+            appendTo="body"
+            [styleClass]="editErrors['role'] ? 'field-invalid' : ''"/>
+          @if (editErrors['role']) {
+            <small class="field-error">
+              <i class="pi pi-exclamation-circle"></i>
+              {{ editErrors['role'] }}
+            </small>
+          }
+        </div>
+
+        @if (editUser.role === 'RESPONSABLE_MAGASIN') {
+          <div class="field">
+            <label>Store <span class="field-required">*</span></label>
+            <p-autoComplete
+              [(ngModel)]="selectedEditUserStoreText"
+              name="edit-store"
+              [suggestions]="filteredEditUserStores"
+              (completeMethod)="searchEditUserStores($event)"
+              (onSelect)="onEditUserStoreSelect($event)"
+              placeholder="Search store by name or code..."
+              appendTo="body"
+              [forceSelection]="true"
+              [styleClass]="editErrors['store'] ? 'field-invalid' : ''">
+              <ng-template let-store pTemplate="item">
+                <div>
+                  <strong>{{ store.magasin }}</strong>
+                  <span style="color: var(--text-muted)"> - {{ store.code }}</span>
+                </div>
+              </ng-template>
+            </p-autoComplete>
+            @if (editErrors['store']) {
+              <small class="field-error">
+                <i class="pi pi-exclamation-circle"></i>
+                {{ editErrors['store'] }}
+              </small>
+            }
+          </div>
+        }
+
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" (onClick)="showEditDialog = false"/>
+      <p-button label="Save" icon="pi pi-check" (onClick)="saveEditUser()"/>
+    </ng-template>
+
+  </p-dialog>
+
+  <!-- ── Edit Store Dialog ───────────────────────────────────────── -->
   <p-dialog
     header="Change Store Assignment"
     [(visible)]="showEditStoreDialog"
@@ -155,7 +336,7 @@
 
     <div class="dialog-form">
       <div class="field">
-        <label>Select New Store</label>
+        <label>Select New Store <span class="field-required">*</span></label>
         <p-autoComplete
           [(ngModel)]="selectedEditStoreText"
           [suggestions]="filteredEditStores"
@@ -163,7 +344,8 @@
           (onSelect)="onEditStoreSelect($event)"
           placeholder="Search store..."
           appendTo="body"
-          [forceSelection]="true">
+          [forceSelection]="true"
+          [styleClass]="editStoreError ? 'field-invalid' : ''">
           <ng-template let-store pTemplate="item">
             <div>
               <strong>{{ store.magasin }}</strong>
@@ -171,12 +353,70 @@
             </div>
           </ng-template>
         </p-autoComplete>
+        @if (editStoreError) {
+          <small class="field-error">
+            <i class="pi pi-exclamation-circle"></i>
+            {{ editStoreError }}
+          </small>
+        }
       </div>
     </div>
 
     <ng-template pTemplate="footer">
       <p-button label="Cancel" severity="secondary" (onClick)="showEditStoreDialog = false"/>
-      <p-button label="Update" (onClick)="updateStore()"/>
+      <p-button label="Update" icon="pi pi-check" (onClick)="updateStore()"/>
+    </ng-template>
+
+  </p-dialog>
+
+  <!-- ── Delete Confirm Dialog ───────────────────────────────────── -->
+  <p-dialog
+    header="Delete User"
+    [(visible)]="showDeleteConfirm"
+    [modal]="true"
+    [style]="{width: '380px'}"
+    [closable]="true">
+
+    <div class="confirm-dialog-body">
+      <div class="confirm-icon confirm-icon--danger">
+        <i class="pi pi-trash"></i>
+      </div>
+      <p class="confirm-message">Are you sure you want to delete this user? This action cannot be undone.</p>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" (onClick)="cancelDelete()"/>
+      <p-button label="Delete" icon="pi pi-trash" severity="danger" (onClick)="deleteUser()"/>
+    </ng-template>
+
+  </p-dialog>
+
+  <!-- ── Toggle Active Confirm Dialog ───────────────────────────── -->
+  <p-dialog
+    [header]="pendingToggleUser?.active ? 'Deactivate User' : 'Activate User'"
+    [(visible)]="showToggleConfirm"
+    [modal]="true"
+    [style]="{width: '380px'}"
+    [closable]="true">
+
+    <div class="confirm-dialog-body">
+      <div class="confirm-icon" [class.confirm-icon--warn]="pendingToggleUser?.active" [class.confirm-icon--success]="!pendingToggleUser?.active">
+        <i class="pi" [class.pi-ban]="pendingToggleUser?.active" [class.pi-check-circle]="!pendingToggleUser?.active"></i>
+      </div>
+      <p class="confirm-message">
+        Are you sure you want to
+        <strong>{{ pendingToggleUser?.active ? 'deactivate' : 'activate' }}</strong>
+        user <strong>"{{ pendingToggleUser?.username }}"</strong>?
+      </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" (onClick)="cancelToggle()"/>
+      <p-button
+        [label]="pendingToggleUser?.active ? 'Deactivate' : 'Activate'"
+        [icon]="pendingToggleUser?.active ? 'pi pi-ban' : 'pi pi-check-circle'"
+        [severity]="pendingToggleUser?.active ? 'warn' : 'success'"
+        (onClick)="toggleActive()"/>
     </ng-template>
 
   </p-dialog>

@@ -72,26 +72,22 @@ body {
 }
 
 /* ===== PrimeNG Sort Icon Fix ===== */
-/* Default — faded */
 .p-datatable .p-datatable-sortable-column .p-datatable-sort-icon {
   color: var(--text-secondary) !important;
   opacity: 0.45 !important;
   transition: color 0.2s, opacity 0.2s;
 }
 
-/* Hover */
 .p-datatable .p-datatable-sortable-column:hover .p-datatable-sort-icon {
   color: var(--text-primary) !important;
   opacity: 1 !important;
 }
 
-/* Active / sorted column */
 .p-datatable .p-datatable-column-sorted .p-datatable-sort-icon {
   color: var(--brand-primary) !important;
   opacity: 1 !important;
 }
 
-/* Remove focus ring on sort click */
 .p-datatable .p-datatable-sortable-column:focus,
 .p-datatable .p-datatable-sortable-column:focus-visible {
   outline: none !important;
@@ -141,4 +137,146 @@ body {
 .p-paginator .p-paginator-next .p-icon,
 .p-paginator .p-paginator-last .p-icon {
   color: var(--text-secondary) !important;
+}
+
+/* ===== GLOBAL DROPDOWN / SELECT / AUTOCOMPLETE OVERLAY ===== */
+/* Applied globally because overlays are appended to <body>
+   and cannot be reached by component-level ::ng-deep */
+
+.p-select-overlay,
+.p-autocomplete-overlay,
+.p-multiselect-overlay,
+.p-datepicker-panel {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-md) !important;
+  color: var(--text-primary) !important;
+}
+
+/* List containers */
+.p-select-list,
+.p-autocomplete-list,
+.p-multiselect-list {
+  background: var(--bg-card) !important;
+  padding: 6px !important;
+}
+
+/* Individual options */
+.p-select-option,
+.p-autocomplete-option,
+.p-multiselect-option {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-family: var(--font-family) !important;
+  font-size: 0.9rem !important;
+  transition: background 0.15s ease !important;
+}
+
+.p-select-option:hover,
+.p-autocomplete-option:hover,
+.p-multiselect-option:hover {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.p-select-option:focus,
+.p-autocomplete-option:focus,
+.p-multiselect-option:focus,
+.p-select-option.p-focus,
+.p-autocomplete-option.p-focus,
+.p-multiselect-option.p-focus {
+  background: var(--bg-primary) !important;
+  outline: none !important;
+}
+
+/* Selected / highlighted option */
+.p-select-option.p-selected,
+.p-autocomplete-option.p-selected,
+.p-multiselect-option.p-selected {
+  background: rgba(108, 52, 131, 0.1) !important;
+  color: var(--brand-primary) !important;
+  font-weight: 600 !important;
+}
+
+.p-select-option.p-selected:hover,
+.p-autocomplete-option.p-selected:hover,
+.p-multiselect-option.p-selected:hover {
+  background: rgba(108, 52, 131, 0.15) !important;
+}
+
+/* Empty / no results message */
+.p-select-empty-message,
+.p-autocomplete-empty-message,
+.p-multiselect-empty-message {
+  color: var(--text-muted) !important;
+  padding: 10px 12px !important;
+  font-size: 0.875rem !important;
+  font-style: italic !important;
+}
+
+/* Filter input inside overlay (multiselect / select with filter) */
+.p-select-filter-container,
+.p-multiselect-filter-container {
+  padding: 6px 6px 2px !important;
+}
+
+.p-select-filter-container .p-inputtext,
+.p-multiselect-filter-container .p-inputtext {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border: 1.5px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  width: 100% !important;
+  font-family: var(--font-family) !important;
+}
+
+.p-select-filter-container .p-inputtext:focus,
+.p-multiselect-filter-container .p-inputtext:focus {
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 3px rgba(108, 52, 131, 0.12) !important;
+  outline: none !important;
+}
+
+.p-select-filter-container .p-inputtext::placeholder,
+.p-multiselect-filter-container .p-inputtext::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Option group headers */
+.p-select-option-group,
+.p-multiselect-option-group {
+  color: var(--text-muted) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 12px 4px !important;
+}
+
+/* Paginator rows-per-page overlay (same component, in a portal) */
+.p-paginator .p-select-overlay {
+  min-width: auto !important;
+}
+
+/* ===== USERS TABLE SCROLL FIX ===== */
+.p-datatable-wrapper {
+  overflow-x: auto !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-secondary) transparent;
+}
+
+.p-datatable-wrapper::-webkit-scrollbar {
+  height: 5px;
+}
+
+.p-datatable-wrapper::-webkit-scrollbar-thumb {
+  background: var(--brand-secondary);
+  border-radius: 10px;
+}
+
+.p-datatable table {
+  min-width: 960px !important;
 }

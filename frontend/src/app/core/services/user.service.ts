@@ -17,6 +17,14 @@ export interface Magasin {
   code: string;
 }
 
+export interface UpdateUserRequest {
+  username: string;
+  email: string | null;
+  password?: string;
+  role: string;
+  idMagasin: number | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -36,6 +44,10 @@ export class UserService {
 
   createUser(user: any): Observable<any> {
     return this.http.post('http://localhost:8080/api/auth/register', user);
+  }
+
+  updateUser(id: number, req: UpdateUserRequest): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${id}`, req);
   }
 
   updateStore(userId: number, storeId: number): Observable<User> {

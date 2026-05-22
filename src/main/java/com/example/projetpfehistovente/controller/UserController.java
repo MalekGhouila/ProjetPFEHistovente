@@ -1,12 +1,15 @@
 package com.example.projetpfehistovente.controller;
 
+import com.example.projetpfehistovente.dto.UpdateUserRequest;
 import com.example.projetpfehistovente.entity.User;
 import com.example.projetpfehistovente.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -22,9 +25,13 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id, Principal principal) {
         return userService.findById(id)
                 .map(existing -> {
+                    // Block self-deletion
+                    if (existing.getUsername().equals(principal.getName())) {
+                        return ResponseEntity.<Void>status(403).<Void>build();
+                    }
                     userService.deleteById(id);
                     return ResponseEntity.<Void>ok().<Void>build();
                 })
@@ -53,5 +60,15 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(
+            @PathVariable Long id,
+            @RequestBody UpdateUserRequest req) {
+        try {
+            User updated = userService.updateUser(id, req);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
