@@ -234,3 +234,25 @@
   border-radius: 8px !important;
   min-width: 160px;
 }
+
+/* ===== SELECT LABEL & SELECTED OPTION FIX ===== */
+:host ::ng-deep .p-select .p-select-label {
+  color: var(--text-primary) !important;
+  font-size: 0.875rem !important;
+  background: transparent !important;
+}
+
+:host ::ng-deep .p-select .p-select-dropdown {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+}
+
+:host ::ng-deep .p-select:not(.p-disabled):hover {
+  border-color: var(--brand-secondary) !important;
+}
+
+:host ::ng-deep .p-select:not(.p-disabled).p-focus {
+  border-color: var(--brand-secondary) !important;
+  box-shadow: 0 0 0 3px var(--input-focus-shadow) !important;
+  outline: none !important;
+}

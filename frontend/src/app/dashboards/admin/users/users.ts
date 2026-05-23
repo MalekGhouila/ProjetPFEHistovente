@@ -124,9 +124,9 @@ export class Users implements OnInit {
   }
 
   loadAllStores() {
-    this.magasinService.getAll().subscribe({
-      next: (data: any) => {
-        this.allStores = data.content || data;
+    this.magasinService.getAllUnpaginated().subscribe({  // ← CHANGED
+      next: (data: Magasin[]) => {
+        this.allStores = data;
         this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Error loading stores:', err)

@@ -24,11 +24,10 @@ export class AuthService {
     localStorage.setItem('username', username);
     localStorage.setItem('role', role);
 
-    // Always update idMagasin - even if null!
     if (idMagasin !== null && idMagasin !== undefined) {
       localStorage.setItem('idMagasin', idMagasin.toString());
     } else {
-      localStorage.removeItem('idMagasin'); // ← Clear if null!
+      localStorage.removeItem('idMagasin');
     }
   }
 
@@ -36,7 +35,6 @@ export class AuthService {
     const id = localStorage.getItem('idMagasin');
     return id ? parseInt(id) : null;
   }
-
 
   getToken(): string | null {
     return localStorage.getItem('token');
@@ -66,11 +64,24 @@ export class AuthService {
     return localStorage.getItem('storeName');
   }
 
+  saveStoreCode(code: string | null): void {
+    if (code?.trim()) {
+      localStorage.setItem('storeCode', code);
+    } else {
+      localStorage.removeItem('storeCode');
+    }
+  }
+
+  getStoreCode(): string | null {
+    return localStorage.getItem('storeCode');
+  }
+
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('role');
     localStorage.removeItem('idMagasin');
     localStorage.removeItem('storeName');
+    localStorage.removeItem('storeCode');
   }
 }

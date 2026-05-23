@@ -31,6 +31,10 @@ export class MagasinService {
     return this.http.get<any>(this.apiUrl);
   }
 
+  getAllUnpaginated(): Observable<Magasin[]> {                          // ← ADDED
+    return this.http.get<Magasin[]>(`${this.apiUrl}/all`);             // ← ADDED
+  }                                                                     // ← ADDED
+
   getPaginated(
     search: string = '',
     page: number = 0,

@@ -47,13 +47,13 @@ export class ResponsableMagasin implements OnInit {
     }
 
     const name = this.authService.getStoreName();
+    const code = this.authService.getStoreCode();           // ← ADDED
     this.storeName = name?.trim()
-      ? `${name} (#${this.storeId})`
+      ? `${name} (${code ?? '#' + this.storeId})`           // ← CHANGED
       : `Store #${this.storeId}`;
     this.welcomeMessage = `Welcome back, ${this.authService.getUsername()}!`;
     this.initChartOptions();
     this.loadStoreData();
-
   }
 
   initChartOptions() {
