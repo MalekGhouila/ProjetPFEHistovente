@@ -16,7 +16,6 @@ import { DataAnalyst } from './dashboards/data-analyst/data-analyst';
 import { Stores } from './dashboards/manager/stores/stores';
 import { Families } from './dashboards/manager/families/families';
 import { Predictions } from './dashboards/manager/predictions/predictions';
-import { Alerts } from './dashboards/manager/alerts/alerts';
 import { CustomAnalysis } from './dashboards/manager/custom-analysis/custom-analysis';
 
 // Responsable sub-pages
@@ -32,9 +31,7 @@ import { StagingReview } from './dashboards/data-analyst/staging-review/staging-
 
 // Admin sub-pages
 import { Users } from './dashboards/admin/users/users';
-import { DataMonitoring } from './dashboards/admin/data-monitoring/data-monitoring';
 import { MlMonitoring } from './dashboards/admin/ml-monitoring/ml-monitoring';
-import { Settings } from './dashboards/admin/settings/settings';
 
 import { Unauthorized } from './shared/unauthorized/unauthorized';
 
@@ -57,13 +54,10 @@ export const routes: Routes = [
         children: [
           { path: '', component: Admin },
           { path: 'users', component: Users },
-          { path: 'data-monitoring', component: DataMonitoring },
           { path: 'ml-monitoring', component: MlMonitoring },
-          { path: 'settings', component: Settings },
           { path: 'stores', component: Stores },
           { path: 'families', component: Families },
           { path: 'predictions', component: Predictions },
-          { path: 'alerts', component: Alerts },
           { path: 'custom-analysis', component: CustomAnalysis },
           { path: 'data-quality', component: DataQuality },
         ]
@@ -78,7 +72,6 @@ export const routes: Routes = [
           { path: 'stores', component: Stores },
           { path: 'families', component: Families },
           { path: 'predictions', component: Predictions },
-          { path: 'alerts', component: Alerts },
           { path: 'custom-analysis', component: CustomAnalysis },
         ]
       },
